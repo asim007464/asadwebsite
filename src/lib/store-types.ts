@@ -8,6 +8,8 @@ export type ProductListing = {
   /** When present (see `product_listings` view): homepage “Featured picks” pool */
   is_featured?: boolean;
   featured_sort_order?: number;
+  meta_keywords?: string;
+  meta_description?: string;
   /** Cheapest (default) variant for quick add-to-cart. */
   default_variant_id?: string | null;
   default_variant_sku?: string | null;
@@ -41,6 +43,8 @@ export type Category = {
   name: string;
   slug: string;
   parent_id: string | null;
+  thumbnail_url?: string;
+  hero_icon_hint?: string;
 };
 
 export type HeroSlideRow = {
@@ -48,6 +52,17 @@ export type HeroSlideRow = {
   url: string;
   alt: string;
   sort_order: number;
+  is_active: boolean;
+};
+
+/** Singleton row (`id = 1`) edited in Admin → Reviews banner; shown above testimonials on home. */
+export type HomeReviewsBannerRow = {
+  id: number;
+  background_image_url: string;
+  heading: string;
+  paragraph: string;
+  button_label: string;
+  button_href: string;
   is_active: boolean;
 };
 

@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { DEMO_TESTIMONIALS } from "@/lib/testimonials";
+import { DEMO_TESTIMONIALS, type Testimonial } from "@/lib/testimonials";
 
 function QuoteGlyph({ className = "" }: { className?: string }) {
   return (
@@ -50,8 +50,8 @@ function GoogleGlyph({ className = "" }: { className?: string }) {
   );
 }
 
-export function TestimonialsSection() {
-  const items = DEMO_TESTIMONIALS;
+export function TestimonialsSection({ intro, testimonials }: { intro?: string; testimonials?: readonly Testimonial[] }) {
+  const items = testimonials && testimonials.length > 0 ? testimonials : DEMO_TESTIMONIALS;
   const [perPage, setPerPage] = useState(2);
 
   useEffect(() => {
@@ -89,7 +89,9 @@ export function TestimonialsSection() {
             What customers say
           </h2>
           <p className="mt-3 text-sm leading-relaxed text-slate-600 sm:text-base">
-            COD orders with phone confirmation — shoppers tell us when specs, delivery, and pricing line up. Quotes below are sample stories you can replace with live feedback.
+            {intro?.trim()?.length
+              ? intro.trim()
+              : "COD orders with phone confirmation — shoppers tell us when specs, delivery, and pricing line up. Quotes below are sample stories you can replace with live feedback."}
           </p>
         </div>
 

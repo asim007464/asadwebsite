@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
-import type { Category, HeroSlideRow, ProductListing } from "@/lib/store-types";
+import type { Category, HeroSlideRow, HomeReviewsBannerRow, ProductListing } from "@/lib/store-types";
 import { DEMO_PRODUCTS } from "@/lib/demo-products";
 import { DemoProductSection } from "@/components/DemoProductSection";
 import { CategorySlider } from "@/components/CategorySlider";
@@ -8,11 +8,13 @@ import { SITE_SHOP_NAME, SITE_SHORT_TAGLINE } from "@/lib/site-brand";
 import { FALLBACK_HERO_BACKDROP_SLIDES } from "@/lib/site-visuals";
 import { HeroCarouselDots, HeroCarouselProvider } from "@/components/HeroBackdropCarousel";
 import { FeaturedProductsCarousel } from "@/components/FeaturedProductsCarousel";
+import { ReviewsBannerSection } from "@/components/ReviewsBannerSection";
 import { TestimonialsSection } from "@/components/TestimonialsSection";
 import { FAQSection } from "@/components/FAQSection";
 import { StatCountUp } from "@/components/StatCountUp";
-import { SafeRemoteImage } from "@/components/SafeRemoteImage";
-import { getCategoryThumb } from "@/lib/category-thumbs";
+import { BrowseCategoriesGrid } from "@/components/BrowseCategoriesGrid";
+import { getHomeSectionListings } from "@/lib/home-section-products";
+import { getStorefrontPayload } from "@/lib/storefront";
 
 export const dynamic = "force-dynamic";
 
@@ -23,47 +25,44 @@ export default function Home() {
 async function HomeServer() {
   const supabase = createSupabaseAdminClient();
 
-  const [{ data: categories }, featuredBlock, heroSlidesResult, catalogCountRes, gadgetsRes] = await Promise.all([
-    supabase.from("categories").select("id,name,slug,parent_id").order("name"),
-    (async () => {
-      const featured = await supabase
-        .from("product_listings")
-        .select(
-          "id,name,slug,description,min_price_pkr,image_url,is_featured,featured_sort_order,default_variant_id,default_variant_sku,default_variant_title,default_variant_price_pkr",
-        )
-        .eq("is_featured", true)
-        .order("featured_sort_order", { ascending: true })
-        .order("name", { ascending: true })
-        .limit(48);
-      if (!featured.error && featured.data?.length) {
-        return { rows: featured.data as ProductListing[], source: "featured" as const };
-      }
-      const fb = await supabase
-        .from("product_listings")
-        .select(
-          "id,name,slug,description,min_price_pkr,image_url,default_variant_id,default_variant_sku,default_variant_title,default_variant_price_pkr",
-        )
-        .order("name", { ascending: true })
-        .limit(12);
-      return {
-        rows: ((fb.data as ProductListing[] | null) ?? []) as ProductListing[],
-        source: "catalog" as const,
-      };
-    })(),
+  const [
+    categoriesRes,
+    featuredBlock,
+    gadgetsBlock,
+    heroSlidesResult,
+    catalogCountRes,
+    reviewsBannerRes,
+    storefront,
+  ] = await Promise.all([
+    supabase.from("categories").select("id,name,slug,parent_id,thumbnail_url,hero_icon_hint").order("name"),
+    getHomeSectionListings("featured", 48),
+    getHomeSectionListings("gadgets", 48),
     supabase.from("hero_slides").select("id,url,alt,sort_order,is_active").eq("is_active", true).order("sort_order"),
     supabase.from("product_listings").select("id", { count: "exact", head: true }),
     supabase
-      .from("product_listings")
-      .select("id,name,slug,description,min_price_pkr,image_url,default_variant_id,default_variant_sku,default_variant_title,default_variant_price_pkr")
-      .order("name")
-      .limit(12),
+      .from("home_reviews_banner")
+      .select("id,background_image_url,heading,paragraph,button_label,button_href,is_active")
+      .eq("id", 1)
+      .maybeSingle(),
+    getStorefrontPayload(),
   ]);
 
+  const { data: categories } = categoriesRes;
   const featuredProducts = featuredBlock.rows;
   const featuredSource = featuredBlock.source;
   const hasLiveProducts = (catalogCountRes.count ?? 0) > 0;
-  const dropdownCategories = ((categories as Category[] | null) ?? []).slice(0, 10);
-  const gadgetsProducts = ((gadgetsRes.data as ProductListing[] | null) ?? []) as ProductListing[];
+  const allCategoriesList = ((categories as Category[] | null) ?? []);
+  const gadgetsProducts = gadgetsBlock.rows;
+  const rb = !reviewsBannerRes.error && reviewsBannerRes.data ? (reviewsBannerRes.data as HomeReviewsBannerRow) : null;
+  const rbBg = rb?.background_image_url?.trim() ?? "";
+  const rbHead = rb?.heading?.trim() ?? "";
+  const rbPara = rb?.paragraph?.trim() ?? "";
+  const rbLbl = rb?.button_label?.trim() ?? "";
+  const showReviewsBannerStrip =
+    Boolean(rb?.is_active) &&
+    rbBg.length > 0 &&
+    /^https:\/\//i.test(rbBg) &&
+    (rbHead.length > 0 || rbPara.length > 0 || rbLbl.length > 0);
 
   const heroSlideRows =
     heroSlidesResult.error || !heroSlidesResult.data ? [] : (heroSlidesResult.data as HeroSlideRow[]);
@@ -100,26 +99,46 @@ async function HomeServer() {
           <div className="relative z-10 mx-auto w-full max-w-7xl px-4 py-12 sm:px-6 sm:py-16 lg:px-8 lg:py-20">
             <div className="max-w-2xl">
               <div className="flex flex-wrap items-center gap-2">
-              <span className="rounded-full bg-white/12 px-3 py-1 text-[11px] font-bold uppercase tracking-wide text-blue-100 ring-1 ring-white/15 backdrop-blur-md">
-                {SITE_SHOP_NAME}
-              </span>
-              <span className="rounded-full bg-emerald-500/15 px-3 py-1 text-[11px] font-semibold text-emerald-100 ring-1 ring-emerald-400/25">
-                COD · Lahore & nationwide
-              </span>
+                <span className="rounded-full bg-white/12 px-3 py-1 text-[11px] font-bold uppercase tracking-wide text-blue-100 ring-1 ring-white/15 backdrop-blur-md">
+                  {SITE_SHOP_NAME}
+                </span>
+                <span className="rounded-full bg-emerald-500/15 px-3 py-1 text-[11px] font-semibold text-emerald-100 ring-1 ring-emerald-400/25">
+                  {(storefront.heroBadgeCod ?? "").trim() ? storefront.heroBadgeCod : "COD · Lahore & nationwide"}
+                </span>
+                {(storefront.heroBadgeRegion ?? "").trim() ? (
+                  <span className="rounded-full bg-white/10 px-3 py-1 text-[11px] font-semibold text-blue-100 ring-1 ring-white/18 backdrop-blur-md">
+                    {storefront.heroBadgeRegion}
+                  </span>
+                ) : null}
               </div>
 
-              <p className="mt-5 text-sm font-semibold leading-snug text-blue-200/95">{SITE_SHORT_TAGLINE}</p>
+              <p className="mt-5 text-sm font-semibold leading-snug text-blue-200/95">
+                {(storefront.headerAccent ?? "").trim() ? storefront.headerAccent : SITE_SHORT_TAGLINE}
+              </p>
 
-              <h1 className="mt-3 max-w-xl text-3xl font-bold tracking-tight text-white sm:text-4xl lg:text-[2.45rem] lg:leading-[1.15]">
-              Straight answers on specs — then{" "}
-              <span className="bg-gradient-to-r from-white to-blue-100 bg-clip-text text-transparent [-webkit-background-clip:text]">
-                cash on delivery
-              </span>{" "}
-              you can rely on.
-              </h1>
+              {(storefront.heroTitle ?? "").trim() ? (
+                <h1 className="mt-3 max-w-xl text-3xl font-bold tracking-tight text-white sm:text-4xl lg:text-[2.45rem] lg:leading-[1.15]">
+                  {storefront.heroTitle!.trim()}
+                </h1>
+              ) : (
+                <h1 className="mt-3 max-w-xl text-3xl font-bold tracking-tight text-white sm:text-4xl lg:text-[2.45rem] lg:leading-[1.15]">
+                  Straight answers on specs — then{" "}
+                  <span className="bg-gradient-to-r from-white to-blue-100 bg-clip-text text-transparent [-webkit-background-clip:text]">
+                    cash on delivery
+                  </span>{" "}
+                  you can rely on.
+                </h1>
+              )}
 
               <p className="mt-5 max-w-lg text-sm leading-relaxed text-blue-50/90 sm:text-[15px]">
-              Fans, LED lighting, heaters, coolers, kitchen helpers, grooming tools, wiring and electrical accessories. Pick your variant — we confirm each order by phone or WhatsApp before anything leaves the warehouse.
+                {(storefront.heroLeadParagraph ?? "").trim().length ? (
+                  storefront.heroLeadParagraph
+                ) : (
+                  <>
+                    Fans, LED lighting, heaters, coolers, kitchen helpers, grooming tools, wiring and electrical accessories. Pick your variant —
+                    we confirm each order by phone or WhatsApp before anything leaves the warehouse.
+                  </>
+                )}
               </p>
 
               <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
@@ -177,11 +196,15 @@ async function HomeServer() {
             <>
               {featuredSource === "catalog" ? (
                 <p className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
-                  <span className="font-semibold">None marked as featured yet.</span> Showing catalog items instead. Open{" "}
-                  <Link href="/admin/featured" className="font-semibold text-blue-800 underline underline-offset-2 hover:text-blue-900">
-                    Admin → Featured picks
+                  <span className="font-semibold">No curated homepage list yet.</span> Showing newest catalog SKUs instead. Assign products in{" "}
+                  <Link href="/admin/home-sections" className="font-semibold text-blue-800 underline underline-offset-2 hover:text-blue-900">
+                    Admin → Homepage strips
                   </Link>{" "}
-                  to flag hot sellers for this strip.
+                  or flag items in{" "}
+                  <Link href="/admin/featured" className="font-semibold text-blue-800 underline underline-offset-2 hover:text-blue-900">
+                    Featured picks
+                  </Link>
+                  .
                 </p>
               ) : null}
               <div className="mt-5">
@@ -210,40 +233,7 @@ async function HomeServer() {
             </Link>
           </div>
 
-          {dropdownCategories.length ? (
-            <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
-              {dropdownCategories.map((c) => (
-                <Link
-                  key={c.id}
-                  href={`/products?category=${encodeURIComponent(c.slug)}`}
-                  className="group overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-md motion-reduce:hover:translate-y-0"
-                >
-                  <div className="relative aspect-[16/10] w-full bg-slate-100">
-                    <div
-                      aria-hidden
-                      className="absolute inset-0 scale-110 bg-cover bg-center opacity-30 blur-[2px]"
-                      style={{ backgroundImage: `url(${getCategoryThumb(c.slug).url})` }}
-                    />
-                    <SafeRemoteImage
-                      src={getCategoryThumb(c.slug).url}
-                      alt={getCategoryThumb(c.slug).alt}
-                      fill
-                      className="z-10 object-cover transition-transform duration-200 ease-smooth-out motion-reduce:transition-none group-hover:scale-[1.03] motion-reduce:group-hover:scale-100"
-                      sizes="(max-width:640px) 50vw, (max-width:1024px) 33vw, 20vw"
-                    />
-                  </div>
-                  <div className="p-4">
-                    <div className="truncate text-sm font-semibold text-slate-900 group-hover:text-blue-800">{c.name}</div>
-                    <div className="mt-1 text-xs font-medium text-slate-500">Explore →</div>
-                  </div>
-                </Link>
-              ))}
-            </div>
-          ) : (
-            <div className="mt-6 rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-4 py-6 text-sm text-slate-600">
-              No categories yet. Add them in <span className="font-semibold text-blue-800">Admin → Categories</span>.
-            </div>
-          )}
+          <BrowseCategoriesGrid categories={allCategoriesList} />
         </section>
 
         <section className="mt-12">
@@ -302,9 +292,16 @@ async function HomeServer() {
           </div>
         </section>
 
-        <section className="relative left-1/2 mt-16 w-[100dvw] -translate-x-1/2 border-y border-slate-200 bg-white py-14 text-slate-900 sm:py-16 -mb-12">
+        {showReviewsBannerStrip && rb ? <ReviewsBannerSection banner={rb} /> : null}
+
+        <section
+          className={`relative left-1/2 w-[100dvw] -translate-x-1/2 border-y border-slate-200 bg-white py-14 text-slate-900 sm:py-16 -mb-12 ${showReviewsBannerStrip ? "mt-8 sm:mt-10" : "mt-16"}`}
+        >
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <TestimonialsSection />
+            <TestimonialsSection
+              intro={storefront.testimonialsLead}
+              testimonials={(storefront.testimonials ?? []).length > 0 ? storefront.testimonials : undefined}
+            />
             <FAQSection />
           </div>
         </section>

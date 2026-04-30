@@ -23,11 +23,10 @@ const checkoutSchema = z.object({
   shipping_province: z.string().optional().or(z.literal("")),
   shipping_postal_code: z.string().optional().or(z.literal("")),
   notes: z.string().optional().or(z.literal("")),
-  payment_method: z.enum(["cod", "card", "jazzcash"]).default("cod"),
-  card_last4: z.string().regex(/^\d{4}$/).optional().or(z.literal("")),
-  card_holder: z.string().optional().or(z.literal("")),
+  payment_method: z.enum(["cod", "jazzcash", "bank_transfer"]).default("cod"),
   jazzcash_phone: z.string().optional().or(z.literal("")),
   jazzcash_reference: z.string().optional().or(z.literal("")),
+  bank_reference: z.string().optional().or(z.literal("")),
   items: z.array(cartItemSchema).min(1),
 });
 
@@ -50,19 +49,17 @@ export async function createOrder(payload: unknown) {
   const order_number = makeOrderNumber();
 
   let paymentNote = "";
-  if (input.payment_method === "card") {
-    if (!input.card_last4 || !/^\d{4}$/.test(input.card_last4)) {
-      throw new Error("Please enter a valid card number (we only store the last 4 digits).");
-    }
-    paymentNote = `Payment: Card • Last4: ${input.card_last4}${input.card_holder ? ` • Name: ${input.card_holder}` : ""}`;
-  }
   if (input.payment_method === "jazzcash") {
     const phone = (input.jazzcash_phone || "").trim();
     const ref = (input.jazzcash_reference || "").trim();
     if (phone.length < 8 || ref.length < 3) {
-      throw new Error("Please enter JazzCash phone number and reference/transaction id.");
+      throw new Error("Please enter JazzCash phone number and transaction / reference id.");
     }
     paymentNote = `Payment: JazzCash • Phone: ${phone} • Ref: ${ref}`;
+  }
+  if (input.payment_method === "bank_transfer") {
+    const ref = (input.bank_reference || "").trim();
+    paymentNote = `Payment: Bank transfer${ref ? ` • Customer ref: ${ref}` : ""} — reconcile against order total before dispatching.`;
   }
 
   const notesFull = [input.notes || "", paymentNote].map((s) => s.trim()).filter(Boolean).join("\n");

@@ -1,4 +1,5 @@
 import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
 import { timingSafeEqual } from "node:crypto";
 
 export const ADMIN_COOKIE_NAME = "asad_admin_session";
@@ -22,4 +23,8 @@ export async function isAdminAuthenticated() {
   } catch {
     return false;
   }
+}
+
+export async function assertAdminAuthenticated() {
+  if (!(await isAdminAuthenticated())) redirect("/admin/login");
 }

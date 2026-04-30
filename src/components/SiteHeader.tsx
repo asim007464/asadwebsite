@@ -5,6 +5,7 @@ import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { cartSubtotal, readCart } from "@/lib/cart";
+import { readWishlist } from "@/lib/wishlist";
 import { formatPKR } from "@/lib/money";
 import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
 import { SITE_SHOP_NAME, SITE_SHORT_TAGLINE } from "@/lib/site-brand";
@@ -37,6 +38,19 @@ function ChevronDown({ className }: { className?: string }) {
   return (
     <svg aria-hidden viewBox="0 0 20 20" className={className} fill="none">
       <path d="M5 7.5 10 12.5 15 7.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function WishlistHeartIcon({ filled, className }: { filled?: boolean; className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} aria-hidden fill="none">
+      <path
+        d="M12 20.6c-.3 0-.6-.1-.9-.4-6.3-5.8-9-9-9-12.3 0-2.8 2.3-5 5.1-5 1.4 0 2.8.6 3.8 1.6 1-.9 2.4-1.6 3.9-1.6 2.8 0 5.1 2.3 5.1 5.1 0 3.2-2.8 6.6-9 12.4-.3.3-.7.5-1 .5z"
+        fill={filled ? "currentColor" : "none"}
+        stroke="currentColor"
+        strokeWidth={1.6}
+      />
     </svg>
   );
 }
@@ -74,6 +88,8 @@ export function SiteHeader() {
   const [count, setCount] = useState(0);
   const [subtotal, setSubtotal] = useState(0);
   const [logoError, setLogoError] = useState(false);
+  const [wishCount, setWishCount] = useState(0);
+  const [customer, setCustomer] = useState<{ email?: string | null; name?: string | null } | null>(null);
   const [categories, setCategories] = useState<Category[]>([]);
   const [catOpen, setCatOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -99,6 +115,49 @@ export function SiteHeader() {
     sync();
     window.addEventListener("storage", sync);
     return () => window.removeEventListener("storage", sync);
+  }, []);
+
+  useEffect(() => {
+    const syncWish = () => setWishCount(readWishlist().length);
+    syncWish();
+    window.addEventListener("storage", syncWish);
+    return () => window.removeEventListener("storage", syncWish);
+  }, []);
+
+  useEffect(() => {
+    let unsub: (() => void) | undefined;
+    (async () => {
+      try {
+        const supabase = createSupabaseBrowserClient();
+        const { data } = await supabase.auth.getSession();
+        const u = data.session?.user;
+        setCustomer(
+          u
+            ? {
+                email: u.email,
+                name: (typeof u.user_metadata?.full_name === "string" ? u.user_metadata.full_name : null) ?? null,
+              }
+            : null,
+        );
+        const { data: listener } = supabase.auth.onAuthStateChange((_evt, session) => {
+          const su = session?.user;
+          setCustomer(
+            su
+              ? {
+                  email: su.email,
+                  name: (typeof su.user_metadata?.full_name === "string" ? su.user_metadata.full_name : null) ?? null,
+                }
+              : null,
+          );
+        });
+        unsub = () => listener.subscription.unsubscribe();
+      } catch {
+        setCustomer(null);
+      }
+    })();
+    return () => {
+      if (unsub) unsub();
+    };
   }, []);
 
   useEffect(() => {
@@ -215,11 +274,36 @@ export function SiteHeader() {
     return `Shopping cart, ${count} items, subtotal ${formatPKR(subtotal)}`;
   }, [count, subtotal]);
 
+  const wishlistAriaLabel = useMemo(() => {
+    if (wishCount <= 0) return "Wishlist, empty — save favourites here";
+    return `Wishlist, ${wishCount} saved ${wishCount === 1 ? "item" : "items"}`;
+  }, [wishCount]);
+
+  const displayName = useMemo(() => {
+    if (!customer) return null;
+    const n = customer.name?.trim();
+    if (n) return n.split(/\s+/)[0] ?? "Account";
+    const em = customer.email ?? "";
+    if (!em) return "Account";
+    return em.split("@")[0] ?? "Account";
+  }, [customer]);
+
   const closeMobile = () => {
     setMobileOpen(false);
     setMobileCatOpen(false);
     setSearchOpen(false);
   };
+
+  async function handleSignOut() {
+    try {
+      const sb = createSupabaseBrowserClient();
+      await sb.auth.signOut();
+    } finally {
+      setAccountOpen(false);
+      closeMobile();
+      router.refresh();
+    }
+  }
 
   const linkBase =
     "rounded-full px-4 py-2 text-sm font-semibold tracking-tight transition-all duration-150 outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2";
@@ -245,7 +329,7 @@ export function SiteHeader() {
           {!logoError ? (
             <span className="relative flex h-16 w-16 shrink-0 items-center justify-center md:h-[4.25rem] md:w-[4.25rem]">
               <Image
-                src="/logo.png"
+                src="/website-logo.jpeg"
                 alt={`${SITE_SHOP_NAME} logo`}
                 width={192}
                 height={192}
@@ -448,46 +532,81 @@ export function SiteHeader() {
               >
                 <div className="border-b border-slate-100 bg-gradient-to-br from-blue-50/80 to-white px-4 py-3">
                   <div className="text-[10px] font-bold uppercase tracking-widest text-blue-700/80">Account</div>
-                  <div className="mt-0.5 text-sm font-bold text-slate-900">Customer access</div>
+                  {customer ? (
+                    <>
+                      <div className="mt-0.5 truncate text-sm font-bold text-slate-900">Hello, {displayName}</div>
+                      {customer.email ? (
+                        <div className="mt-0.5 truncate text-[11px] font-medium text-slate-600">{customer.email}</div>
+                      ) : null}
+                    </>
+                  ) : (
+                    <div className="mt-0.5 text-sm font-bold text-slate-900">Customer access</div>
+                  )}
                 </div>
                 <div className="p-2">
-                  <Link
-                    href="/register"
-                    role="menuitem"
-                    className={cn(
-                      "block rounded-xl px-3 py-2.5 text-sm font-semibold transition hover:bg-blue-50 hover:text-blue-800",
-                      isRegisterActive ? "bg-blue-50 text-blue-900" : "text-slate-800",
-                    )}
-                    onClick={() => setAccountOpen(false)}
-                  >
-                    Register
-                  </Link>
-                  <Link
-                    href="/login"
-                    role="menuitem"
-                    className={cn(
-                      "block rounded-xl px-3 py-2.5 text-sm font-semibold transition hover:bg-blue-50 hover:text-blue-800",
-                      isLoginActive ? "bg-blue-50 text-blue-900" : "text-slate-800",
-                    )}
-                    onClick={() => setAccountOpen(false)}
-                  >
-                    Login
-                  </Link>
-                  <Link
-                    href="/forgot-password"
-                    role="menuitem"
-                    className={cn(
-                      "block rounded-xl px-3 py-2.5 text-sm font-semibold transition hover:bg-blue-50 hover:text-blue-800",
-                      isForgotActive ? "bg-blue-50 text-blue-900" : "text-slate-800",
-                    )}
-                    onClick={() => setAccountOpen(false)}
-                  >
-                    Forgot password
-                  </Link>
+                  {customer ? (
+                    <button
+                      type="button"
+                      role="menuitem"
+                      onClick={() => handleSignOut()}
+                      className="block w-full rounded-xl px-3 py-2.5 text-left text-sm font-semibold text-red-700 transition hover:bg-red-50"
+                    >
+                      Sign out
+                    </button>
+                  ) : (
+                    <>
+                      <Link
+                        href="/register"
+                        role="menuitem"
+                        className={cn(
+                          "block rounded-xl px-3 py-2.5 text-sm font-semibold transition hover:bg-blue-50 hover:text-blue-800",
+                          isRegisterActive ? "bg-blue-50 text-blue-900" : "text-slate-800",
+                        )}
+                        onClick={() => setAccountOpen(false)}
+                      >
+                        Register
+                      </Link>
+                      <Link
+                        href="/login"
+                        role="menuitem"
+                        className={cn(
+                          "block rounded-xl px-3 py-2.5 text-sm font-semibold transition hover:bg-blue-50 hover:text-blue-800",
+                          isLoginActive ? "bg-blue-50 text-blue-900" : "text-slate-800",
+                        )}
+                        onClick={() => setAccountOpen(false)}
+                      >
+                        Login
+                      </Link>
+                      <Link
+                        href="/forgot-password"
+                        role="menuitem"
+                        className={cn(
+                          "block rounded-xl px-3 py-2.5 text-sm font-semibold transition hover:bg-blue-50 hover:text-blue-800",
+                          isForgotActive ? "bg-blue-50 text-blue-900" : "text-slate-800",
+                        )}
+                        onClick={() => setAccountOpen(false)}
+                      >
+                        Forgot password
+                      </Link>
+                    </>
+                  )}
                 </div>
               </div>
             ) : null}
           </div>
+
+          <Link
+            href="/wishlist"
+            aria-label={wishlistAriaLabel}
+            className="relative ml-1 hidden h-11 w-11 shrink-0 items-center justify-center rounded-full border border-slate-200/90 bg-white text-slate-700 shadow-sm transition hover:border-rose-200 hover:bg-rose-50 hover:text-rose-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 focus-visible:ring-offset-2 lg:inline-flex"
+          >
+            <WishlistHeartIcon filled={wishCount > 0} className="h-[1.15rem] w-[1.15rem]" />
+            {wishCount > 0 ? (
+              <span className="absolute -right-0.5 -top-0.5 flex h-[1.125rem] min-w-[1.125rem] items-center justify-center rounded-full bg-rose-500 px-0.5 text-[10px] font-bold text-white ring-2 ring-white">
+                {wishCount > 99 ? "99+" : wishCount}
+              </span>
+            ) : null}
+          </Link>
 
           <Link
             href="/cart"
@@ -514,12 +633,33 @@ export function SiteHeader() {
 
         <div className="flex shrink-0 items-center gap-2 lg:hidden">
           <Link
-            href="/login"
-            className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-800 shadow-sm transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-800 active:scale-[0.98]"
-            aria-label="Account — sign in"
+            href="/wishlist"
+            className="relative inline-flex h-11 w-11 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-800 shadow-sm transition hover:border-rose-200 hover:bg-rose-50 hover:text-rose-800 active:scale-[0.98]"
+            aria-label={wishlistAriaLabel}
           >
-            <ProfileIcon className="h-[1.25rem] w-[1.25rem]" />
+            <WishlistHeartIcon filled={wishCount > 0} className="h-[1.25rem] w-[1.25rem]" />
+            {wishCount > 0 ? (
+              <span className="absolute -right-0.5 -top-0.5 flex h-[1.125rem] min-w-[1.125rem] items-center justify-center rounded-full bg-rose-500 px-0.5 text-[10px] font-bold text-white ring-2 ring-white">
+                {wishCount > 99 ? "99+" : wishCount}
+              </span>
+            ) : null}
           </Link>
+          {customer ? (
+            <span
+              className="inline-flex h-11 w-11 items-center justify-center rounded-full bg-blue-600 text-sm font-bold uppercase text-white shadow-sm ring-2 ring-blue-100"
+              aria-label={`Signed in as ${displayName ?? "you"}`}
+            >
+              {(displayName ?? "?").slice(0, 1)}
+            </span>
+          ) : (
+            <Link
+              href="/login"
+              className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-800 shadow-sm transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-800 active:scale-[0.98]"
+              aria-label="Account — sign in"
+            >
+              <ProfileIcon className="h-[1.25rem] w-[1.25rem]" />
+            </Link>
+          )}
           <Link
             href="/cart"
             className="relative inline-flex h-11 w-11 items-center justify-center rounded-full bg-blue-600 text-white shadow-md shadow-blue-600/30 transition hover:bg-blue-700 active:scale-[0.98]"
@@ -606,38 +746,54 @@ export function SiteHeader() {
               </Link>
               <div className="rounded-2xl border border-slate-100 bg-slate-50/90 p-4">
                 <div className="text-[10px] font-bold uppercase tracking-widest text-blue-700">Account</div>
-                <div className="mt-3 grid gap-1">
-                  <Link
-                    href="/register"
-                    className={cn(
-                      "rounded-xl px-3 py-2.5 text-[15px] font-semibold transition",
-                      isRegisterActive ? "bg-white text-blue-900 ring-1 ring-blue-100" : "text-slate-800 hover:bg-white",
-                    )}
-                    onClick={closeMobile}
-                  >
-                    Register
-                  </Link>
-                  <Link
-                    href="/login"
-                    className={cn(
-                      "rounded-xl px-3 py-2.5 text-[15px] font-semibold transition",
-                      isLoginActive ? "bg-white text-blue-900 ring-1 ring-blue-100" : "text-slate-800 hover:bg-white",
-                    )}
-                    onClick={closeMobile}
-                  >
-                    Login
-                  </Link>
-                  <Link
-                    href="/forgot-password"
-                    className={cn(
-                      "rounded-xl px-3 py-2.5 text-[15px] font-semibold transition",
-                      isForgotActive ? "bg-white text-blue-900 ring-1 ring-blue-100" : "text-slate-800 hover:bg-white",
-                    )}
-                    onClick={closeMobile}
-                  >
-                    Forgot password
-                  </Link>
-                </div>
+                {customer ? (
+                  <>
+                    <div className="mt-2 rounded-xl bg-white px-3 py-3 text-[15px] font-semibold text-slate-900 ring-1 ring-blue-100">
+                      Hello, {displayName}
+                      {customer.email ? <span className="mt-2 block truncate text-xs font-normal text-slate-500">{customer.email}</span> : null}
+                    </div>
+                    <button
+                      type="button"
+                      className="mt-3 block w-full rounded-xl bg-red-50 px-3 py-3 text-[15px] font-semibold text-red-700 ring-1 ring-red-100 transition hover:bg-red-100"
+                      onClick={() => handleSignOut()}
+                    >
+                      Sign out
+                    </button>
+                  </>
+                ) : (
+                  <div className="mt-3 grid gap-1">
+                    <Link
+                      href="/register"
+                      className={cn(
+                        "rounded-xl px-3 py-2.5 text-[15px] font-semibold transition",
+                        isRegisterActive ? "bg-white text-blue-900 ring-1 ring-blue-100" : "text-slate-800 hover:bg-white",
+                      )}
+                      onClick={closeMobile}
+                    >
+                      Register
+                    </Link>
+                    <Link
+                      href="/login"
+                      className={cn(
+                        "rounded-xl px-3 py-2.5 text-[15px] font-semibold transition",
+                        isLoginActive ? "bg-white text-blue-900 ring-1 ring-blue-100" : "text-slate-800 hover:bg-white",
+                      )}
+                      onClick={closeMobile}
+                    >
+                      Login
+                    </Link>
+                    <Link
+                      href="/forgot-password"
+                      className={cn(
+                        "rounded-xl px-3 py-2.5 text-[15px] font-semibold transition",
+                        isForgotActive ? "bg-white text-blue-900 ring-1 ring-blue-100" : "text-slate-800 hover:bg-white",
+                      )}
+                      onClick={closeMobile}
+                    >
+                      Forgot password
+                    </Link>
+                  </div>
+                )}
               </div>
               <button
                 type="button"

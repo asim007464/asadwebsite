@@ -6,20 +6,43 @@ export const dynamic = "force-dynamic";
 export default async function AdminDashboardPage() {
   const supabase = createSupabaseAdminClient();
 
-  const [{ data: categories }, { data: products }, { data: pendingOrders }, heroSlidesRes] = await Promise.all([
-    supabase.from("categories").select("id"),
-    supabase.from("products").select("id,is_featured"),
-    supabase.from("orders").select("id").eq("status", "pending"),
-    supabase.from("hero_slides").select("id"),
-  ]);
+  const [
+    { data: categories },
+    { data: products },
+    { data: pendingOrders },
+    heroSlidesRes,
+    reviewsBannerRes,
+    homepageRowsRes,
+  ] = await Promise.all([
+      supabase.from("categories").select("id"),
+      supabase.from("products").select("id,is_featured"),
+      supabase.from("orders").select("id").eq("status", "pending"),
+      supabase.from("hero_slides").select("id"),
+      supabase.from("home_reviews_banner").select("is_active,id").eq("id", 1).maybeSingle(),
+      supabase.from("homepage_section_products").select("id", { count: "exact", head: true }),
+    ]);
 
   const heroSlidesCount = heroSlidesRes.error ? 0 : (heroSlidesRes.data?.length ?? 0);
+  const reviewsBannerOn =
+    !reviewsBannerRes.error &&
+    Boolean(reviewsBannerRes.data?.is_active) &&
+    reviewsBannerRes.data != null;
+
   const featuredCount = products?.filter((r: { is_featured?: boolean }) => r.is_featured).length ?? 0;
+  const homepageCuratedCount = homepageRowsRes.error ? 0 : (homepageRowsRes.count ?? 0);
 
   const cards = [
     { label: "Categories", value: categories?.length ?? 0, href: "/admin/categories" },
     { label: "Featured picks", value: featuredCount, href: "/admin/featured" },
     { label: "Hero slides", value: heroSlidesCount, href: "/admin/hero" },
+    {
+      label: "Reviews banner",
+      value: reviewsBannerOn ? "On" : "Off",
+      href: "/admin/reviews-banner",
+    },
+    { label: "Homepage rows", value: homepageCuratedCount, href: "/admin/home-sections" },
+    { label: "Site CMS", value: "Open", href: "/admin/site" },
+    { label: "SEO editor", value: products?.length ?? 0, href: "/admin/products/seo" },
     { label: "Products (total)", value: products?.length ?? 0, href: "/products" },
     { label: "Pending orders", value: pendingOrders?.length ?? 0, href: "/admin/orders" },
   ];
@@ -32,7 +55,7 @@ export default async function AdminDashboardPage() {
           Manage categories uploaded by admin and track COD orders. This panel is responsive on phones too.
         </p>
 
-        <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+        <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-6">
           {cards.map((c) => (
             <Link
               key={c.label}

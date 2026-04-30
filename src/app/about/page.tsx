@@ -1,11 +1,16 @@
 import Link from "next/link";
 import Image from "next/image";
 import { SITE_SHOP_NAME } from "@/lib/site-brand";
+import { getStorefrontPayload } from "@/lib/storefront";
 
-const ABOUT_STORE_IMAGE = "/20260401_153109.jpg.jpeg";
-const ABOUT_SECOND_IMAGE = "/20260419_185049.jpg.jpeg";
+const ABOUT_FALLBACK_PRIMARY = "/20260401_153109.jpg.jpeg";
+const ABOUT_FALLBACK_SECOND = "/20260419_185049.jpg.jpeg";
 
-export default function AboutPage() {
+export default async function AboutPage() {
+  const storefront = await getStorefrontPayload();
+  const ABOUT_STORE_IMAGE = (storefront.aboutPrimaryImage ?? "").trim() || ABOUT_FALLBACK_PRIMARY;
+  const ABOUT_SECOND_IMAGE = (storefront.aboutSecondaryImage ?? "").trim() || ABOUT_FALLBACK_SECOND;
+
   return (
     <main className="mx-auto w-full max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
       <section className="relative overflow-hidden rounded-3xl border border-slate-200 bg-gradient-to-br from-blue-50 via-white to-white shadow-sm">

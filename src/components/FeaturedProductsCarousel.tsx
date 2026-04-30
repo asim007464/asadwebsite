@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ProductCardMedia } from "@/components/ProductCardMedia";
 import { AddToCartButton } from "@/components/AddToCartButton";
+import { AddToWishlistButton } from "@/components/AddToWishlistButton";
 import { formatPKR } from "@/lib/money";
 import type { ProductListing } from "@/lib/store-types";
 
@@ -48,7 +49,7 @@ export function FeaturedProductsCarousel({ products }: { products: ProductListin
     el.scrollIntoView({ behavior: "smooth", inline: "start", block: "nearest" });
   }, [active]);
 
-  const showNav = n > perView;
+  const showNav = n > 4;
 
   const cardClass =
     "group flex h-full min-h-0 min-w-0 flex-col overflow-hidden rounded-3xl border border-slate-200 bg-white/95 shadow-sm ring-1 ring-white/60 backdrop-blur-sm transition duration-200 ease-smooth-out motion-reduce:transition-none hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-md motion-reduce:hover:translate-y-0";
@@ -147,23 +148,41 @@ export function FeaturedProductsCarousel({ products }: { products: ProductListin
                       {formatPKR(p.min_price_pkr)}
                     </div>
                   </div>
-                  <div className="flex items-center justify-between gap-3">
-                    <AddToCartButton
-                      variant={
-                        p.default_variant_id && p.default_variant_sku && p.default_variant_title && typeof p.default_variant_price_pkr === "number"
-                          ? {
-                              id: p.default_variant_id,
-                              sku: p.default_variant_sku,
-                              title: p.default_variant_title,
-                              price_pkr: p.default_variant_price_pkr,
-                              product_slug: p.slug,
-                              product_name: p.name,
-                              image_url: p.image_url,
-                            }
-                          : null
-                      }
-                      className="inline-flex h-10 items-center justify-center rounded-full bg-blue-600 px-4 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 disabled:opacity-60"
-                    />
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <AddToWishlistButton
+                        variant={
+                          p.default_variant_id && p.default_variant_sku && p.default_variant_title && typeof p.default_variant_price_pkr === "number"
+                            ? {
+                                variantId: p.default_variant_id,
+                                productSlug: p.slug,
+                                productName: p.name,
+                                variantTitle: p.default_variant_title,
+                                sku: p.default_variant_sku,
+                                unitPricePkr: p.default_variant_price_pkr,
+                                imageUrl: p.image_url,
+                              }
+                            : null
+                        }
+                        className="inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-full border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-rose-200 hover:bg-rose-50 hover:text-rose-800"
+                      />
+                      <AddToCartButton
+                        variant={
+                          p.default_variant_id && p.default_variant_sku && p.default_variant_title && typeof p.default_variant_price_pkr === "number"
+                            ? {
+                                id: p.default_variant_id,
+                                sku: p.default_variant_sku,
+                                title: p.default_variant_title,
+                                price_pkr: p.default_variant_price_pkr,
+                                product_slug: p.slug,
+                                product_name: p.name,
+                                image_url: p.image_url,
+                              }
+                            : null
+                        }
+                        className="inline-flex h-10 items-center justify-center rounded-full bg-blue-600 px-4 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 disabled:opacity-60"
+                      />
+                    </div>
                     <Link href="/cart" className="text-sm font-semibold text-blue-700 hover:text-blue-800">
                       Cart →
                     </Link>

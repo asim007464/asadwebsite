@@ -23,8 +23,8 @@ export const metadata: Metadata = {
   },
   description: `${SITE_SHOP_NAME} — ${SITE_SHORT_TAGLINE} — fans, lighting, kitchen, grooming, COD Pakistan`,
   icons: {
-    icon: [{ url: "/logo.png", type: "image/png" }],
-    apple: [{ url: "/logo.png", type: "image/png" }],
+    icon: [{ url: "/website-logo.jpeg", type: "image/jpeg" }],
+    apple: [{ url: "/website-logo.jpeg", type: "image/jpeg" }],
   },
 };
 
@@ -36,9 +36,9 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased overflow-x-hidden`}
+      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased overflow-x-clip`}
     >
-      <body className="relative min-h-full flex flex-col overflow-x-hidden bg-transparent font-sans text-slate-900">
+      <body className="relative min-h-full flex flex-col overflow-x-clip bg-transparent font-sans text-slate-900">
         <div className="site-backdrop" aria-hidden />
         <SiteHeader />
         <div className="flex-1 pt-[var(--site-header-height)]">{children}</div>

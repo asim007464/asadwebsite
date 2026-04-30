@@ -6,6 +6,7 @@ import { DEMO_PRODUCTS } from "@/lib/demo-products";
 import { ProductCardMedia } from "@/components/ProductCardMedia";
 import { ProductsFilters } from "@/components/ProductsFilters";
 import { AddToCartButton } from "@/components/AddToCartButton";
+import { AddToWishlistButton } from "@/components/AddToWishlistButton";
 
 export const dynamic = "force-dynamic";
 
@@ -24,47 +25,76 @@ export default async function ProductsPage({
   const max = maxRaw && /^\d+$/.test(maxRaw) ? Math.max(0, Number(maxRaw)) : undefined;
   const sort = typeof sp.sort === "string" ? sp.sort : "name";
 
+  const PAGE_SIZE = 12;
+  const pageRaw = typeof sp.page === "string" ? Number.parseInt(sp.page, 10) : NaN;
+  const page = Number.isFinite(pageRaw) && pageRaw > 0 ? pageRaw : 1;
+  const rangeFrom = (page - 1) * PAGE_SIZE;
+  const rangeTo = rangeFrom + PAGE_SIZE - 1;
+
+  const columns =
+    "id,name,slug,description,min_price_pkr,image_url,category_id,default_variant_id,default_variant_sku,default_variant_title,default_variant_price_pkr";
+
   const supabase = createSupabaseAdminClient();
-  const [{ data: categories }, { data: products }] = await Promise.all([
-    supabase.from("categories").select("id,name,slug,parent_id").order("name"),
-    (async () => {
-      const base = supabase
-        .from("product_listings")
-        .select(
-          "id,name,slug,description,min_price_pkr,image_url,category_id,default_variant_id,default_variant_sku,default_variant_title,default_variant_price_pkr",
-        );
-      const applyPrice = (qb: typeof base) => {
+  const [{ data: categories }, listingsPack] = await Promise.all([
+    supabase.from("categories").select("id,name,slug,parent_id,thumbnail_url,hero_icon_hint").order("name"),
+    (async (): Promise<{ data: ProductListing[] | null; count: number | null }> => {
+      const started = () => supabase.from("product_listings").select(columns, { count: "exact" });
+      type RowQ = ReturnType<typeof started>;
+      const applyPrice = (qb: RowQ) => {
         let q2 = qb;
         if (typeof min === "number") q2 = q2.gte("min_price_pkr", min);
         if (typeof max === "number") q2 = q2.lte("min_price_pkr", max);
         return q2;
       };
-      const applySort = (qb: typeof base) => {
+      const applySort = (qb: RowQ) => {
         if (sort === "price_asc") return qb.order("min_price_pkr", { ascending: true }).order("name", { ascending: true });
         if (sort === "price_desc") return qb.order("min_price_pkr", { ascending: false }).order("name", { ascending: true });
         return qb.order("name", { ascending: true });
       };
 
       if (!category && q) {
-        return await applySort(applyPrice(base.or(`name.ilike.%${q}%,description.ilike.%${q}%`))).limit(60);
+        const res = await applySort(
+          applyPrice(started().or(`name.ilike.%${q}%,description.ilike.%${q}%`)),
+        ).range(rangeFrom, rangeTo);
+        return { data: (res.data as ProductListing[] | null) ?? null, count: res.count ?? null };
       }
 
-      if (!category) return await applySort(applyPrice(base)).limit(60);
+      if (!category) {
+        const res = await applySort(applyPrice(started())).range(rangeFrom, rangeTo);
+        return { data: (res.data as ProductListing[] | null) ?? null, count: res.count ?? null };
+      }
 
       const { data: cat } = await supabase.from("categories").select("id").eq("slug", category).maybeSingle();
       if (!cat?.id) {
-        return await applySort(applyPrice(base)).limit(60);
+        const res = await applySort(applyPrice(started())).range(rangeFrom, rangeTo);
+        return { data: (res.data as ProductListing[] | null) ?? null, count: res.count ?? null };
       }
-      const byCat = base.eq("category_id", cat.id);
-      if (q) {
-        return await applySort(applyPrice(byCat.or(`name.ilike.%${q}%,description.ilike.%${q}%`))).limit(60);
-      }
-      return await applySort(applyPrice(byCat)).limit(60);
+
+      let scoped = started().eq("category_id", cat.id);
+      scoped = applyPrice(scoped);
+      if (q) scoped = scoped.or(`name.ilike.%${q}%,description.ilike.%${q}%`);
+      const res = await applySort(scoped).range(rangeFrom, rangeTo);
+      return { data: (res.data as ProductListing[] | null) ?? null, count: res.count ?? null };
     })(),
   ]);
 
-  const listings = (products?.data as ProductListing[] | null) ?? [];
+  const listings = listingsPack.data ?? [];
+  const totalCount = listingsPack.count ?? listings.length;
+  const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
   const hasLiveProducts = listings.length > 0;
+  const showingFrom = totalCount === 0 ? 0 : rangeFrom + 1;
+  const showingTo = Math.min(rangeTo + 1, totalCount);
+
+  function pageHref(next: number) {
+    const u = new URLSearchParams();
+    if (category) u.set("category", category);
+    if (q) u.set("q", q);
+    if (typeof min === "number") u.set("min", String(min));
+    if (typeof max === "number") u.set("max", String(max));
+    if (sort && sort !== "name") u.set("sort", sort);
+    u.set("page", String(Math.max(1, Math.min(next, totalPages))));
+    return `/products?${u.toString()}`;
+  }
 
   return (
     <main className="mx-auto w-full max-w-7xl px-4 py-10">
@@ -83,6 +113,14 @@ export default async function ProductsPage({
             ) : (
               "Browse our catalog with category shortcuts."
             )}
+            {hasLiveProducts ? (
+              <>
+                {" "}
+                <span className="text-slate-500">
+                  ({showingFrom}–{showingTo} of {totalCount} live SKUs, {PAGE_SIZE} per page)
+                </span>
+              </>
+            ) : null}
           </p>
         </div>
         <div className="flex flex-wrap gap-2 md:hidden">
@@ -156,23 +194,41 @@ export default async function ProductsPage({
                       <div className="shrink-0 rounded-full bg-blue-50 px-3 py-1 text-sm font-semibold text-blue-800">{formatPKR(p.min_price_pkr)}</div>
                     </div>
 
-                    <div className="flex items-center justify-between gap-3 border-t border-slate-100 pt-4">
-                      <AddToCartButton
-                        variant={
-                          p.default_variant_id && p.default_variant_sku && p.default_variant_title && typeof p.default_variant_price_pkr === "number"
-                            ? {
-                                id: p.default_variant_id,
-                                sku: p.default_variant_sku,
-                                title: p.default_variant_title,
-                                price_pkr: p.default_variant_price_pkr,
-                                product_slug: p.slug,
-                                product_name: p.name,
-                                image_url: p.image_url,
-                              }
-                            : null
-                        }
-                        className="inline-flex h-10 items-center justify-center rounded-full bg-blue-600 px-4 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 disabled:opacity-60"
-                      />
+                    <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 pt-4">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <AddToWishlistButton
+                          variant={
+                            p.default_variant_id && p.default_variant_sku && p.default_variant_title && typeof p.default_variant_price_pkr === "number"
+                              ? {
+                                  variantId: p.default_variant_id,
+                                  productSlug: p.slug,
+                                  productName: p.name,
+                                  variantTitle: p.default_variant_title,
+                                  sku: p.default_variant_sku,
+                                  unitPricePkr: p.default_variant_price_pkr,
+                                  imageUrl: p.image_url,
+                                }
+                              : null
+                          }
+                          className="inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-full border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-rose-200 hover:bg-rose-50 hover:text-rose-800"
+                        />
+                        <AddToCartButton
+                          variant={
+                            p.default_variant_id && p.default_variant_sku && p.default_variant_title && typeof p.default_variant_price_pkr === "number"
+                              ? {
+                                  id: p.default_variant_id,
+                                  sku: p.default_variant_sku,
+                                  title: p.default_variant_title,
+                                  price_pkr: p.default_variant_price_pkr,
+                                  product_slug: p.slug,
+                                  product_name: p.name,
+                                  image_url: p.image_url,
+                                }
+                              : null
+                          }
+                          className="inline-flex h-10 items-center justify-center rounded-full bg-blue-600 px-4 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 disabled:opacity-60"
+                        />
+                      </div>
                       <Link href="/cart" className="text-sm font-semibold text-blue-700 hover:text-blue-800">
                         View cart →
                       </Link>
@@ -220,6 +276,34 @@ export default async function ProductsPage({
             ))}
         </div>
       </div>
+
+      {hasLiveProducts && totalPages > 1 ? (
+        <nav className="mt-8 flex flex-col items-center gap-4 sm:flex-row sm:justify-center" aria-label="Catalog pagination">
+          <div className="flex flex-wrap items-center justify-center gap-2">
+            <Link
+              href={pageHref(page - 1)}
+              aria-disabled={page <= 1}
+              className={`inline-flex min-w-[8rem] items-center justify-center rounded-full border px-5 py-2.5 text-sm font-semibold ${
+                page <= 1 ? "pointer-events-none border-slate-100 text-slate-300" : "border-slate-200 text-slate-800 hover:bg-slate-50"
+              }`}
+            >
+              Previous
+            </Link>
+            <Link
+              href={pageHref(page + 1)}
+              aria-disabled={page >= totalPages}
+              className={`inline-flex min-w-[8rem] items-center justify-center rounded-full border px-5 py-2.5 text-sm font-semibold ${
+                page >= totalPages ? "pointer-events-none border-slate-100 text-slate-300" : "border-slate-200 text-slate-800 hover:bg-slate-50"
+              }`}
+            >
+              Next
+            </Link>
+          </div>
+          <p className="text-sm text-slate-600">
+            Page <span className="font-semibold text-slate-900">{page}</span> / {totalPages}
+          </p>
+        </nav>
+      ) : null}
 
       {hasLiveProducts ? (
         <section className="mt-10 rounded-3xl border border-dashed border-blue-200 bg-gradient-to-br from-blue-50/60 via-white to-white p-6 sm:p-8">

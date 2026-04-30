@@ -6,6 +6,11 @@ alter table public.products add column if not exists is_featured boolean not nul
 alter table public.products add column if not exists featured_sort_order integer not null default 0;
 create index if not exists products_featured_sort_idx on public.products (is_featured, featured_sort_order) where is_featured = true;
 
+alter table public.products add column if not exists meta_keywords text not null default '';
+alter table public.products add column if not exists meta_description text not null default '';
+alter table public.categories add column if not exists thumbnail_url text not null default '';
+alter table public.categories add column if not exists hero_icon_hint text not null default '';
+
 create or replace view public.product_listings as
 select
   p.id,
@@ -25,6 +30,8 @@ select
   ) as image_url,
   p.is_featured,
   p.featured_sort_order,
+  p.meta_keywords,
+  p.meta_description,
   dv.id as default_variant_id,
   dv.sku as default_variant_sku,
   dv.title as default_variant_title,
@@ -313,3 +320,20 @@ where slug = 'blender-grinder-2in1-450w';
 update public.products
 set is_featured = true, featured_sort_order = 4
 where slug = 'room-heater-quartz-1200w';
+
+-- Homepage strip above reviews (editable in Admin → Reviews banner).
+-- Applies only while the banner is inactive and unset (won’t overwrite a configured banner).
+update public.home_reviews_banner
+set
+  background_image_url = 'https://picsum.photos/id/866/2400/1200',
+  heading = 'Real shoppers. Real COD orders.',
+  paragraph = 'Read customer feedback below — then browse nationwide delivery with phone-confirmed COD.',
+  button_label = 'Browse products',
+  button_href = '/products',
+  is_active = true,
+  updated_at = now()
+where
+  id = 1
+  and is_active is false
+  and coalesce(trim(background_image_url), '') = ''
+  and coalesce(trim(heading), '') = '';
