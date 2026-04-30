@@ -91,6 +91,32 @@ create index if not exists hero_slides_active_sort_idx on public.hero_slides(is_
 
 alter table public.hero_slides enable row level security;
 
+-- Homepage strip above testimonials/reviews — managed in Admin → Reviews banner.
+create table if not exists public.home_reviews_banner (
+  id integer primary key default 1 check (id = 1),
+  background_image_url text not null default '',
+  heading text not null default '',
+  paragraph text not null default '',
+  button_label text not null default '',
+  button_href text not null default '/products',
+  is_active boolean not null default false,
+  updated_at timestamptz not null default now()
+);
+
+insert into public.home_reviews_banner (id)
+values (1)
+on conflict (id) do nothing;
+
+alter table public.home_reviews_banner enable row level security;
+
+do $$
+begin
+  if not exists (select 1 from pg_policies where schemaname='public' and tablename='home_reviews_banner' and policyname='Public read home reviews banner active') then
+    create policy "Public read home reviews banner active"
+      on public.home_reviews_banner for select using (is_active = true);
+  end if;
+end$$;
+
 do $$
 begin
   if not exists (select 1 from pg_policies where schemaname='public' and tablename='hero_slides' and policyname='Public read hero slides') then
@@ -219,4 +245,106 @@ begin
     create policy "Public read inventory" on public.inventory for select using (true);
   end if;
 end$$;
+
+-- =========================
+-- Progressive migrations below (SEO, wishlist/CMS tables, OTP). Safe to run on existing DBs.
+-- =========================
+
+alter table public.products add column if not exists meta_keywords text not null default '';
+alter table public.products add column if not exists meta_description text not null default '';
+
+alter table public.categories add column if not exists thumbnail_url text not null default '';
+alter table public.categories add column if not exists hero_icon_hint text not null default '';
+
+
+create table if not exists public.storefront_settings (
+  id integer primary key default 1 check (id = 1),
+  data jsonb not null default '{}'::jsonb,
+  updated_at timestamptz not null default now()
+);
+
+insert into public.storefront_settings (id)
+values (1)
+on conflict (id) do nothing;
+
+
+create table if not exists public.homepage_section_products (
+  id uuid primary key default gen_random_uuid(),
+  section text not null check (section in ('featured', 'gadgets')),
+  product_id uuid not null references public.products(id) on delete cascade,
+  sort_order integer not null default 0,
+  created_at timestamptz not null default now(),
+  unique (section, product_id)
+);
+
+create index if not exists homepage_section_products_section_sort_idx on public.homepage_section_products(section, sort_order);
+
+
+create table if not exists public.email_verification_codes (
+  id uuid primary key default gen_random_uuid(),
+  email text not null,
+  purpose text not null check (purpose in ('register', 'password_reset')),
+  code_hash text not null,
+  expires_at timestamptz not null,
+  created_at timestamptz not null default now()
+);
+
+create index if not exists email_verification_codes_email_purpose_idx on public.email_verification_codes(email, purpose);
+create index if not exists email_verification_codes_expires_idx on public.email_verification_codes(expires_at);
+
+alter table public.email_verification_codes enable row level security;
+
+-- Lookup auth.users id server-side after OTP (service role RPC only — do not expose to anon).
+create or replace function public.lookup_auth_user_id(email_input text)
+returns uuid
+language sql
+security definer
+set search_path = auth
+as $$
+  select u.id from auth.users u where lower(trim(u.email)) = lower(trim(email_input)) limit 1;
+$$;
+
+revoke all on function public.lookup_auth_user_id(text) from public;
+grant execute on function public.lookup_auth_user_id(text) to service_role;
+
+
+--
+-- Refresh product_listings view (adds SEO fields for storefront PDP meta / admin tooling).
+--
+
+create or replace view public.product_listings as
+select
+  p.id,
+  p.name,
+  p.slug,
+  p.description,
+  p.category_id,
+  p.brand_id,
+  p.is_active,
+  coalesce(dv.price_pkr, 0) as min_price_pkr,
+  (
+    select pi.url
+    from public.product_images pi
+    where pi.product_id = p.id
+    order by pi.sort_order asc, pi.created_at asc
+    limit 1
+  ) as image_url,
+  p.is_featured,
+  p.featured_sort_order,
+  p.meta_keywords,
+  p.meta_description,
+  dv.id as default_variant_id,
+  dv.sku as default_variant_sku,
+  dv.title as default_variant_title,
+  dv.price_pkr as default_variant_price_pkr
+from public.products p
+left join lateral (
+  select v.id, v.sku, v.title, v.price_pkr
+  from public.product_variants v
+  where v.product_id = p.id and v.is_active = true
+  order by v.price_pkr asc, v.created_at asc
+  limit 1
+) dv on true
+where p.is_active = true
+;
 

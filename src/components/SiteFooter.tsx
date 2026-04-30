@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { SITE_SHOP_NAME, SITE_SHORT_TAGLINE } from "@/lib/site-brand";
+import { getStorefrontPayload } from "@/lib/storefront";
 
 const shopLinks = [
   { href: "/products", label: "All products" },
@@ -23,15 +24,16 @@ const companyLinks = [
   { href: "/contact", label: "Contact & map" },
 ] as const;
 
-const socialLinks = [
-  { href: "https://facebook.com/", label: "Facebook", icon: FacebookIcon },
-  { href: "https://linkedin.com/", label: "LinkedIn", icon: LinkedInIcon },
-  { href: "https://instagram.com/", label: "Instagram", icon: InstagramIcon },
-  { href: "https://x.com/", label: "X (Twitter)", icon: XIcon },
-  { href: "https://pinterest.com/", label: "Pinterest", icon: PinterestIcon },
-  { href: "https://youtube.com/", label: "YouTube", icon: YouTubeIcon },
-] as const;
-
+function pickSocialIcon(platform: string | undefined, label: string) {
+  const key = `${platform ?? ""} ${label}`.toLowerCase();
+  if (key.includes("facebook")) return FacebookIcon;
+  if (key.includes("linkedin")) return LinkedInIcon;
+  if (key.includes("instagram")) return InstagramIcon;
+  if (key.includes("youtube")) return YouTubeIcon;
+  if (key.includes("pinterest")) return PinterestIcon;
+  if (key.includes("twitter") || /\bx\b/.test(key)) return XIcon;
+  return LinkedInIcon;
+}
 function FootHeading({ children }: { children: ReactNode }) {
   return (
     <h2 className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.18em] text-blue-400">
@@ -119,7 +121,10 @@ function YouTubeIcon() {
   );
 }
 
-export function SiteFooter() {
+export async function SiteFooter() {
+  const storefront = await getStorefrontPayload();
+  const socialLinksResolved = storefront.socialLinks.filter((x) => x.url?.trim()?.length && x.label?.trim()?.length);
+
   return (
     <footer className="relative mt-auto overflow-hidden bg-slate-950 text-slate-400">
       <div className="h-1 bg-gradient-to-r from-blue-700 via-blue-500 to-blue-600" aria-hidden />
@@ -143,7 +148,7 @@ export function SiteFooter() {
             >
               <span className="relative flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-white/5 ring-1 ring-white/10 md:h-[4.25rem] md:w-[4.25rem]">
                 <Image
-                  src="/logo.png"
+                  src="/website-logo.jpeg"
                   alt=""
                   width={192}
                   height={192}
@@ -175,12 +180,12 @@ export function SiteFooter() {
             <div className="mt-8">
               <FootHeading>Social</FootHeading>
               <div className="mt-4 flex flex-wrap gap-2">
-                {socialLinks.map((s) => {
-                  const Icon = s.icon;
+                {socialLinksResolved.map((s) => {
+                  const Icon = pickSocialIcon(s.platform, s.label);
                   return (
                     <a
-                      key={s.label}
-                      href={s.href}
+                      key={`${s.label}-${s.url}`}
+                      href={s.url}
                       target="_blank"
                       rel="noopener noreferrer"
                       aria-label={s.label}
@@ -191,7 +196,7 @@ export function SiteFooter() {
                   );
                 })}
               </div>
-              <p className="mt-3 text-xs text-slate-500">Replace these URLs with your real profile links.</p>
+              <p className="mt-3 text-xs text-slate-500">Links editable in Admin → Site & payments (social).</p>
             </div>
           </div>
 

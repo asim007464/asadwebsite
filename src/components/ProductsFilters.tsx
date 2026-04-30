@@ -143,8 +143,14 @@ export function ProductsFilters({ categories }: { categories: Category[] }) {
 
   return (
     <>
-      <div className="hidden md:block self-start md:sticky md:top-24">
-        <div className="max-h-[calc(100vh-7rem)] overflow-auto pr-1">{panel}</div>
+      {/*
+       * Sticky (not fixed) so the panel rides with the catalog and stops once the grid scrolls away,
+       * instead of hovering over the merchandising strip and footer.
+       */}
+      <div className="hidden md:block md:sticky md:top-[calc(var(--site-header-height)+1rem)] md:z-10 md:h-fit md:w-full md:self-start md:pb-8">
+        <div className="max-h-[calc(100dvh-var(--site-header-height)-2rem)] overflow-y-auto overscroll-contain pr-1 pb-1 [scrollbar-gutter:stable]">
+          {panel}
+        </div>
       </div>
       <div className="md:hidden">
         <details className="rounded-3xl border border-slate-200 bg-white shadow-sm">

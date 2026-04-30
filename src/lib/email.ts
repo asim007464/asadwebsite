@@ -50,3 +50,22 @@ export async function sendOrderEmail(options: {
   });
 }
 
+export async function sendPlainEmail(options: { to: string; subject: string; text: string }) {
+  const env = getEmailEnv();
+  const transporter = nodemailer.createTransport({
+    host: env.SMTP_HOST,
+    port: env.SMTP_PORT,
+    secure: env.SMTP_SECURE,
+    auth: {
+      user: env.SMTP_USER,
+      pass: env.SMTP_PASS,
+    },
+  });
+  await transporter.sendMail({
+    from: env.MAIL_FROM,
+    to: options.to,
+    subject: options.subject,
+    text: options.text,
+  });
+}
+

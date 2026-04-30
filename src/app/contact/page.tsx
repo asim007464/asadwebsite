@@ -1,5 +1,9 @@
 import Link from "next/link";
 import Image from "next/image";
+import { getStorefrontPayload } from "@/lib/storefront";
+
+const CONTACT_FALLBACK_PRIMARY = "/20260401_153109.jpg.jpeg";
+const CONTACT_FALLBACK_SECOND = "/20260419_185049.jpg.jpeg";
 
 /**
  * Registered Google Business Profile for this shop.
@@ -15,8 +19,7 @@ const STORE_LOCATION = {
     "https://www.google.com/maps/place/Al+Makkah+Electric+Traders/@31.0658769,72.9439501,17z/data=!3m1!4b1!4m6!3m5!1s0x3922f15e62348bcf:0xd4712bb9e23c818e!8m2!3d31.0658769!4d72.9439501!16s%2Fg%2F11ynf8lkz5",
 } as const;
 
-const CONTACT_STORE_IMAGE = "/20260401_153109.jpg.jpeg";
-const CONTACT_SECOND_IMAGE = "/20260419_185049.jpg.jpeg";
+
 
 /** Official `/maps/embed?pb=…` payload — pins the registered Business Profile (not only lat/lng). */
 function googleMapsEmbedSrc(lat: number, lng: number, placeFeatureRef: string, placeTitleForEmbed: string) {
@@ -27,7 +30,11 @@ function googleMapsEmbedSrc(lat: number, lng: number, placeFeatureRef: string, p
   return `https://www.google.com/maps/embed?pb=${pb}`;
 }
 
-export default function ContactPage() {
+export default async function ContactPage() {
+  const storefront = await getStorefrontPayload();
+  const CONTACT_STORE_IMAGE = (storefront.contactPrimaryImage ?? "").trim() || CONTACT_FALLBACK_PRIMARY;
+  const CONTACT_SECOND_IMAGE = (storefront.contactSecondaryImage ?? "").trim() || CONTACT_FALLBACK_SECOND;
+
   const mapEmbedSrc = googleMapsEmbedSrc(
     STORE_LOCATION.lat,
     STORE_LOCATION.lng,

@@ -28,6 +28,18 @@ export default async function AdminLayout({ children }: { children: ReactNode })
               <Link href="/admin/hero" className="rounded-xl px-3 py-2 text-blue-800 hover:bg-blue-50">
                 Hero slides
               </Link>
+              <Link href="/admin/reviews-banner" className="rounded-xl px-3 py-2 text-blue-800 hover:bg-blue-50">
+                Reviews banner
+              </Link>
+              <Link href="/admin/site" className="rounded-xl px-3 py-2 text-blue-800 hover:bg-blue-50">
+                Site & payments
+              </Link>
+              <Link href="/admin/home-sections" className="rounded-xl px-3 py-2 text-blue-800 hover:bg-blue-50">
+                Homepage strips
+              </Link>
+              <Link href="/admin/products/seo" className="rounded-xl px-3 py-2 text-blue-800 hover:bg-blue-50">
+                SEO snippets
+              </Link>
               <Link href="/admin/orders" className="rounded-xl px-3 py-2 text-blue-800 hover:bg-blue-50">
                 Orders
               </Link>
@@ -66,6 +78,18 @@ export default async function AdminLayout({ children }: { children: ReactNode })
                 </Link>
                 <Link href="/admin/hero" className="shrink-0 rounded-full border border-slate-200 bg-white px-4 py-2 text-xs font-semibold text-blue-800">
                   Hero
+                </Link>
+                <Link href="/admin/reviews-banner" className="shrink-0 rounded-full border border-slate-200 bg-white px-4 py-2 text-xs font-semibold text-blue-800">
+                  Reviews banner
+                </Link>
+                <Link href="/admin/site" className="shrink-0 rounded-full border border-slate-200 bg-white px-4 py-2 text-xs font-semibold text-blue-800">
+                  Site CMS
+                </Link>
+                <Link href="/admin/home-sections" className="shrink-0 rounded-full border border-slate-200 bg-white px-4 py-2 text-xs font-semibold text-blue-800">
+                  Strips
+                </Link>
+                <Link href="/admin/products/seo" className="shrink-0 rounded-full border border-slate-200 bg-white px-4 py-2 text-xs font-semibold text-blue-800">
+                  SEO
                 </Link>
                 <Link href="/admin/orders" className="shrink-0 rounded-full border border-slate-200 bg-white px-4 py-2 text-xs font-semibold text-blue-800">
                   Orders
