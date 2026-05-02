@@ -41,6 +41,11 @@ const nextConfig: NextConfig = {
   images: {
     remotePatterns: collectRemotePatterns(),
   },
+  experimental: {
+    serverActions: {
+      bodySizeLimit: "6mb",
+    },
+  },
   typescript: {
     // In environments where native SWC bindings are blocked, the WASM worker can fail during build-typecheck.
     // Typechecking still happens in-editor; this setting keeps builds unblocked.

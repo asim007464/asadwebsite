@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { createCategory, deleteCategory, updateCategoryAppearance } from "@/app/admin/actions";
+import { ADMIN_IMAGE_FILE_INPUT_CLASS, ADMIN_IMAGE_UPLOAD_HINT } from "@/lib/admin-media-upload";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
 export const dynamic = "force-dynamic";
@@ -26,7 +27,8 @@ export default async function AdminCategoriesPage({
           <div>
             <h1 className="text-2xl font-semibold tracking-tight text-slate-900">Categories</h1>
             <p className="mt-2 max-w-2xl text-sm text-slate-600">
-              Names sort alphabetically in the marquee and browse grids — upload squared HTTPS thumbnails (or rooted <code>/public</code> paths) for richer cards. Provide a lightweight{" "}
+              Names sort alphabetically in the marquee and browse grids — paste an HTTPS or <code>/public</code> path, or <span className="font-semibold">upload an image</span> from your computer
+              (stored in Supabase; run the <code className="text-xs">admin-media</code> migration if uploads fail). Provide a lightweight{" "}
               <span className="font-semibold">hero_icon_hint</span> keyword (<code className="text-xs">fan</code>,{" "}
               <code className="text-xs">kitchen</code>, <code className="text-xs">led</code>…) only when no artwork is available so the glyphs stay on-brand.
             </p>
@@ -97,16 +99,30 @@ export default async function AdminCategoriesPage({
                       </form>
                     </div>
                   </div>
-                  <form action={updateCategoryAppearance} className="grid min-w-0 flex-1 gap-4 sm:grid-cols-12">
+                  <form
+                    action={updateCategoryAppearance}
+                    encType="multipart/form-data"
+                    className="grid min-w-0 flex-1 gap-4 sm:grid-cols-12"
+                  >
                     <input type="hidden" name="id" value={c.id} />
                     <div className="sm:col-span-8">
                       <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">Thumbnail URL</label>
                       <input
                         name="thumbnail_url"
                         defaultValue={thumb}
-                        placeholder="https://… or /local-file.jpg"
+                        placeholder="https://… or /path-in-public.jpg"
                         className="mt-2 h-11 w-full rounded-2xl border border-slate-200 bg-white px-4 font-mono text-[11px] outline-none focus:border-blue-300 focus:ring-4 focus:ring-blue-100"
                       />
+                      <label className="mt-3 block text-xs font-semibold uppercase tracking-wide text-slate-500">
+                        Upload from computer
+                      </label>
+                      <input
+                        name="thumbnail_file"
+                        type="file"
+                        accept="image/jpeg,image/png,image/webp,image/gif"
+                        className={ADMIN_IMAGE_FILE_INPUT_CLASS}
+                      />
+                      <p className="mt-1 text-[11px] text-slate-500">{ADMIN_IMAGE_UPLOAD_HINT}</p>
                     </div>
                     <div className="sm:col-span-4">
                       <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">Hero icon keyword</label>

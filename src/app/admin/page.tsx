@@ -54,7 +54,7 @@ export default async function AdminDashboardPage({
     ...(owner ? ([{ label: "Users & admins", value: "Manage", href: "/admin/team", hint: "Accounts & access" }] as const) : []),
     { label: "Pending orders", value: pending, href: "/admin/orders", hint: "COD queue" },
     { label: "Categories", value: categories?.length ?? 0, href: "/admin/categories", hint: "Catalog structure" },
-    { label: "Products", value: products?.length ?? 0, href: "/products", hint: "Live storefront" },
+    { label: "Products", value: products?.length ?? 0, href: "/admin/products", hint: "Add & edit catalog" },
     { label: "Featured picks", value: featuredCount, href: "/admin/featured", hint: "Home carousel" },
     { label: "Hero slides", value: heroSlidesCount, href: "/admin/hero", hint: "Home backgrounds" },
     {

@@ -59,7 +59,11 @@ export default async function AdminFeaturedProductsPage({
 
         {products.length === 0 ? (
           <p className="mt-8 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-6 text-center text-sm text-slate-600">
-            No products in the catalog yet. Add rows in Supabase or run <span className="font-mono text-xs">seed.sql</span>.
+            No products in the catalog yet.{" "}
+            <Link href="/admin/products/new" className="font-semibold text-blue-700 hover:text-blue-800">
+              Add a product
+            </Link>{" "}
+            in the admin or run <span className="font-mono text-xs">seed.sql</span>.
           </p>
         ) : (
           <div className="mt-8 space-y-4">

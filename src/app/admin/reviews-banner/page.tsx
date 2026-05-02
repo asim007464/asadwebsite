@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { updateHomeReviewsBanner } from "@/app/admin/actions";
+import { ADMIN_IMAGE_FILE_INPUT_CLASS, ADMIN_IMAGE_UPLOAD_HINT } from "@/lib/admin-media-upload";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import type { HomeReviewsBannerRow } from "@/lib/store-types";
 
@@ -47,7 +48,7 @@ export default async function AdminReviewsBannerPage({
             <h1 className="text-2xl font-semibold tracking-tight text-slate-900">Reviews banner</h1>
             <p className="mt-2 max-w-2xl text-sm text-slate-600">
               Large background strip <span className="font-semibold">directly above</span> the customer reviews section on the
-              homepage. Use an <span className="font-semibold">https://</span> image URL (Supabase Storage or a CDN).
+              homepage. Paste an <span className="font-semibold">https://</span> or <span className="font-semibold">/</span> image URL, or upload a file (same rules as other admin images).
             </p>
           </div>
           <Link href="/admin" className="text-sm font-semibold text-blue-700 hover:text-blue-800">
@@ -66,10 +67,8 @@ export default async function AdminReviewsBannerPage({
         {error === "invalid-bg-url" ? (
           <div className="mt-5 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-800">
             Background URL must start with{" "}
-            <span className="font-mono text-xs">
-              https://
-            </span>{" "}
-            or be left blank.
+            <span className="font-mono text-xs">https://</span>, a site path like{" "}
+            <span className="font-mono text-xs">/photo.jpg</span>, or be left blank if you upload instead.
           </div>
         ) : null}
         {error === "invalid-button-href" ? (
@@ -84,16 +83,23 @@ export default async function AdminReviewsBannerPage({
           </div>
         ) : null}
 
-        <form action={updateHomeReviewsBanner} className="mt-8 grid grid-cols-1 gap-5 border-t border-slate-100 pt-8 md:gap-6">
+        <form action={updateHomeReviewsBanner} encType="multipart/form-data" className="mt-8 grid grid-cols-1 gap-5 border-t border-slate-100 pt-8 md:gap-6">
           <div>
             <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">Background image URL</label>
             <input
               name="background_image_url"
-              type="url"
               defaultValue={row.background_image_url}
-              placeholder="https://…"
+              placeholder="https://… or /image-in-public.jpg"
               className="mt-2 h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 font-mono text-xs outline-none focus:border-blue-300 focus:ring-4 focus:ring-blue-100 md:text-sm"
             />
+            <label className="mt-3 block text-xs font-semibold uppercase tracking-wide text-slate-500">Or upload from computer</label>
+            <input
+              name="background_image_file"
+              type="file"
+              accept="image/jpeg,image/png,image/webp,image/gif"
+              className={ADMIN_IMAGE_FILE_INPUT_CLASS}
+            />
+            <p className="mt-1 text-[11px] text-slate-500">{ADMIN_IMAGE_UPLOAD_HINT}</p>
           </div>
 
           <div>

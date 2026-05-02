@@ -63,7 +63,7 @@ export function AdminChrome({ owner, shopName, children }: { owner: boolean; sho
             <nav className="flex flex-col gap-0.5 p-3 pb-4" aria-label="Admin navigation">
               <NavItem href="/admin" label="Dashboard" variant="sidebar" />
               <NavItem href="/admin/orders" label="Orders" variant="sidebar" />
-              <NavItem href="/admin/categories" label="Categories" variant="sidebar" />
+              <NavItem href="/admin/products" label="Products" variant="sidebar" />
               <NavItem href="/admin/products/seo" label="SEO snippets" variant="sidebar" />
               <NavItem href="/admin/featured" label="Featured picks" variant="sidebar" />
               <NavItem href="/admin/home-sections" label="Homepage strips" variant="sidebar" />
@@ -112,6 +112,7 @@ export function AdminChrome({ owner, shopName, children }: { owner: boolean; sho
                   <NavItem href="/admin" label="Home" variant="pill" />
                   <NavItem href="/admin/orders" label="Orders" variant="pill" />
                   <NavItem href="/admin/categories" label="Categories" variant="pill" />
+                  <NavItem href="/admin/products" label="Products" variant="pill" />
                   <NavItem href="/admin/featured" label="Featured" variant="pill" />
                   <NavItem href="/admin/hero" label="Hero" variant="pill" />
                   <NavItem href="/admin/site" label="Site" variant="pill" />
