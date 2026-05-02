@@ -22,6 +22,7 @@ const shopLinks = [
 const companyLinks = [
   { href: "/about", label: "About us" },
   { href: "/contact", label: "Contact & map" },
+  { href: "/admin", label: "Admin" },
 ] as const;
 
 function pickSocialIcon(platform: string | undefined, label: string) {
@@ -126,14 +127,14 @@ export async function SiteFooter() {
   const socialLinksResolved = storefront.socialLinks.filter((x) => x.url?.trim()?.length && x.label?.trim()?.length);
 
   return (
-    <footer className="relative mt-auto overflow-hidden bg-slate-950 text-slate-400">
-      <div className="h-1 bg-gradient-to-r from-blue-700 via-blue-500 to-blue-600" aria-hidden />
+    <footer className="relative mt-auto overflow-hidden bg-black text-slate-400">
+      <div className="h-1 bg-gradient-to-r from-blue-800 via-blue-700 to-blue-800 opacity-80" aria-hidden />
 
       <div
-        className="pointer-events-none absolute inset-0 opacity-[0.04]"
+        className="pointer-events-none absolute inset-0 opacity-[0.03]"
         style={{
           backgroundImage:
-            "radial-gradient(circle at 20% 0%, rgb(96 153 247) 0%, transparent 42%), radial-gradient(circle at 90% 80%, rgb(33 82 209) 0%, transparent 38%)",
+            "radial-gradient(circle at 20% 0%, rgb(30 58 138) 0%, transparent 42%), radial-gradient(circle at 90% 80%, rgb(30 64 175) 0%, transparent 38%)",
         }}
         aria-hidden
       />
@@ -141,12 +142,12 @@ export async function SiteFooter() {
       <div className="relative mx-auto w-full max-w-6xl px-4 pb-8 pt-12 sm:px-6 lg:px-8 lg:pb-10 lg:pt-14">
         <div className="grid gap-12 lg:grid-cols-12 lg:gap-10 xl:gap-12">
           {/* Brand */}
-          <div className="lg:col-span-4">
+          <div className="flex flex-col items-center text-center lg:col-span-4 lg:items-start lg:text-left">
             <Link
               href="/"
-              className="group inline-flex max-w-md items-start gap-4 rounded-2xl outline-none transition hover:opacity-95 focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950"
+              className="group flex max-w-md flex-col items-center gap-3 rounded-2xl outline-none transition hover:opacity-95 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-black sm:flex-row sm:items-center sm:gap-4 lg:items-start"
             >
-              <span className="relative flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-white/5 ring-1 ring-white/10 md:h-[4.25rem] md:w-[4.25rem]">
+              <span className="relative flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-white md:h-[4.25rem] md:w-[4.25rem]">
                 <Image
                   src="/website-logo.jpeg"
                   alt=""
@@ -157,29 +158,29 @@ export async function SiteFooter() {
                   loading="lazy"
                 />
               </span>
-              <span className="min-w-0 pt-0.5">
+              <span className="min-w-0 pt-0 sm:pt-0.5">
                 <span className="block text-lg font-bold tracking-tight text-white md:text-xl">{SITE_SHOP_NAME}</span>
                 <span className="mt-1.5 block text-sm font-medium leading-snug text-blue-300/90">{SITE_SHORT_TAGLINE}</span>
               </span>
             </Link>
-            <p className="mt-6 max-w-sm text-sm leading-relaxed text-slate-400">
+            <p className="mt-6 max-w-sm text-sm leading-relaxed text-slate-400 lg:mx-0">
               Trusted electrical and appliance sourcing — fans, lighting, kitchen and grooming tools, plus wiring and accessories. Clear specs on every SKU and COD backed by phone confirmation.
             </p>
-            <div className="mt-6 flex flex-wrap gap-2">
+            <div className="mt-6 flex flex-wrap justify-center gap-2 lg:justify-start">
               <span className="rounded-full bg-blue-600 px-3.5 py-1.5 text-xs font-bold text-white shadow-lg shadow-blue-600/25">
                 COD Pakistan
               </span>
-              <span className="rounded-full border border-slate-600/80 bg-slate-900/60 px-3.5 py-1.5 text-xs font-semibold text-slate-200">
+              <span className="rounded-full border border-slate-700 bg-black px-3.5 py-1.5 text-xs font-semibold text-slate-200">
                 Nationwide dispatch
               </span>
-              <span className="rounded-full border border-slate-600/80 bg-slate-900/60 px-3.5 py-1.5 text-xs font-semibold text-slate-200">
+              <span className="rounded-full border border-slate-700 bg-black px-3.5 py-1.5 text-xs font-semibold text-slate-200">
                 Specs per variant
               </span>
             </div>
 
-            <div className="mt-8">
+            <div className="mt-8 flex w-full flex-col items-center lg:items-start">
               <FootHeading>Social</FootHeading>
-              <div className="mt-4 flex flex-wrap gap-2">
+              <div className="mt-4 flex flex-wrap justify-center gap-2 lg:justify-start">
                 {socialLinksResolved.map((s) => {
                   const Icon = pickSocialIcon(s.platform, s.label);
                   return (
@@ -189,7 +190,7 @@ export async function SiteFooter() {
                       target="_blank"
                       rel="noopener noreferrer"
                       aria-label={s.label}
-                      className="inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-slate-700/80 bg-slate-900/60 text-slate-200 transition hover:border-blue-400/50 hover:bg-slate-900 hover:text-white"
+                      className="inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-slate-700 bg-black text-slate-200 transition hover:border-blue-500/40 hover:bg-zinc-950 hover:text-white"
                     >
                       <Icon />
                     </a>
@@ -228,7 +229,7 @@ export async function SiteFooter() {
           {/* Contact */}
           <div className="lg:col-span-4">
             <FootHeading>Contact</FootHeading>
-            <div className="mt-5 rounded-2xl border border-slate-700/80 bg-slate-900/70 p-6 shadow-2xl shadow-black/40 backdrop-blur-sm ring-1 ring-white/5">
+            <div className="mt-6 rounded-2xl border border-slate-800 bg-black p-6 shadow-2xl shadow-black/50 ring-1 ring-slate-800/80">
               <p className="text-xs font-semibold uppercase tracking-wide text-emerald-400/95">WhatsApp fastest</p>
               <p className="mt-2 text-sm leading-relaxed text-slate-400">Quotes, finishes, stock checks — we reply on WhatsApp during desk hours.</p>
               <a
@@ -241,12 +242,12 @@ export async function SiteFooter() {
               </a>
               <Link
                 href="/contact"
-                className="mt-3 flex h-10 w-full items-center justify-center rounded-xl border border-slate-600/90 bg-slate-800/50 text-sm font-semibold text-white transition hover:border-blue-500/50 hover:bg-slate-800"
+                className="mt-3 flex h-10 w-full items-center justify-center rounded-xl border border-slate-700 bg-black text-sm font-semibold text-white transition hover:border-blue-500/40 hover:bg-zinc-950"
               >
                 Directions & full contact
               </Link>
 
-              <div className="my-5 h-px bg-slate-700/80" />
+              <div className="my-5 h-px bg-slate-900" />
 
               <dl className="space-y-4 text-sm">
                 <div>
@@ -303,7 +304,7 @@ export async function SiteFooter() {
           </div>
         </div>
 
-        <div className="mt-12 flex flex-col gap-4 border-t border-slate-800 pt-8 sm:flex-row sm:items-center sm:justify-between">
+        <div className="mt-12 flex flex-col gap-4 border-t border-slate-900 pt-8 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-sm text-slate-500">
             © {new Date().getFullYear()} <span className="font-semibold text-slate-300">{SITE_SHOP_NAME}</span>
             <span className="text-slate-600"> · </span>

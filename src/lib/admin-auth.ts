@@ -1,16 +1,15 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { DEFAULT_ADMIN_OWNER_EMAIL } from "@/lib/admin-owner-email";
 
 /** Legacy cookie from password-only admin — cleared on login/out. */
 export const ADMIN_COOKIE_NAME = "asad_admin_session";
 
-const DEFAULT_OWNER_EMAIL = "asimsajjad928@gmail.com";
-
 export function getAdminOwnerEmail(): string {
   const raw = process.env.ADMIN_OWNER_EMAIL?.trim();
   if (raw) return raw.toLowerCase();
-  return DEFAULT_OWNER_EMAIL;
+  return DEFAULT_ADMIN_OWNER_EMAIL;
 }
 
 export function normAdminEmail(email: string): string {
