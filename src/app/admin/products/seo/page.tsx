@@ -29,9 +29,14 @@ export default async function AdminProductSeoPage({
               Separate keywords with commas · meta descriptions ideally 120–160 characters for detail-page metadata and social previews downstream.
             </p>
           </div>
-          <Link href="/admin" className="text-sm font-semibold text-blue-700 hover:text-blue-800">
-            ← Dashboard
-          </Link>
+          <div className="flex flex-wrap gap-4">
+            <Link href="/admin/products" className="text-sm font-semibold text-blue-700 hover:text-blue-800">
+              ← Products
+            </Link>
+            <Link href="/admin" className="text-sm font-semibold text-slate-600 hover:text-slate-900">
+              Dashboard
+            </Link>
+          </div>
         </div>
 
         {error ? (
@@ -40,7 +45,13 @@ export default async function AdminProductSeoPage({
 
         <div className="mt-8 space-y-4">
           {!products.length ? (
-            <p className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-4 py-6 text-sm text-slate-600">No catalog rows detected.</p>
+            <p className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-4 py-6 text-sm text-slate-600">
+              No products yet.{" "}
+              <Link href="/admin/products/new" className="font-semibold text-blue-700 hover:text-blue-800">
+                Add a product
+              </Link>{" "}
+              first.
+            </p>
           ) : (
             products.map((p) => (
               <details key={p.id} className="group rounded-3xl border border-slate-200 bg-slate-50/70 p-4 open:bg-white open:shadow-sm">

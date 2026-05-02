@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { mergeStorefrontSettings } from "@/app/admin/actions";
+import { ADMIN_IMAGE_FILE_INPUT_CLASS, ADMIN_IMAGE_UPLOAD_HINT } from "@/lib/admin-media-upload";
 import { getStorefrontPayload } from "@/lib/storefront";
 import type { ResolvedStorefront } from "@/lib/storefront";
 
@@ -87,8 +88,8 @@ export default async function AdminSitePage({
             <h1 className="text-2xl font-semibold tracking-tight text-slate-900">Site content & checkout copy</h1>
             <p className="mt-2 max-w-3xl text-sm leading-relaxed text-slate-600">
               Homepage hero ribbons, testimonials intro paragraph, WhatsApp/footer social URLs, SEO-friendly bank & JazzCash wording for checkout, optional About/
-              Contact photo URLs (https or <code className="text-xs">/</code>-rooted paths), and structured reviews JSON consumed on the testimonials strip.
-              Leave JSON fields blank to keep whatever is saved now.
+              Contact photos (<span className="font-semibold">URL or upload</span> — HTTPS, <code className="text-xs">/</code>-rooted paths, or files into Supabase{" "}
+              <code className="text-xs">admin-media</code>), and structured reviews JSON consumed on the testimonials strip. Leave JSON fields blank to keep whatever is saved now.
             </p>
           </div>
           <Link href="/admin" className="text-sm font-semibold text-blue-700 hover:text-blue-800">
@@ -102,7 +103,7 @@ export default async function AdminSitePage({
           </div>
         ) : null}
 
-        <form action={mergeStorefrontSettings} className="mt-8 space-y-10">
+        <form action={mergeStorefrontSettings} encType="multipart/form-data" className="mt-8 space-y-10">
           <section className="rounded-3xl border border-slate-200 bg-slate-50/70 p-4 sm:p-5">
             <h2 className="text-lg font-semibold text-slate-900">Hero & header copy</h2>
             <div className="mt-5 grid gap-5 sm:grid-cols-6">
@@ -179,22 +180,35 @@ export default async function AdminSitePage({
           <section className="rounded-3xl border border-slate-200 bg-slate-50/70 p-4 sm:p-5">
             <h2 className="text-lg font-semibold text-slate-900">About / contact imagery</h2>
             <p className="mt-2 max-w-2xl text-xs text-slate-600">
-              Supabase/CDN HTTPS URLs preferred; rooted paths (<code>/photo.jpg</code>) also work when the asset lives inside <code>/public</code>.
+              Supabase CDN HTTPS URLs, rooted paths (<code>/photo.jpg</code> in <code>/public</code>), or upload — file wins over the URL on save.{" "}
+              {ADMIN_IMAGE_UPLOAD_HINT}
             </p>
             <div className="mt-5 grid gap-5 md:grid-cols-6">
-              {(["aboutPrimaryImage", "aboutSecondaryImage", "contactPrimaryImage", "contactSecondaryImage"] as const).map((k) => (
-                <div key={k} className="md:col-span-3">
-                  <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                    {k.replace(/([A-Z])/g, " $1").trim()}
-                  </label>
-                  <input
-                    name={imgNames[k]}
-                    defaultValue={(storefront[k] as string)?.trim?.() ?? ""}
-                    placeholder="https://… or /file-in-public-folder.jpg"
-                    className="mt-2 h-11 w-full rounded-2xl border border-slate-200 bg-white px-4 font-mono text-[11px] outline-none focus:border-blue-300 focus:ring-4 focus:ring-blue-100"
-                  />
-                </div>
-              ))}
+              {(["aboutPrimaryImage", "aboutSecondaryImage", "contactPrimaryImage", "contactSecondaryImage"] as const).map((k) => {
+                const urlName = imgNames[k];
+                return (
+                  <div key={k} className="md:col-span-3">
+                    <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                      {k.replace(/([A-Z])/g, " $1").trim()}
+                    </label>
+                    <input
+                      name={urlName}
+                      defaultValue={(storefront[k] as string)?.trim?.() ?? ""}
+                      placeholder="https://… or /file-in-public-folder.jpg"
+                      className="mt-2 h-11 w-full rounded-2xl border border-slate-200 bg-white px-4 font-mono text-[11px] outline-none focus:border-blue-300 focus:ring-4 focus:ring-blue-100"
+                    />
+                    <label className="mt-3 block text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+                      Upload
+                    </label>
+                    <input
+                      name={`${urlName}_file`}
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp,image/gif"
+                      className={ADMIN_IMAGE_FILE_INPUT_CLASS}
+                    />
+                  </div>
+                );
+              })}
             </div>
           </section>
 

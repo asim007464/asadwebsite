@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { createHeroSlide, deleteHeroSlide, updateHeroSlide } from "@/app/admin/actions";
+import { ADMIN_IMAGE_FILE_INPUT_CLASS, ADMIN_IMAGE_UPLOAD_HINT } from "@/lib/admin-media-upload";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import type { HeroSlideRow } from "@/lib/store-types";
 
@@ -27,8 +28,7 @@ export default async function AdminHeroSlidesPage({
             <h1 className="text-2xl font-semibold tracking-tight text-slate-900">Hero slides</h1>
             <p className="mt-2 max-w-2xl text-sm text-slate-600">
               Background images on the home hero crossfade automatically (about every 5½ seconds). Only rows marked{" "}
-              <span className="font-semibold">Active</span> are visible to shoppers. Use HTTPS URLs (e.g. Supabase Storage or
-              Unsplash).
+              <span className="font-semibold">Active</span> are visible to shoppers. Use an <span className="font-semibold">https://</span> image URL or upload a file from your computer.
             </p>
           </div>
           <Link href="/admin" className="text-sm font-semibold text-blue-700 hover:text-blue-800">
@@ -49,15 +49,21 @@ export default async function AdminHeroSlidesPage({
           </div>
         ) : null}
 
-        <form action={createHeroSlide} className="mt-6 grid grid-cols-1 gap-3 rounded-3xl border border-slate-200 bg-slate-50 p-4 sm:grid-cols-12 sm:p-5">
+        <form
+          action={createHeroSlide}
+          encType="multipart/form-data"
+          className="mt-6 grid grid-cols-1 gap-3 rounded-3xl border border-slate-200 bg-slate-50 p-4 sm:grid-cols-12 sm:p-5"
+        >
           <div className="sm:col-span-5">
             <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">Image URL (https)</label>
             <input
               name="url"
-              required
               placeholder="https://…"
               className="mt-2 h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm outline-none focus:border-blue-300 focus:ring-4 focus:ring-blue-100"
             />
+            <label className="mt-3 block text-xs font-semibold uppercase tracking-wide text-slate-500">Or upload</label>
+            <input name="image_file" type="file" accept="image/jpeg,image/png,image/webp,image/gif" className={ADMIN_IMAGE_FILE_INPUT_CLASS} />
+            <p className="mt-1 text-[11px] text-slate-500">{ADMIN_IMAGE_UPLOAD_HINT}</p>
           </div>
           <div className="sm:col-span-4">
             <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">Alt text</label>
@@ -94,16 +100,17 @@ export default async function AdminHeroSlidesPage({
                   <Image src={s.url} alt="" fill className="object-cover" sizes="140px" />
                 </div>
                 <div className="p-4">
-                  <form id={`hero-slide-edit-${s.id}`} action={updateHeroSlide} className="grid gap-3 sm:grid-cols-12">
+                  <form id={`hero-slide-edit-${s.id}`} action={updateHeroSlide} encType="multipart/form-data" className="grid gap-3 sm:grid-cols-12">
                     <input type="hidden" name="id" value={s.id} />
                     <div className="sm:col-span-5">
                       <label className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">URL</label>
                       <input
                         name="url"
-                        required
                         defaultValue={s.url}
                         className="mt-1 h-10 w-full rounded-xl border border-slate-200 px-3 font-mono text-xs outline-none focus:border-blue-300"
                       />
+                      <label className="mt-2 block text-[10px] font-semibold uppercase tracking-wide text-slate-500">Upload</label>
+                      <input name="image_file" type="file" accept="image/jpeg,image/png,image/webp,image/gif" className={ADMIN_IMAGE_FILE_INPUT_CLASS} />
                     </div>
                     <div className="sm:col-span-3">
                       <label className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Alt</label>
@@ -159,16 +166,18 @@ export default async function AdminHeroSlidesPage({
               <div className="relative mx-auto aspect-[16/10] w-full max-w-sm overflow-hidden rounded-2xl bg-slate-100">
                 <Image src={s.url} alt="" fill className="object-cover" sizes="(max-width:400px) 100vw, 400px" />
               </div>
-              <form id={`hero-slide-edit-m-${s.id}`} action={updateHeroSlide} className="mt-4 space-y-3">
+              <form id={`hero-slide-edit-m-${s.id}`} action={updateHeroSlide} encType="multipart/form-data" className="mt-4 space-y-3">
                 <input type="hidden" name="id" value={s.id} />
                 <div>
                   <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">URL</label>
                   <input
                     name="url"
-                    required
                     defaultValue={s.url}
                     className="mt-1 h-11 w-full rounded-xl border border-slate-200 px-3 font-mono text-[11px] outline-none focus:border-blue-300"
                   />
+                  <label className="mt-2 block text-xs font-semibold uppercase tracking-wide text-slate-500">Or upload</label>
+                  <input name="image_file" type="file" accept="image/jpeg,image/png,image/webp,image/gif" className={ADMIN_IMAGE_FILE_INPUT_CLASS} />
+                  <p className="mt-1 text-[11px] text-slate-500">{ADMIN_IMAGE_UPLOAD_HINT}</p>
                 </div>
                 <div>
                   <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">Alt</label>
