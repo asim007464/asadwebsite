@@ -8,6 +8,7 @@ import { cartSubtotal, readCart } from "@/lib/cart";
 import { readWishlist } from "@/lib/wishlist";
 import { formatPKR } from "@/lib/money";
 import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
+import { clientUserHasAdminPanelAccess } from "@/lib/admin-panel-client";
 import { SITE_SHOP_NAME, SITE_SHORT_TAGLINE } from "@/lib/site-brand";
 
 type Category = { id: string; name: string; slug: string };
@@ -89,7 +90,11 @@ export function SiteHeader() {
   const [subtotal, setSubtotal] = useState(0);
   const [logoError, setLogoError] = useState(false);
   const [wishCount, setWishCount] = useState(0);
-  const [customer, setCustomer] = useState<{ email?: string | null; name?: string | null } | null>(null);
+  const [customer, setCustomer] = useState<{
+    email?: string | null;
+    name?: string | null;
+    canAdmin: boolean;
+  } | null>(null);
   const [categories, setCategories] = useState<Category[]>([]);
   const [catOpen, setCatOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -136,6 +141,7 @@ export function SiteHeader() {
             ? {
                 email: u.email,
                 name: (typeof u.user_metadata?.full_name === "string" ? u.user_metadata.full_name : null) ?? null,
+                canAdmin: clientUserHasAdminPanelAccess(u),
               }
             : null,
         );
@@ -146,6 +152,7 @@ export function SiteHeader() {
               ? {
                   email: su.email,
                   name: (typeof su.user_metadata?.full_name === "string" ? su.user_metadata.full_name : null) ?? null,
+                  canAdmin: clientUserHasAdminPanelAccess(su),
                 }
               : null,
           );
@@ -318,6 +325,7 @@ export function SiteHeader() {
   const isLoginActive = pathname === "/login";
   const isRegisterActive = pathname === "/register";
   const isForgotActive = pathname === "/forgot-password";
+  const isAdminActive = pathname.startsWith("/admin");
 
   return (
     <header className="fixed inset-x-0 top-0 z-30 w-full border-b border-slate-200 bg-white shadow-[0_4px_24px_-8px_rgba(15,23,42,0.12)] backdrop-blur-xl backdrop-saturate-150">
@@ -524,7 +532,7 @@ export function SiteHeader() {
               }}
               className={cn(
                 "inline-flex h-11 w-11 items-center justify-center rounded-full border border-slate-200/90 bg-white text-slate-700 shadow-sm transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2",
-                accountOpen || isLoginActive || isRegisterActive || isForgotActive
+                accountOpen || isLoginActive || isRegisterActive || isForgotActive || isAdminActive
                   ? "border-blue-200 bg-blue-50 text-blue-800 ring-2 ring-blue-100"
                   : "",
               )}
@@ -552,14 +560,29 @@ export function SiteHeader() {
                 </div>
                 <div className="p-2">
                   {customer ? (
-                    <button
-                      type="button"
-                      role="menuitem"
-                      onClick={() => handleSignOut()}
-                      className="block w-full rounded-xl px-3 py-2.5 text-left text-sm font-semibold text-red-700 transition hover:bg-red-50"
-                    >
-                      Sign out
-                    </button>
+                    <>
+                      {customer.canAdmin ? (
+                        <Link
+                          href="/admin"
+                          role="menuitem"
+                          className={cn(
+                            "block rounded-xl px-3 py-2.5 text-sm font-semibold transition hover:bg-blue-50 hover:text-blue-800",
+                            isAdminActive ? "bg-blue-50 text-blue-900" : "text-slate-800",
+                          )}
+                          onClick={() => setAccountOpen(false)}
+                        >
+                          Admin panel
+                        </Link>
+                      ) : null}
+                      <button
+                        type="button"
+                        role="menuitem"
+                        onClick={() => handleSignOut()}
+                        className="block w-full rounded-xl px-3 py-2.5 text-left text-sm font-semibold text-red-700 transition hover:bg-red-50"
+                      >
+                        Sign out
+                      </button>
+                    </>
                   ) : (
                     <>
                       <Link
@@ -759,6 +782,20 @@ export function SiteHeader() {
                       Hello, {displayName}
                       {customer.email ? <span className="mt-2 block truncate text-xs font-normal text-slate-500">{customer.email}</span> : null}
                     </div>
+                    {customer.canAdmin ? (
+                      <Link
+                        href="/admin"
+                        className={cn(
+                          "mt-3 block rounded-xl px-3 py-3 text-center text-[15px] font-semibold ring-1 transition",
+                          isAdminActive
+                            ? "bg-blue-50 text-blue-900 ring-blue-100"
+                            : "bg-white text-blue-800 ring-slate-200 hover:bg-blue-50",
+                        )}
+                        onClick={closeMobile}
+                      >
+                        Admin panel
+                      </Link>
+                    ) : null}
                     <button
                       type="button"
                       className="mt-3 block w-full rounded-xl bg-red-50 px-3 py-3 text-[15px] font-semibold text-red-700 ring-1 ring-red-100 transition hover:bg-red-100"
