@@ -129,41 +129,7 @@ alter table public.products add column if not exists is_featured boolean not nul
 alter table public.products add column if not exists featured_sort_order integer not null default 0;
 create index if not exists products_featured_sort_idx on public.products (is_featured, featured_sort_order) where is_featured = true;
 
--- Simple storefront listing view: min price and main image.
--- Column order: keep min_price_pkr + image_url before is_featured so CREATE OR REPLACE VIEW upgrades cleanly (PG 42P16).
-create or replace view public.product_listings as
-select
-  p.id,
-  p.name,
-  p.slug,
-  p.description,
-  p.category_id,
-  p.brand_id,
-  p.is_active,
-  coalesce(dv.price_pkr, 0) as min_price_pkr,
-  (
-    select pi.url
-    from public.product_images pi
-    where pi.product_id = p.id
-    order by pi.sort_order asc, pi.created_at asc
-    limit 1
-  ) as image_url,
-  p.is_featured,
-  p.featured_sort_order,
-  dv.id as default_variant_id,
-  dv.sku as default_variant_sku,
-  dv.title as default_variant_title,
-  dv.price_pkr as default_variant_price_pkr
-from public.products p
-left join lateral (
-  select v.id, v.sku, v.title, v.price_pkr
-  from public.product_variants v
-  where v.product_id = p.id and v.is_active = true
-  order by v.price_pkr asc, v.created_at asc
-  limit 1
-) dv on true
-where p.is_active = true
-;
+-- storefront listing view `product_listings` is defined after ALTER adds SEO columns on `products`.
 
 -- Orders (COD-first)
 do $$
@@ -294,6 +260,8 @@ create index if not exists email_verification_codes_expires_idx on public.email_
 
 alter table public.email_verification_codes enable row level security;
 
+grant select, insert, update, delete on table public.email_verification_codes to service_role;
+
 -- Lookup auth.users id server-side after OTP (service role RPC only — do not expose to anon).
 create or replace function public.lookup_auth_user_id(email_input text)
 returns uuid
@@ -307,12 +275,18 @@ $$;
 revoke all on function public.lookup_auth_user_id(text) from public;
 grant execute on function public.lookup_auth_user_id(text) to service_role;
 
+notify pgrst, 'reload schema';
 
 --
--- Refresh product_listings view (adds SEO fields for storefront PDP meta / admin tooling).
+-- product_listings view (SEO + default variant columns).
+--
+-- Postgres 42P16: `CREATE OR REPLACE VIEW` cannot insert new columns in the middle of an existing
+-- view (it treats that as renaming columns). Always DROP + CREATE when changing column order/count.
 --
 
-create or replace view public.product_listings as
+drop view if exists public.product_listings cascade;
+
+create view public.product_listings as
 select
   p.id,
   p.name,
