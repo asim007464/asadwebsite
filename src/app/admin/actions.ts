@@ -1,59 +1,119 @@
 "use server";
 
-import { timingSafeEqual } from "node:crypto";
-import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { ADMIN_COOKIE_NAME, assertAdminAuthenticated, getAdminPasswordFromEnv } from "@/lib/admin-auth";
-
-function timingSafeEqualUtf8(a: string, b: string) {
-  const aa = Buffer.from(a, "utf8");
-  const bb = Buffer.from(b, "utf8");
-  if (aa.length !== bb.length) return false;
-  return timingSafeEqual(aa, bb);
-}
+import {
+  adminUserAllowed,
+  assertAdminAuthenticated,
+  assertAdminOwner,
+  clearLegacyAdminCookie,
+  getAdminOwnerEmail,
+  isOwnerEmail,
+  normAdminEmail,
+} from "@/lib/admin-auth";
+import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export async function adminLogin(formData: FormData) {
+  const email = String(formData.get("email") ?? "").trim();
   const password = String(formData.get("password") ?? "");
   const nextPathRaw = String(formData.get("next") ?? "/admin");
-  const expected = getAdminPasswordFromEnv();
-  const secret = process.env.ADMIN_SESSION_SECRET;
 
-  if (!expected || !secret || secret.length < 16) {
-    throw new Error("Admin login not configured. Set ADMIN_PASSWORD and ADMIN_SESSION_SECRET in .env.local");
+  if (!email || !password) {
+    redirect(`/admin/login?error=auth&next=${encodeURIComponent(nextPathRaw)}`);
   }
 
-  if (!timingSafeEqualUtf8(password, expected)) {
-    redirect(`/admin/login?error=1&next=${encodeURIComponent(nextPathRaw)}`);
+  const supabase = await createSupabaseServerClient();
+  const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+
+  if (error || !data.user) {
+    redirect(`/admin/login?error=auth&next=${encodeURIComponent(nextPathRaw)}`);
   }
 
-  const jar = await cookies();
-  jar.set({
-    name: ADMIN_COOKIE_NAME,
-    value: secret,
-    httpOnly: true,
-    sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
-    path: "/",
-    maxAge: 60 * 60 * 24 * 7,
-  });
+  if (!adminUserAllowed(data.user)) {
+    await supabase.auth.signOut();
+    await clearLegacyAdminCookie();
+    redirect(`/admin/login?error=forbidden&next=${encodeURIComponent(nextPathRaw)}`);
+  }
+
+  await clearLegacyAdminCookie();
 
   const safeNext = nextPathRaw.startsWith("/admin") ? nextPathRaw : "/admin";
   redirect(safeNext);
 }
 
 export async function adminLogout() {
-  await assertAdminAuthenticated();
-  const jar = await cookies();
-  jar.set({
-    name: ADMIN_COOKIE_NAME,
-    value: "",
-    httpOnly: true,
-    sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
-    path: "/",
-    maxAge: 0,
-  });
+  const supabase = await createSupabaseServerClient();
+  await supabase.auth.signOut();
+  await clearLegacyAdminCookie();
   redirect("/admin/login");
+}
+
+export async function promoteAdminStaff(formData: FormData) {
+  await assertAdminOwner();
+
+  const raw = String(formData.get("email") ?? "");
+  const email = normAdminEmail(raw);
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    redirect("/admin/team?error=invalid-email");
+  }
+
+  const owner = getAdminOwnerEmail();
+  if (email === owner) {
+    redirect("/admin/team?notice=owner-already");
+  }
+
+  const admin = createSupabaseAdminClient();
+  const { data: uid, error: rpcErr } = await admin.rpc("lookup_auth_user_id", { email_input: email });
+  if (rpcErr || !uid) {
+    redirect("/admin/team?error=no-account");
+  }
+
+  const uidStr = String(uid);
+  const { data: got, error: getErr } = await admin.auth.admin.getUserById(uidStr);
+  if (getErr || !got.user) {
+    redirect("/admin/team?error=no-account");
+  }
+
+  const meta = { ...(got.user.app_metadata ?? {}), admin_panel: true };
+  const { error: upErr } = await admin.auth.admin.updateUserById(uidStr, { app_metadata: meta });
+  if (upErr) {
+    redirect(`/admin/team?error=${encodeURIComponent(upErr.message)}`);
+  }
+  redirect("/admin/team?notice=promoted");
+}
+
+export async function demoteAdminStaff(formData: FormData) {
+  await assertAdminOwner();
+
+  const raw = String(formData.get("email") ?? "");
+  const email = normAdminEmail(raw);
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    redirect("/admin/team?error=invalid-email");
+  }
+
+  if (isOwnerEmail(email)) {
+    redirect("/admin/team?error=cannot-demote-owner");
+  }
+
+  const admin = createSupabaseAdminClient();
+  const { data: uid, error: rpcErr } = await admin.rpc("lookup_auth_user_id", { email_input: email });
+  if (rpcErr || !uid) {
+    redirect("/admin/team?error=no-account");
+  }
+
+  const uidStr = String(uid);
+  const { data: got, error: getErr } = await admin.auth.admin.getUserById(uidStr);
+  if (getErr || !got.user) {
+    redirect("/admin/team?error=no-account");
+  }
+
+  const meta: Record<string, unknown> = { ...(got.user.app_metadata ?? {}) };
+  delete meta.admin_panel;
+  const { error: upErr } = await admin.auth.admin.updateUserById(uidStr, { app_metadata: meta });
+  if (upErr) {
+    redirect(`/admin/team?error=${encodeURIComponent(upErr.message)}`);
+  }
+  redirect("/admin/team?notice=demoted");
 }
 
 export async function createCategory(formData: FormData) {

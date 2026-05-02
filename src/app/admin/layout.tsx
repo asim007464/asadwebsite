@@ -1,12 +1,14 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { adminLogout } from "@/app/admin/actions";
-import { isAdminAuthenticated } from "@/lib/admin-auth";
+import { isAdminAuthenticated, isAdminOwner } from "@/lib/admin-auth";
 import { SITE_SHOP_NAME } from "@/lib/site-brand";
 
 export default async function AdminLayout({ children }: { children: ReactNode }) {
   const ok = await isAdminAuthenticated();
   if (!ok) return children;
+
+  const owner = await isAdminOwner();
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -43,6 +45,11 @@ export default async function AdminLayout({ children }: { children: ReactNode })
               <Link href="/admin/orders" className="rounded-xl px-3 py-2 text-blue-800 hover:bg-blue-50">
                 Orders
               </Link>
+              {owner ? (
+                <Link href="/admin/team" className="rounded-xl px-3 py-2 text-blue-800 hover:bg-blue-50">
+                  Admin team
+                </Link>
+              ) : null}
               <Link href="/" className="rounded-xl px-3 py-2 text-slate-700 hover:bg-slate-50">
                 View storefront
               </Link>
@@ -94,6 +101,11 @@ export default async function AdminLayout({ children }: { children: ReactNode })
                 <Link href="/admin/orders" className="shrink-0 rounded-full border border-slate-200 bg-white px-4 py-2 text-xs font-semibold text-blue-800">
                   Orders
                 </Link>
+                {owner ? (
+                  <Link href="/admin/team" className="shrink-0 rounded-full border border-slate-200 bg-white px-4 py-2 text-xs font-semibold text-blue-800">
+                    Team
+                  </Link>
+                ) : null}
                 <Link href="/" className="shrink-0 rounded-full border border-slate-200 bg-white px-4 py-2 text-xs font-semibold text-slate-700">
                   Store
                 </Link>

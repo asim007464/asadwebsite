@@ -2,7 +2,12 @@
 
 import { createHash, randomInt } from "node:crypto";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
-import { formatEmailSendFailure, sendPlainEmail } from "@/lib/email";
+import {
+  formatEmailSendFailure,
+  passwordResetVerificationEmail,
+  sendPlainEmail,
+  signupVerificationEmail,
+} from "@/lib/email";
 
 const WINDOW_MS = 15 * 60 * 1000;
 
@@ -75,11 +80,8 @@ export async function sendRegisterVerificationCode(email: string): Promise<OtpOk
   if (ins) return { ok: false, error: mapOtpDbError(ins.message) };
 
   try {
-    await sendPlainEmail({
-      to: em,
-      subject: "Your signup verification code",
-      text: `Your verification code is ${code}. It expires in 15 minutes. If you did not request this, ignore this email.`,
-    });
+    const { subject, text, html } = signupVerificationEmail(code);
+    await sendPlainEmail({ to: em, subject, text, html });
   } catch (e) {
     return { ok: false, error: formatEmailSendFailure(e) };
   }
@@ -143,11 +145,8 @@ export async function sendPasswordResetVerificationCode(email: string): Promise<
   if (ins) return { ok: false, error: mapOtpDbError(ins.message) };
 
   try {
-    await sendPlainEmail({
-      to: em,
-      subject: "Password reset verification code",
-      text: `Your password-reset code is ${code}. Expires in 15 minutes.`,
-    });
+    const { subject, text, html } = passwordResetVerificationEmail(code);
+    await sendPlainEmail({ to: em, subject, text, html });
   } catch (e) {
     return { ok: false, error: formatEmailSendFailure(e) };
   }
