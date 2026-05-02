@@ -3,7 +3,14 @@ import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
 export const dynamic = "force-dynamic";
 
-export default async function AdminDashboardPage() {
+export default async function AdminDashboardPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const sp = await searchParams;
+  const ownerOnly = sp.notice === "owner-only";
+
   const supabase = createSupabaseAdminClient();
 
   const [
@@ -54,6 +61,12 @@ export default async function AdminDashboardPage() {
         <p className="mt-2 max-w-2xl text-sm text-slate-600">
           Manage categories uploaded by admin and track COD orders. This panel is responsive on phones too.
         </p>
+
+        {ownerOnly ? (
+          <div className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-950">
+            Only the site owner can open that page. Staff admins cannot add or remove other admins.
+          </div>
+        ) : null}
 
         <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-6">
           {cards.map((c) => (

@@ -4,7 +4,6 @@ import type { Category, HeroSlideRow, HomeReviewsBannerRow, ProductListing } fro
 import { DEMO_PRODUCTS } from "@/lib/demo-products";
 import { DemoProductSection } from "@/components/DemoProductSection";
 import { CategorySlider } from "@/components/CategorySlider";
-import { SITE_SHOP_NAME, SITE_SHORT_TAGLINE } from "@/lib/site-brand";
 import { FALLBACK_HERO_BACKDROP_SLIDES } from "@/lib/site-visuals";
 import { HeroCarouselDots, HeroCarouselProvider } from "@/components/HeroBackdropCarousel";
 import { FeaturedProductsCarousel } from "@/components/FeaturedProductsCarousel";
@@ -98,30 +97,12 @@ async function HomeServer() {
 
           <div className="relative z-10 mx-auto w-full max-w-7xl px-4 py-12 sm:px-6 sm:py-16 lg:px-8 lg:py-20">
             <div className="max-w-2xl">
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="rounded-full bg-white/12 px-3 py-1 text-[11px] font-bold uppercase tracking-wide text-blue-100 ring-1 ring-white/15 backdrop-blur-md">
-                  {SITE_SHOP_NAME}
-                </span>
-                <span className="rounded-full bg-emerald-500/15 px-3 py-1 text-[11px] font-semibold text-emerald-100 ring-1 ring-emerald-400/25">
-                  {(storefront.heroBadgeCod ?? "").trim() ? storefront.heroBadgeCod : "COD · Lahore & nationwide"}
-                </span>
-                {(storefront.heroBadgeRegion ?? "").trim() ? (
-                  <span className="rounded-full bg-white/10 px-3 py-1 text-[11px] font-semibold text-blue-100 ring-1 ring-white/18 backdrop-blur-md">
-                    {storefront.heroBadgeRegion}
-                  </span>
-                ) : null}
-              </div>
-
-              <p className="mt-5 text-sm font-semibold leading-snug text-blue-200/95">
-                {(storefront.headerAccent ?? "").trim() ? storefront.headerAccent : SITE_SHORT_TAGLINE}
-              </p>
-
               {(storefront.heroTitle ?? "").trim() ? (
-                <h1 className="mt-3 max-w-xl text-3xl font-bold tracking-tight text-white sm:text-4xl lg:text-[2.45rem] lg:leading-[1.15]">
+                <h1 className="max-w-xl text-3xl font-bold tracking-tight text-white sm:text-4xl lg:text-[2.45rem] lg:leading-[1.15]">
                   {storefront.heroTitle!.trim()}
                 </h1>
               ) : (
-                <h1 className="mt-3 max-w-xl text-3xl font-bold tracking-tight text-white sm:text-4xl lg:text-[2.45rem] lg:leading-[1.15]">
+                <h1 className="max-w-xl text-3xl font-bold tracking-tight text-white sm:text-4xl lg:text-[2.45rem] lg:leading-[1.15]">
                   Straight answers on specs — then{" "}
                   <span className="bg-gradient-to-r from-white to-blue-100 bg-clip-text text-transparent [-webkit-background-clip:text]">
                     cash on delivery
@@ -156,8 +137,11 @@ async function HomeServer() {
               </Link>
               </div>
             </div>
+          </div>
 
-            <div className="mt-8 flex w-full justify-center">
+          {/* Bottom-center on full hero width (not tied to the left text column). */}
+          <div className="pointer-events-none absolute inset-x-0 bottom-6 z-20 flex justify-center px-4 sm:bottom-8 lg:bottom-12">
+            <div className="pointer-events-auto">
               <HeroCarouselDots />
             </div>
           </div>

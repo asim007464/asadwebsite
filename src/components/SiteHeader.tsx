@@ -354,16 +354,22 @@ export function SiteHeader() {
         </Link>
 
         {/* Desktop search: right after logo */}
-        <div className="relative hidden flex-1 lg:block max-w-[44rem]" ref={searchWrapRef}>
+        <div className="relative hidden max-w-[44rem] flex-1 lg:block" ref={searchWrapRef}>
           <form
             onSubmit={(e) => {
               e.preventDefault();
               submitSearch();
             }}
-            className="relative"
+            className="flex h-11 w-full items-center gap-0 rounded-full border border-slate-200 bg-white shadow-sm outline-none transition focus-within:border-blue-300 focus-within:ring-4 focus-within:ring-blue-100"
           >
-            <SearchIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+            <span className="flex shrink-0 items-center pl-3.5 text-slate-400" aria-hidden>
+              <SearchIcon className="h-4 w-4" />
+            </span>
+            <label htmlFor="site-header-search" className="sr-only">
+              Search products
+            </label>
             <input
+              id="site-header-search"
               value={search}
               onChange={(e) => {
                 const v = e.target.value;
@@ -393,12 +399,13 @@ export function SiteHeader() {
                   router.push(s.href);
                 }
               }}
-              placeholder="Search here"
-              className="h-11 w-full rounded-full border border-slate-200 bg-white pl-9 pr-12 text-sm font-semibold text-slate-800 shadow-sm outline-none transition focus:border-blue-300 focus:ring-4 focus:ring-blue-100"
+              placeholder="Search products"
+              autoComplete="off"
+              className="min-w-0 flex-1 border-0 bg-transparent py-2 pl-1 pr-2 text-sm font-semibold text-slate-800 placeholder:text-slate-400 outline-none focus:ring-0"
             />
             <button
               type="submit"
-              className="absolute right-2 top-1/2 inline-flex h-8 -translate-y-1/2 items-center justify-center rounded-full bg-blue-600 px-4 text-xs font-semibold text-white shadow-sm hover:bg-blue-700"
+              className="mr-1.5 inline-flex h-8 shrink-0 items-center justify-center rounded-full bg-blue-600 px-4 text-xs font-semibold text-white shadow-sm transition hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
             >
               Go
             </button>
