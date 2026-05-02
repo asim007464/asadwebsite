@@ -11,7 +11,9 @@ alter table public.products add column if not exists meta_description text not n
 alter table public.categories add column if not exists thumbnail_url text not null default '';
 alter table public.categories add column if not exists hero_icon_hint text not null default '';
 
-create or replace view public.product_listings as
+drop view if exists public.product_listings cascade;
+
+create view public.product_listings as
 select
   p.id,
   p.name,

@@ -15,10 +15,24 @@ export function RegisterForm() {
   const [success, setSuccess] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
+  function validatePasswords(): boolean {
+    if (password !== confirm) {
+      setError("Passwords do not match.");
+      return false;
+    }
+    if (password.length < 6) {
+      setError("Password must be at least 6 characters.");
+      return false;
+    }
+    return true;
+  }
+
   async function onSendCode(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
     setSuccess(null);
+    if (!validatePasswords()) return;
+
     setLoading(true);
     try {
       const r = await sendRegisterVerificationCode(email);
@@ -26,7 +40,7 @@ export function RegisterForm() {
         setError(r.error);
         return;
       }
-      setSuccess("We emailed a 6‑digit verification code — check your inbox (and spam) within 15 minutes.");
+      setSuccess("We emailed a 6‑digit verification code — check your inbox (and spam) within 15 minutes. Enter it below.");
       setStep(2);
     } catch (x) {
       setError(x instanceof Error ? x.message : "Something went wrong.");
@@ -39,14 +53,8 @@ export function RegisterForm() {
     e.preventDefault();
     setError(null);
     setSuccess(null);
-    if (password !== confirm) {
-      setError("Passwords do not match.");
-      return;
-    }
-    if (password.length < 6) {
-      setError("Password must be at least 6 characters.");
-      return;
-    }
+    if (!validatePasswords()) return;
+
     const clean = code.replace(/\s/g, "");
     if (clean.length !== 6 || !/^\d{6}$/.test(clean)) {
       setError("Enter the 6‑digit verification code from your email.");
@@ -110,63 +118,65 @@ export function RegisterForm() {
                 onClick={() => {
                   setStep(1);
                   setCode("");
+                  setSuccess(null);
                 }}
                 className="ml-1 font-semibold text-blue-700 hover:text-blue-800 disabled:opacity-60"
               >
-                Change email
+                Change email (new code needed)
               </button>
             </p>
-          ) : null}
+          ) : (
+            <p className="mt-2 text-xs text-slate-500">Your password fields stay below—you can edit them after the code arrives, before you verify.</p>
+          )}
+        </div>
+
+        <div>
+          <label htmlFor="reg-password" className="text-sm font-semibold text-slate-900">
+            Password
+          </label>
+          <input
+            id="reg-password"
+            type="password"
+            autoComplete="new-password"
+            required
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className="mt-2 h-12 w-full rounded-2xl border border-slate-200 px-4 text-sm outline-none focus:border-blue-300 focus:ring-4 focus:ring-blue-100"
+          />
+        </div>
+        <div>
+          <label htmlFor="reg-confirm" className="text-sm font-semibold text-slate-900">
+            Confirm password
+          </label>
+          <input
+            id="reg-confirm"
+            type="password"
+            autoComplete="new-password"
+            required
+            value={confirm}
+            onChange={(e) => setConfirm(e.target.value)}
+            className="mt-2 h-12 w-full rounded-2xl border border-slate-200 px-4 text-sm outline-none focus:border-blue-300 focus:ring-4 focus:ring-blue-100"
+          />
         </div>
 
         {step === 2 ? (
-          <>
-            <div>
-              <label htmlFor="reg-code" className="text-sm font-semibold text-slate-900">
-                6‑digit verification code
-              </label>
-              <input
-                id="reg-code"
-                inputMode="numeric"
-                pattern="[0-9]*"
-                maxLength={6}
-                autoComplete="one-time-code"
-                required
-                value={code}
-                onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
-                placeholder="______"
-                className="mt-2 h-12 w-full rounded-2xl border border-slate-200 px-4 text-center font-mono text-lg tracking-[0.4em] outline-none focus:border-blue-300 focus:ring-4 focus:ring-blue-100"
-              />
-            </div>
-            <div>
-              <label htmlFor="reg-password" className="text-sm font-semibold text-slate-900">
-                Password
-              </label>
-              <input
-                id="reg-password"
-                type="password"
-                autoComplete="new-password"
-                required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="mt-2 h-12 w-full rounded-2xl border border-slate-200 px-4 text-sm outline-none focus:border-blue-300 focus:ring-4 focus:ring-blue-100"
-              />
-            </div>
-            <div>
-              <label htmlFor="reg-confirm" className="text-sm font-semibold text-slate-900">
-                Confirm password
-              </label>
-              <input
-                id="reg-confirm"
-                type="password"
-                autoComplete="new-password"
-                required
-                value={confirm}
-                onChange={(e) => setConfirm(e.target.value)}
-                className="mt-2 h-12 w-full rounded-2xl border border-slate-200 px-4 text-sm outline-none focus:border-blue-300 focus:ring-4 focus:ring-blue-100"
-              />
-            </div>
-          </>
+          <div className="rounded-2xl border border-blue-100 bg-blue-50/80 p-4">
+            <label htmlFor="reg-code" className="text-sm font-semibold text-slate-900">
+              6‑digit verification code
+            </label>
+            <input
+              id="reg-code"
+              inputMode="numeric"
+              pattern="[0-9]*"
+              maxLength={6}
+              autoComplete="one-time-code"
+              required
+              value={code}
+              onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+              placeholder="______"
+              className="mt-2 h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 text-center font-mono text-lg tracking-[0.4em] outline-none focus:border-blue-300 focus:ring-4 focus:ring-blue-100"
+            />
+          </div>
         ) : null}
 
         <button
