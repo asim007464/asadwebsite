@@ -35,6 +35,10 @@ export default async function ContactPage() {
   const CONTACT_STORE_IMAGE = (storefront.contactPrimaryImage ?? "").trim() || CONTACT_FALLBACK_PRIMARY;
   const CONTACT_SECOND_IMAGE = (storefront.contactSecondaryImage ?? "").trim() || CONTACT_FALLBACK_SECOND;
 
+  const deskHours = storefront.supportDeskHours;
+  const supportIntro = storefront.supportCommitmentsIntro;
+  const escalations = storefront.supportEscalations;
+
   const mapEmbedSrc = googleMapsEmbedSrc(
     STORE_LOCATION.lat,
     STORE_LOCATION.lng,
@@ -146,22 +150,16 @@ export default async function ContactPage() {
         </section>
 
         <section className="rounded-3xl border border-dashed border-blue-200 bg-gradient-to-br from-blue-50/40 via-white to-white p-8">
-          <div className="text-sm font-semibold text-slate-900">Support commitments (demo language)</div>
-          <p className="mt-3 text-sm leading-relaxed text-slate-600">
-            Replace this block with your legal-approved SLA copy. For now it demonstrates how promise-driven messaging pairs with contact routes.
-          </p>
+          <div className="text-sm font-semibold text-slate-900">Support commitments</div>
+          <p className="mt-3 text-sm leading-relaxed text-slate-600">{supportIntro}</p>
           <dl className="mt-6 space-y-4 text-sm text-slate-700">
             <div className="flex items-start justify-between gap-4 border-b border-blue-100 pb-4">
               <dt className="text-slate-500">Desk hours</dt>
-              <dd className="text-right font-semibold text-slate-900">10:00–19:00 PKT · Mon–Sat</dd>
-            </div>
-            <div className="flex items-start justify-between gap-4 border-b border-blue-100 pb-4">
-              <dt className="text-slate-500">Quote turnaround</dt>
-              <dd className="text-right font-semibold text-slate-900">≤ 45 mins during peaks</dd>
+              <dd className="text-right font-semibold text-slate-900">{deskHours}</dd>
             </div>
             <div className="flex items-start justify-between gap-4">
               <dt className="text-slate-500">Escalations</dt>
-              <dd className="text-right font-semibold text-slate-900">Supervisor loop via WhatsApp label “URGENT DELIVERY ISSUE”</dd>
+              <dd className="text-right font-semibold text-slate-900">{escalations}</dd>
             </div>
           </dl>
         </section>
@@ -188,7 +186,9 @@ export default async function ContactPage() {
               </div>
               <div className="flex flex-wrap gap-x-2">
                 <dt className="font-semibold text-slate-900">Hours</dt>
-                <dd className="text-slate-600">10:00–19:00 PKT · Mon–Sat (confirm before visiting)</dd>
+                <dd className="text-slate-600">
+                  {deskHours} (confirm before visiting)
+                </dd>
               </div>
             </dl>
             <div className="mt-5 flex flex-wrap gap-3">

@@ -3,7 +3,6 @@ import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import type { Category, HeroSlideRow, HomeReviewsBannerRow, ProductListing } from "@/lib/store-types";
 import { DEMO_PRODUCTS } from "@/lib/demo-products";
 import { DemoProductSection } from "@/components/DemoProductSection";
-import { CategorySlider } from "@/components/CategorySlider";
 import { FALLBACK_HERO_BACKDROP_SLIDES } from "@/lib/site-visuals";
 import { HeroCarouselDots, HeroCarouselProvider } from "@/components/HeroBackdropCarousel";
 import { FeaturedProductsCarousel } from "@/components/FeaturedProductsCarousel";
@@ -149,19 +148,18 @@ async function HomeServer() {
       </section>
 
       <main className="mx-auto w-full max-w-7xl px-4 pb-12 pt-10">
-        <section className="rounded-3xl border border-slate-200/80 bg-slate-50/80 px-3 py-6 shadow-inner sm:px-5 sm:py-7">
-          <div className="flex items-end justify-between gap-4 px-1">
-            <div>
-              <h2 className="text-lg font-semibold tracking-tight text-slate-900">Shop by category</h2>
-              <p className="mt-1 text-sm text-slate-600">Curated sections for faster browsing — auto-scrolls; pause by hovering.</p>
+        <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
+          <div className="flex items-end justify-between gap-4">
+            <div className="min-w-0">
+              <h2 className="text-lg font-semibold tracking-tight text-slate-900">Browse categories</h2>
+              <p className="mt-1 text-sm text-slate-600">Quick links to the same categories in the navbar dropdown.</p>
             </div>
             <Link href="/products" className="shrink-0 text-sm font-semibold text-blue-700 hover:text-blue-800">
               View all
             </Link>
           </div>
-          <div className="mt-5 px-0">
-            <CategorySlider categories={(categories as Category[] | null) ?? []} />
-          </div>
+
+          <BrowseCategoriesGrid categories={allCategoriesList} />
         </section>
 
         <section className="mt-12">
@@ -204,20 +202,6 @@ async function HomeServer() {
               </p>
             </div>
           )}
-        </section>
-
-        <section className="mt-12 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
-          <div className="flex items-end justify-between gap-4">
-            <div className="min-w-0">
-              <h2 className="text-lg font-semibold tracking-tight text-slate-900">Browse categories</h2>
-              <p className="mt-1 text-sm text-slate-600">Quick links to the same categories in the navbar dropdown.</p>
-            </div>
-            <Link href="/products" className="shrink-0 text-sm font-semibold text-blue-700 hover:text-blue-800">
-              View all
-            </Link>
-          </div>
-
-          <BrowseCategoriesGrid categories={allCategoriesList} />
         </section>
 
         <section className="mt-12">

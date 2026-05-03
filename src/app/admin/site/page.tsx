@@ -20,6 +20,9 @@ function fieldRow(
     | "bankAccountTitle"
     | "jazzcashNumber"
     | "jazzcashTitle"
+    | "supportDeskHours"
+    | "supportEscalations"
+    | "supportCommitmentsIntro"
   >,
   label: string,
   hint: string,
@@ -103,7 +106,7 @@ export default async function AdminSitePage({
           </div>
         ) : null}
 
-        <form action={mergeStorefrontSettings} encType="multipart/form-data" className="mt-8 space-y-10">
+        <form action={mergeStorefrontSettings} className="mt-8 space-y-10">
           <section className="rounded-3xl border border-slate-200 bg-slate-50/70 p-4 sm:p-5">
             <h2 className="text-lg font-semibold text-slate-900">Hero & header copy</h2>
             <div className="mt-5 grid gap-5 sm:grid-cols-6">
@@ -209,6 +212,30 @@ export default async function AdminSitePage({
                   </div>
                 );
               })}
+            </div>
+          </section>
+
+          <section className="rounded-3xl border border-slate-200 bg-slate-50/70 p-4 sm:p-5">
+            <h2 className="text-lg font-semibold text-slate-900">Contact page — support hours &amp; SLA lines</h2>
+            <p className="mt-2 max-w-2xl text-xs text-slate-600">
+              These strings appear in the dashed “Support commitments” card on <span className="font-semibold">/contact</span>, the visit section hours line, and{" "}
+              <span className="font-semibold">desk hours in the footer</span>. Use 24-hour times (e.g. 08:00–20:00) for an 8-to-8 day.
+            </p>
+            <div className="mt-5 grid gap-5 sm:grid-cols-6">
+              {fieldRow("supportDeskHours", "Desk hours", "e.g. 08:00–20:00 PKT · Mon–Sat", storefront, false, {
+                supportDeskHours: "support_desk_hours",
+              })}
+              {fieldRow("supportEscalations", "Escalations", "Second row in the support card.", storefront, false, {
+                supportEscalations: "support_escalations",
+              })}
+              {fieldRow(
+                "supportCommitmentsIntro",
+                "Support card intro paragraph",
+                "Grey paragraph above the two rows.",
+                storefront,
+                true,
+                { supportCommitmentsIntro: "support_commitments_intro" },
+              )}
             </div>
           </section>
 

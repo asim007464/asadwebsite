@@ -1,6 +1,7 @@
 "use server";
 
 import { z } from "zod";
+import { shippingPkrForPaymentMethod } from "@/lib/checkout-shipping";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { sendOrderEmail } from "@/lib/email";
 
@@ -42,7 +43,7 @@ function makeOrderNumber() {
 export async function createOrder(payload: unknown) {
   const input = checkoutSchema.parse(payload);
   const subtotal = input.items.reduce((s, it) => s + it.unitPricePkr * it.quantity, 0);
-  const shipping = 0;
+  const shipping = shippingPkrForPaymentMethod(input.payment_method);
   const total = subtotal + shipping;
 
   const supabase = createSupabaseAdminClient();
@@ -122,7 +123,7 @@ export async function createOrder(payload: unknown) {
       html: `
         <div style="font-family:Arial,sans-serif;line-height:1.4">
           <h2 style="margin:0 0 8px">New Order: ${order.order_number}</h2>
-          <p style="margin:0 0 12px;color:#444">Payment: ${input.payment_method.toUpperCase()} • Total: <b>PKR ${order.total_pkr}</b></p>
+          <p style="margin:0 0 12px;color:#444">Payment: ${input.payment_method.toUpperCase()} • Subtotal: PKR ${subtotal} • Shipping: PKR ${shipping} • Total: <b>PKR ${order.total_pkr}</b></p>
           <h3 style="margin:16px 0 8px">Customer</h3>
           <p style="margin:0;color:#444">
             <b>${input.customer_name}</b><br/>

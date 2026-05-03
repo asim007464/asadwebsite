@@ -78,3 +78,10 @@ body {
   outline-offset: 2px;
 }
 
+/* Header product search: pill uses focus-within ring; inner outline clashes with rounded UI */
+#site-header-search:focus,
+#site-header-search:focus-visible {
+  outline: none;
+  outline-offset: 0;
+}
+

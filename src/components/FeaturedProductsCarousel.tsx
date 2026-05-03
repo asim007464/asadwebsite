@@ -139,14 +139,8 @@ export function FeaturedProductsCarousel({ products }: { products: ProductListin
                 </Link>
                 <p className="mt-2 min-h-[2.5rem] text-sm leading-relaxed text-slate-600 line-clamp-2">{p.description}</p>
                 <div className="mt-auto space-y-3 border-t border-slate-100 pt-3">
-                  <div className="flex flex-wrap items-center justify-between gap-2">
-                    <div className="flex flex-wrap gap-2 text-[11px] font-semibold text-slate-500">
-                      <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-slate-700 ring-1 ring-slate-200/80">COD</span>
-                      <span className="rounded-full bg-blue-50 px-2.5 py-0.5 text-blue-800 ring-1 ring-blue-100">Phone confirmed</span>
-                    </div>
-                    <div className="shrink-0 rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold tabular-nums text-blue-800 ring-1 ring-blue-100/80">
-                      {formatPKR(p.min_price_pkr)}
-                    </div>
+                  <div className="inline-flex rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold tabular-nums text-blue-800 ring-1 ring-blue-100/80">
+                    {formatPKR(p.min_price_pkr)}
                   </div>
                   <div className="flex flex-wrap items-center justify-between gap-3">
                     <div className="flex flex-wrap items-center gap-2">

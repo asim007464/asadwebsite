@@ -51,7 +51,6 @@ export default async function AdminHeroSlidesPage({
 
         <form
           action={createHeroSlide}
-          encType="multipart/form-data"
           className="mt-6 grid grid-cols-1 gap-3 rounded-3xl border border-slate-200 bg-slate-50 p-4 sm:grid-cols-12 sm:p-5"
         >
           <div className="sm:col-span-5">
@@ -100,7 +99,7 @@ export default async function AdminHeroSlidesPage({
                   <Image src={s.url} alt="" fill className="object-cover" sizes="140px" />
                 </div>
                 <div className="p-4">
-                  <form id={`hero-slide-edit-${s.id}`} action={updateHeroSlide} encType="multipart/form-data" className="grid gap-3 sm:grid-cols-12">
+                  <form id={`hero-slide-edit-${s.id}`} action={updateHeroSlide} className="grid gap-3 sm:grid-cols-12">
                     <input type="hidden" name="id" value={s.id} />
                     <div className="sm:col-span-5">
                       <label className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">URL</label>
@@ -166,7 +165,7 @@ export default async function AdminHeroSlidesPage({
               <div className="relative mx-auto aspect-[16/10] w-full max-w-sm overflow-hidden rounded-2xl bg-slate-100">
                 <Image src={s.url} alt="" fill className="object-cover" sizes="(max-width:400px) 100vw, 400px" />
               </div>
-              <form id={`hero-slide-edit-m-${s.id}`} action={updateHeroSlide} encType="multipart/form-data" className="mt-4 space-y-3">
+              <form id={`hero-slide-edit-m-${s.id}`} action={updateHeroSlide} className="mt-4 space-y-3">
                 <input type="hidden" name="id" value={s.id} />
                 <div>
                   <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">URL</label>

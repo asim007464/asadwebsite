@@ -83,7 +83,7 @@ export default async function AdminReviewsBannerPage({
           </div>
         ) : null}
 
-        <form action={updateHomeReviewsBanner} encType="multipart/form-data" className="mt-8 grid grid-cols-1 gap-5 border-t border-slate-100 pt-8 md:gap-6">
+        <form action={updateHomeReviewsBanner} className="mt-8 grid grid-cols-1 gap-5 border-t border-slate-100 pt-8 md:gap-6">
           <div>
             <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">Background image URL</label>
             <input

@@ -1,9 +1,10 @@
 import Link from "next/link";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import type { Category, ProductListing } from "@/lib/store-types";
-import { formatPKR } from "@/lib/money";
+import { PRICE_FILTER_MAX_PKR, formatPKR } from "@/lib/money";
 import { DEMO_PRODUCTS } from "@/lib/demo-products";
 import { ProductCardMedia } from "@/components/ProductCardMedia";
+import { ProductsCatalogToolbar } from "@/components/ProductsCatalogToolbar";
 import { ProductsFilters } from "@/components/ProductsFilters";
 import { AddToCartButton } from "@/components/AddToCartButton";
 import { AddToWishlistButton } from "@/components/AddToWishlistButton";
@@ -21,9 +22,16 @@ export default async function ProductsPage({
   const q = qRaw ? qRaw.trim().slice(0, 64) : undefined;
   const minRaw = typeof sp.min === "string" ? sp.min : undefined;
   const maxRaw = typeof sp.max === "string" ? sp.max : undefined;
-  const min = minRaw && /^\d+$/.test(minRaw) ? Math.max(0, Number(minRaw)) : undefined;
-  const max = maxRaw && /^\d+$/.test(maxRaw) ? Math.max(0, Number(maxRaw)) : undefined;
+  const min =
+    minRaw && /^\d+$/.test(minRaw)
+      ? Math.min(PRICE_FILTER_MAX_PKR, Math.max(0, Number(minRaw)))
+      : undefined;
+  const max =
+    maxRaw && /^\d+$/.test(maxRaw)
+      ? Math.min(PRICE_FILTER_MAX_PKR, Math.max(0, Number(maxRaw)))
+      : undefined;
   const sort = typeof sp.sort === "string" ? sp.sort : "name";
+  const featured = sp.featured === "1" || sp.featured === "true";
 
   const PAGE_SIZE = 12;
   const pageRaw = typeof sp.page === "string" ? Number.parseInt(sp.page, 10) : NaN;
@@ -38,7 +46,11 @@ export default async function ProductsPage({
   const [{ data: categories }, listingsPack] = await Promise.all([
     supabase.from("categories").select("id,name,slug,parent_id,thumbnail_url,hero_icon_hint").order("name"),
     (async (): Promise<{ data: ProductListing[] | null; count: number | null }> => {
-      const started = () => supabase.from("product_listings").select(columns, { count: "exact" });
+      const started = () => {
+        let qb = supabase.from("product_listings").select(columns, { count: "exact" });
+        if (featured) qb = qb.eq("is_featured", true);
+        return qb;
+      };
       type RowQ = ReturnType<typeof started>;
       const applyPrice = (qb: RowQ) => {
         let q2 = qb;
@@ -92,6 +104,7 @@ export default async function ProductsPage({
     if (typeof min === "number") u.set("min", String(min));
     if (typeof max === "number") u.set("max", String(max));
     if (sort && sort !== "name") u.set("sort", sort);
+    if (featured) u.set("featured", "1");
     u.set("page", String(Math.max(1, Math.min(next, totalPages))));
     return `/products?${u.toString()}`;
   }
@@ -101,23 +114,25 @@ export default async function ProductsPage({
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h1 className="text-3xl font-semibold tracking-tight text-slate-900">Shop</h1>
-          <p className="mt-2 text-sm text-slate-600">
+          <p className="mt-1.5 text-sm text-slate-600">
             {category ? (
               <>
-                Showing results for <span className="font-semibold text-slate-900">{category}</span>
+                <span className="font-semibold text-slate-900">{category}</span>
+                <span className="text-slate-500"> · category</span>
               </>
             ) : q ? (
               <>
-                Showing results for <span className="font-semibold text-slate-900">“{q}”</span>
+                <span className="font-semibold text-slate-900">“{q}”</span>
+                <span className="text-slate-500"> · search</span>
               </>
             ) : (
-              "Browse our catalog with category shortcuts."
+              "Filter by category, search, or price."
             )}
             {hasLiveProducts ? (
               <>
                 {" "}
                 <span className="text-slate-500">
-                  ({showingFrom}–{showingTo} of {totalCount} live SKUs, {PAGE_SIZE} per page)
+                  · {showingFrom}–{showingTo} of {totalCount} products
                 </span>
               </>
             ) : null}
@@ -159,12 +174,14 @@ export default async function ProductsPage({
           </p>
         </div>
       ) : (
-        <div className="mt-6 rounded-3xl border border-blue-100 bg-blue-50/60 p-6 text-sm text-blue-950 shadow-sm">
-          <div className="font-semibold">Buying signals & dispatch cadence</div>
-          <p className="mt-2 leading-relaxed">
-            Live SKUs pull straight from Supabase—variants show watts, colours, and bundles on each detail page. Need alternate finishes or voltage checks for travelers? WhatsApp photos of your wall/outlet setup before COD confirmation.
-          </p>
-        </div>
+        <ProductsCatalogToolbar
+          category={category}
+          q={q}
+          min={min}
+          max={max}
+          sort={sort}
+          featured={featured}
+        />
       )}
 
       <div className="mt-8 grid gap-6 md:grid-cols-[18rem_1fr]">
@@ -303,36 +320,6 @@ export default async function ProductsPage({
             Page <span className="font-semibold text-slate-900">{page}</span> / {totalPages}
           </p>
         </nav>
-      ) : null}
-
-      {hasLiveProducts ? (
-        <section className="mt-10 rounded-3xl border border-dashed border-blue-200 bg-gradient-to-br from-blue-50/60 via-white to-white p-6 sm:p-8">
-          <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
-            <div>
-              <div className="inline-flex rounded-full bg-blue-600 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-white">
-                Merchandising playground
-              </div>
-              <h2 className="mt-3 text-xl font-semibold tracking-tight text-slate-900">Need richer storytelling while inventory ramps?</h2>
-              <p className="mt-2 max-w-3xl text-sm leading-relaxed text-slate-600">
-                These fake SKUs mirror how bundles, badges, and cross-sell rails will feel once marketing drops campaign copy. They stay offline until you wire real equivalents.
-              </p>
-            </div>
-            <span className="rounded-full bg-white px-4 py-2 text-xs font-semibold text-blue-900 ring-1 ring-blue-100">Non-interactive samples</span>
-          </div>
-
-          <div className="mt-6 grid gap-5 lg:grid-cols-3">
-            {DEMO_PRODUCTS.slice(0, 3).map((p) => (
-              <article key={`story-${p.sku}`} className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
-                <div className="text-xs font-semibold uppercase tracking-wide text-blue-700">{p.category}</div>
-                <div className="mt-2 text-base font-semibold text-slate-900">{p.name}</div>
-                <p className="mt-3 text-sm leading-relaxed text-slate-600">{p.description}</p>
-                <div className="mt-4 rounded-2xl bg-slate-50 p-4 text-xs font-semibold uppercase tracking-wide text-slate-500">
-                  Cross-sell ideas • cooler pads • spare jug • diffuser nozzle • sandwich waffle plates
-                </div>
-              </article>
-            ))}
-          </div>
-        </section>
       ) : null}
     </main>
   );
