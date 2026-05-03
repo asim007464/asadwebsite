@@ -7,15 +7,25 @@ import { CategoryGlyph } from "@/components/category-glyphs";
 import { SafeRemoteImage } from "@/components/SafeRemoteImage";
 import type { Category } from "@/lib/store-types";
 
-export type CategorySliderItem = Pick<Category, "id" | "name" | "slug" | "thumbnail_url" | "hero_icon_hint">;
+export type CategorySliderItem = Pick<
+  Category,
+  "id" | "name" | "slug" | "thumbnail_url" | "hero_icon_hint"
+>;
 
 function CategoryIconBox({ c }: { c: CategorySliderItem }) {
   const thumb = (c.thumbnail_url ?? "").trim();
-  const useImg = thumb.startsWith("https://") || (thumb.startsWith("/") && thumb.length > 1);
+  const useImg =
+    thumb.startsWith("https://") || (thumb.startsWith("/") && thumb.length > 1);
   if (useImg) {
     return (
       <div className="relative mb-3 aspect-[16/11] w-full overflow-hidden rounded-xl ring-1 ring-inset ring-blue-100/90">
-        <SafeRemoteImage src={thumb} alt="" fill className="object-cover" sizes="144px" />
+        <SafeRemoteImage
+          src={thumb}
+          alt=""
+          fill
+          className="object-cover"
+          sizes="144px"
+        />
       </div>
     );
   }
@@ -26,7 +36,11 @@ function CategoryIconBox({ c }: { c: CategorySliderItem }) {
   );
 }
 
-export function CategorySlider({ categories }: { categories: CategorySliderItem[] }) {
+export function CategorySlider({
+  categories,
+}: {
+  categories: CategorySliderItem[];
+}) {
   const itemsAll = categories ?? [];
   const [narrow, setNarrow] = useState(false);
   const [expanded, setExpanded] = useState(false);
@@ -52,8 +66,15 @@ export function CategorySlider({ categories }: { categories: CategorySliderItem[
   if (!itemsAll.length) {
     return (
       <div className="rounded-2xl border border-dashed border-slate-200 bg-white p-6 text-sm text-slate-600">
-        No categories yet. Run <code className="rounded bg-slate-100 px-1 py-0.5 text-xs">supabase/seed.sql</code>, or add categories in{" "}
-        <Link href="/admin/categories" className="font-semibold text-blue-700 hover:text-blue-800">
+        No categories yet. Run{" "}
+        <code className="rounded bg-slate-100 px-1 py-0.5 text-xs">
+          supabase/seed.sql
+        </code>
+        , or add categories in{" "}
+        <Link
+          href="/admin/categories"
+          className="font-semibold text-blue-700 hover:text-blue-800"
+        >
           Admin → Categories
         </Link>
         .
@@ -69,32 +90,57 @@ export function CategorySlider({ categories }: { categories: CategorySliderItem[
   return (
     <div className="relative space-y-4">
       <div className="relative">
-        <div className="pointer-events-none absolute inset-y-0 left-0 z-[1] w-10 bg-gradient-to-r from-slate-50 to-transparent sm:w-14" aria-hidden />
-        <div className="pointer-events-none absolute inset-y-0 right-0 z-[1] w-10 bg-gradient-to-l from-slate-50 to-transparent sm:w-14" aria-hidden />
+        <div
+          className="pointer-events-none absolute inset-y-0 left-0 z-[1] w-10 bg-gradient-to-r from-slate-50 to-transparent sm:w-14"
+          aria-hidden
+        />
+        <div
+          className="pointer-events-none absolute inset-y-0 right-0 z-[1] w-10 bg-gradient-to-l from-slate-50 to-transparent sm:w-14"
+          aria-hidden
+        />
 
         <div className="hidden motion-reduce:block overflow-x-auto pb-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           <div className="flex w-max gap-3 pt-0.5">
             {items.map((c) => (
-              <Link key={c.id} href={`/products?category=${encodeURIComponent(c.slug)}`} className={cardClass}>
+              <Link
+                key={c.id}
+                href={`/products?category=${encodeURIComponent(c.slug)}`}
+                className={cardClass}
+              >
                 <div>
                   <CategoryIconBox c={c} />
-                  <div className="text-sm font-semibold leading-snug text-slate-900 group-hover:text-blue-800">{c.name}</div>
+                  <div className="text-sm font-semibold leading-snug text-slate-900 group-hover:text-blue-800">
+                    {c.name}
+                  </div>
                 </div>
-                <div className="mt-3 text-xs font-medium text-blue-600/90">Explore products →</div>
+                <div className="mt-3 text-xs font-medium text-blue-600/90">
+                  Explore products →
+                </div>
               </Link>
             ))}
           </div>
         </div>
 
         <div className="motion-reduce:hidden overflow-hidden pb-1 pt-0.5">
-          <div className="category-marquee-track flex w-max gap-3" style={{ "--marquee-duration": `${durationSec}s` } as CSSProperties}>
+          <div
+            className="category-marquee-track flex w-max gap-3"
+            style={{ "--marquee-duration": `${durationSec}s` } as CSSProperties}
+          >
             {[...items, ...items].map((c, i) => (
-              <Link key={`${c.id}-${i}`} href={`/products?category=${encodeURIComponent(c.slug)}`} className={cardClass}>
+              <Link
+                key={`${c.id}-${i}`}
+                href={`/products?category=${encodeURIComponent(c.slug)}`}
+                className={cardClass}
+              >
                 <div>
                   <CategoryIconBox c={c} />
-                  <div className="text-sm font-semibold leading-snug text-slate-900 group-hover:text-blue-800">{c.name}</div>
+                  <div className="text-sm font-semibold leading-snug text-slate-900 group-hover:text-blue-800">
+                    {c.name}
+                  </div>
                 </div>
-                <div className="mt-3 text-xs font-medium text-blue-600/90">Explore products →</div>
+                <div className="mt-3 text-xs font-medium text-blue-600/90">
+                  Explore products →
+                </div>
               </Link>
             ))}
           </div>

@@ -15,7 +15,11 @@ function pickCategoryVisual(c: Category) {
   return { url: fb.url, alt: fb.alt };
 }
 
-export function BrowseCategoriesGrid({ categories }: { categories: Category[] }) {
+export function BrowseCategoriesGrid({
+  categories,
+}: {
+  categories: Category[];
+}) {
   const [narrow, setNarrow] = useState(false);
   const [expanded, setExpanded] = useState(false);
 
@@ -71,8 +75,12 @@ export function BrowseCategoriesGrid({ categories }: { categories: Category[] })
                 />
               </div>
               <div className="p-4">
-                <div className="truncate text-sm font-semibold text-slate-900 group-hover:text-blue-800">{c.name}</div>
-                <div className="mt-1 text-xs font-medium text-slate-500">Explore →</div>
+                <div className="truncate text-sm font-semibold text-slate-900 group-hover:text-blue-800">
+                  {c.name}
+                </div>
+                <div className="mt-1 text-xs font-medium text-slate-500">
+                  Explore →
+                </div>
               </div>
             </Link>
           );
