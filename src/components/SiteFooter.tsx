@@ -252,7 +252,7 @@ export async function SiteFooter() {
               <dl className="space-y-4 text-sm">
                 <div>
                   <dt className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Hours · PKT</dt>
-                  <dd className="mt-1 font-semibold text-slate-100">Mon–Sat · 10:00–19:00</dd>
+                  <dd className="mt-1 font-semibold text-slate-100">{storefront.supportDeskHours}</dd>
                 </div>
                 <div>
                   <dt className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Sales</dt>

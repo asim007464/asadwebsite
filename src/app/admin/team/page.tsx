@@ -41,31 +41,21 @@ function fmtWhen(iso: string | undefined): string {
   }
 }
 
+const badgeBase =
+  "inline-flex shrink-0 items-center justify-center whitespace-nowrap rounded-full px-3 py-1.5 text-xs font-bold ring-1";
 const btnPrimary =
-  "inline-flex min-h-[44px] items-center justify-center rounded-lg bg-blue-600 px-4 text-xs font-bold text-white shadow-sm transition hover:bg-blue-700 active:bg-blue-800 disabled:opacity-50 sm:min-h-0";
+  "inline-flex shrink-0 min-h-[44px] items-center justify-center whitespace-nowrap rounded-full bg-blue-600 px-4 text-xs font-bold text-white shadow-sm transition hover:bg-blue-700 active:bg-blue-800 disabled:opacity-50 sm:h-9 sm:min-h-0";
 const btnDanger =
-  "inline-flex min-h-[44px] items-center justify-center rounded-lg border border-red-200 bg-red-50 px-4 text-xs font-bold text-red-800 shadow-sm transition hover:bg-red-100 active:bg-red-100/80 disabled:opacity-50 sm:min-h-0";
+  "inline-flex shrink-0 min-h-[44px] items-center justify-center whitespace-nowrap rounded-full border border-red-300 bg-red-50 px-4 text-xs font-bold text-red-800 shadow-sm transition hover:bg-red-100 active:bg-red-100/80 disabled:opacity-50 sm:h-9 sm:min-h-0";
 
 function AccessBadge({ role }: { role: "Owner" | "Staff admin" | "Customer" }) {
   if (role === "Owner") {
-    return (
-      <span className="inline-flex rounded-full bg-violet-100 px-2.5 py-1 text-[11px] font-bold text-violet-900 ring-1 ring-violet-200/60">
-        Owner
-      </span>
-    );
+    return <span className={`${badgeBase} bg-violet-100 text-violet-900 ring-violet-200/60`}>Owner</span>;
   }
   if (role === "Staff admin") {
-    return (
-      <span className="inline-flex rounded-full bg-blue-100 px-2.5 py-1 text-[11px] font-bold text-blue-900 ring-1 ring-blue-200/60">
-        Staff admin
-      </span>
-    );
+    return <span className={`${badgeBase} bg-blue-100 text-blue-900 ring-blue-200/60`}>Staff admin</span>;
   }
-  return (
-    <span className="inline-flex rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-semibold text-slate-700 ring-1 ring-slate-200/80">
-      Customer
-    </span>
-  );
+  return <span className={`${badgeBase} bg-slate-100 font-semibold text-slate-700 ring-slate-200/80`}>Customer</span>;
 }
 
 export default async function AdminTeamPage({
@@ -238,7 +228,7 @@ export default async function AdminTeamPage({
                           {canPromote ? (
                             <form action={promoteAdminStaff} className="min-w-0 flex-1 sm:flex-none">
                               <input type="hidden" name="email" value={email} />
-                              <button type="submit" className={`${btnPrimary} h-11 w-full min-h-[44px] sm:h-9 sm:min-h-0`}>
+                              <button type="submit" className={`${btnPrimary} w-full sm:w-auto`}>
                                 Make admin
                               </button>
                             </form>
@@ -246,7 +236,7 @@ export default async function AdminTeamPage({
                           {canDemote ? (
                             <form action={demoteAdminStaff} className="min-w-0 flex-1 sm:flex-none">
                               <input type="hidden" name="email" value={email} />
-                              <button type="submit" className={`${btnDanger} h-11 w-full min-h-[44px] sm:h-9 sm:min-h-0`}>
+                              <button type="submit" className={`${btnDanger} w-full sm:w-auto`}>
                                 Remove admin
                               </button>
                             </form>
@@ -309,29 +299,29 @@ export default async function AdminTeamPage({
                           </td>
                           <td className="whitespace-nowrap px-4 py-3 text-slate-600">{fmtWhen(u.created_at)}</td>
                           <td className="whitespace-nowrap px-4 py-3 text-slate-600">{fmtWhen(u.last_sign_in_at)}</td>
-                          <td className="px-4 py-3">
+                          <td className="whitespace-nowrap px-4 py-3 align-middle">
                             <AccessBadge role={role} />
                           </td>
-                          <td className="px-4 py-3 text-right">
-                            <div className="flex flex-wrap justify-end gap-2">
+                          <td className="whitespace-nowrap px-4 py-3 text-right align-middle">
+                            <div className="flex flex-nowrap justify-end gap-2">
                               {canPromote ? (
-                                <form action={promoteAdminStaff} className="inline">
+                                <form action={promoteAdminStaff} className="inline shrink-0">
                                   <input type="hidden" name="email" value={email} />
-                                  <button type="submit" className={`${btnPrimary} h-9`}>
+                                  <button type="submit" className={btnPrimary}>
                                     Make admin
                                   </button>
                                 </form>
                               ) : null}
                               {canDemote ? (
-                                <form action={demoteAdminStaff} className="inline">
+                                <form action={demoteAdminStaff} className="inline shrink-0">
                                   <input type="hidden" name="email" value={email} />
-                                  <button type="submit" className={`${btnDanger} h-9`}>
+                                  <button type="submit" className={btnDanger}>
                                     Remove admin
                                   </button>
                                 </form>
                               ) : null}
                               {role === "Owner" ? (
-                                <span className="inline-flex h-9 items-center text-xs font-medium text-slate-400">—</span>
+                                <span className="inline-flex h-9 shrink-0 items-center text-xs font-medium text-slate-400">—</span>
                               ) : null}
                               {!canPromote && !canDemote && role !== "Owner" && !email ? (
                                 <span className="text-xs text-slate-400">—</span>
@@ -344,47 +334,6 @@ export default async function AdminTeamPage({
                   )}
                 </tbody>
               </table>
-            </div>
-          </section>
-
-          {/* Quick actions — same button styles as table */}
-          <section>
-            <h2 className="mb-3 text-xs font-bold uppercase tracking-wider text-slate-500">Quick add / remove by email</h2>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="rounded-2xl border border-slate-200 bg-gradient-to-b from-white to-slate-50/80 p-4 shadow-sm">
-                <h3 className="text-sm font-bold text-slate-900">Grant access</h3>
-                <p className="mt-1 text-xs text-slate-600">For someone not on this page yet (must have a shop account).</p>
-                <form action={promoteAdminStaff} className="mt-3 space-y-3">
-                  <input
-                    name="email"
-                    type="email"
-                    required
-                    autoComplete="email"
-                    placeholder="colleague@example.com"
-                    className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
-                  />
-                  <button type="submit" className={`${btnPrimary} h-10 w-full rounded-xl`}>
-                    Grant dashboard access
-                  </button>
-                </form>
-              </div>
-              <div className="rounded-2xl border border-slate-200 bg-gradient-to-b from-white to-slate-50/80 p-4 shadow-sm">
-                <h3 className="text-sm font-bold text-slate-900">Revoke access</h3>
-                <p className="mt-1 text-xs text-slate-600">They keep their customer login; only /admin is removed.</p>
-                <form action={demoteAdminStaff} className="mt-3 space-y-3">
-                  <input
-                    name="email"
-                    type="email"
-                    required
-                    autoComplete="email"
-                    placeholder="email@example.com"
-                    className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm outline-none focus:border-red-300 focus:ring-2 focus:ring-red-100"
-                  />
-                  <button type="submit" className={`${btnDanger} h-10 w-full rounded-xl`}>
-                    Revoke dashboard access
-                  </button>
-                </form>
-              </div>
             </div>
           </section>
         </div>

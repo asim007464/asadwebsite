@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { createProduct } from "@/app/admin/actions";
 import { ADMIN_IMAGE_FILE_INPUT_CLASS, ADMIN_IMAGE_UPLOAD_HINT } from "@/lib/admin-media-upload";
+import { AdminStockQtyField } from "@/components/admin/AdminStockQtyField";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
 export const dynamic = "force-dynamic";
@@ -13,6 +14,8 @@ function errMsg(code: string) {
   if (code === "price") return "Price (PKR) must be a whole number ≥ 0.";
   if (code === "compare") return "Compare-at price must be empty or a whole number ≥ 0.";
   if (code === "image") return "Image URL must be empty, https://, or a path starting with /.";
+  if (code === "gallery-too-many") return "You can upload at most 12 images at once.";
+  if (code === "brand") return "Could not save that brand. Try a shorter name or try again.";
   return code.length < 180 ? code : "Something went wrong.";
 }
 
@@ -30,13 +33,9 @@ export default async function AdminNewProductPage({
   const error = errorRaw ? errMsg(decodeURIComponent(errorRaw)) : "";
 
   const supabase = createSupabaseAdminClient();
-  const [{ data: categories }, { data: brands }] = await Promise.all([
-    supabase.from("categories").select("id,name").order("name"),
-    supabase.from("brands").select("id,name").order("name"),
-  ]);
+  const { data: categories } = await supabase.from("categories").select("id,name").order("name");
 
   const cats = (categories ?? []) as { id: string; name: string }[];
-  const brs = (brands ?? []) as { id: string; name: string }[];
 
   return (
     <main className="py-6 lg:py-0">
@@ -58,7 +57,7 @@ export default async function AdminNewProductPage({
           <div className="mt-5 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-800">{error}</div>
         ) : null}
 
-        <form action={createProduct} encType="multipart/form-data" className="mt-8 grid max-w-3xl grid-cols-1 gap-6 sm:grid-cols-2">
+        <form action={createProduct} className="mt-8 grid max-w-3xl grid-cols-1 gap-6 sm:grid-cols-2">
           <div className="sm:col-span-2">
             <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">Product name</label>
             <input name="name" required placeholder="e.g. Ceiling fan 56″ with remote" className={input} />
@@ -88,15 +87,13 @@ export default async function AdminNewProductPage({
             </select>
           </div>
           <div>
-            <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">Brand</label>
-            <select name="brand_id" className={input}>
-              <option value="">— None —</option>
-              {brs.map((b) => (
-                <option key={b.id} value={b.id}>
-                  {b.name}
-                </option>
-              ))}
-            </select>
+            <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">Brand (optional)</label>
+            <input
+              name="brand_name"
+              placeholder="e.g. Philips — new names create a brand automatically"
+              className={input}
+              autoComplete="off"
+            />
           </div>
           <div className="sm:col-span-2">
             <label className="flex cursor-pointer items-center gap-2 text-sm font-semibold text-slate-800">
@@ -126,20 +123,29 @@ export default async function AdminNewProductPage({
             <input name="compare_at_price_pkr" type="number" min={0} step={1} placeholder="19500" className={input} />
           </div>
           <div>
-            <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">Stock quantity</label>
-            <input name="stock_qty" type="number" min={0} step={1} defaultValue={0} className={input} />
+            <AdminStockQtyField name="stock_qty" label="Stock quantity" defaultQty={0} inputClassName={input} />
           </div>
           <div className="sm:col-span-2">
-            <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">Primary image URL (optional)</label>
-            <input name="primary_image_url" placeholder="https://… or /photo-in-public.jpg" className={monoInput} />
-            <label className="mt-3 block text-xs font-semibold uppercase tracking-wide text-slate-500">Or upload from computer</label>
+            <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">Images — URL (optional)</label>
             <input
-              name="primary_image_file"
+              name="primary_image_url"
+              placeholder="https://… or /photo-in-public.jpg — used only if you upload no files below"
+              className={monoInput}
+            />
+            <label className="mt-3 block text-xs font-semibold uppercase tracking-wide text-slate-500">
+              Or upload one or more images
+            </label>
+            <input
+              name="gallery_files"
               type="file"
               accept="image/jpeg,image/png,image/webp,image/gif"
+              multiple
               className={ADMIN_IMAGE_FILE_INPUT_CLASS}
             />
-            <p className="mt-1 text-[11px] text-slate-500">{ADMIN_IMAGE_UPLOAD_HINT}</p>
+            <p className="mt-1 text-[11px] text-slate-500">
+              {ADMIN_IMAGE_UPLOAD_HINT} Select multiple files with Ctrl or ⌘ (up to 12). The first file is the cover;
+              change order later on the edit screen.
+            </p>
           </div>
 
           <div className="sm:col-span-2 flex flex-wrap gap-3">

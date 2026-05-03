@@ -105,7 +105,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
       .eq("product_id", product.id)
       .eq("is_active", true)
       .order("price_pkr"),
-    supabase.from("product_images").select("url,alt,sort_order").eq("product_id", product.id).order("sort_order"),
+    supabase.from("product_images").select("id,url,alt,sort_order").eq("product_id", product.id).order("sort_order"),
   ]);
 
   const variantRows = (variants as ProductVariant[] | null) ?? [];
@@ -121,9 +121,13 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
     qtyByVariant.set(row.variant_id, row.qty_available);
   }
 
-  const imgs = images ?? [];
+  const imgs = (images ?? []) as { id: string; url: string; alt: string; sort_order: number }[];
   const hero = imgs[0];
-  const galleryImages = imgs.map((img) => ({ url: img.url, alt: img.alt || product.name }));
+  const galleryImages = imgs.map((img) => ({
+    id: img.id,
+    url: img.url,
+    alt: img.alt || product.name,
+  }));
 
   return (
     <main className="mx-auto w-full max-w-6xl px-4 py-10">
@@ -147,11 +151,6 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
           <div>
             <h1 className="text-3xl font-semibold tracking-tight text-slate-900">{product.name}</h1>
             <p className="mt-3 whitespace-pre-line text-sm leading-relaxed text-slate-600">{product.description}</p>
-            <div className="mt-4 flex flex-wrap gap-2 text-[11px] font-semibold">
-              <span className="rounded-full bg-blue-50 px-2.5 py-1 text-blue-800 ring-1 ring-blue-100">COD nationwide</span>
-              <span className="rounded-full bg-slate-100 px-2.5 py-1 text-slate-700 ring-1 ring-slate-200">Phone / WhatsApp confirmation</span>
-              <span className="rounded-full bg-slate-100 px-2.5 py-1 text-slate-700 ring-1 ring-slate-200">Specs tied to SKU</span>
-            </div>
           </div>
 
           <div className="rounded-3xl border border-slate-200 bg-white/95 p-6 shadow-sm ring-1 ring-white/60 backdrop-blur-sm">

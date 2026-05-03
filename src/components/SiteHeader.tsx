@@ -332,10 +332,10 @@ export function SiteHeader() {
       <div className="mx-auto flex min-h-[3.5rem] w-full max-w-6xl items-center justify-between gap-4 px-4 py-2 md:min-h-[4rem] md:py-2.5 lg:px-6">
         <Link
           href="/"
-          className="group flex min-w-0 flex-1 shrink items-center gap-2 rounded-2xl py-0.5 font-semibold tracking-tight text-slate-900 transition-opacity hover:opacity-90 sm:gap-3.5 lg:flex-none lg:shrink-0"
+          className="group flex shrink-0 items-center gap-2 rounded-2xl py-0.5 font-semibold tracking-tight text-slate-900 transition-opacity hover:opacity-90 sm:gap-3.5 lg:min-w-0 lg:flex-none lg:shrink-0"
         >
           {!logoError ? (
-            <span className="relative flex h-16 w-16 shrink-0 items-center justify-center md:h-[4.25rem] md:w-[4.25rem]">
+            <span className="relative flex h-14 w-14 shrink-0 items-center justify-center sm:h-16 sm:w-16 md:h-[4.25rem] md:w-[4.25rem]">
               <Image
                 src="/website-logo.jpeg"
                 alt={`${SITE_SHOP_NAME} logo`}
@@ -347,11 +347,11 @@ export function SiteHeader() {
               />
             </span>
           ) : (
-            <span className="flex h-16 w-16 shrink-0 items-center justify-center rounded-xl bg-blue-600 text-sm font-bold text-white md:h-[4.25rem] md:w-[4.25rem] md:text-base">
+            <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-blue-600 text-sm font-bold text-white sm:h-16 sm:w-16 md:h-[4.25rem] md:w-[4.25rem] md:text-base">
               AM
             </span>
           )}
-          <span className="flex min-w-0 flex-col">
+          <span className="hidden min-w-0 flex-col lg:flex">
             <span className="text-[13px] font-bold leading-snug text-slate-900 sm:text-[15px] md:text-lg md:leading-tight">
               {SITE_SHOP_NAME}
             </span>
@@ -409,7 +409,7 @@ export function SiteHeader() {
               }}
               placeholder="Search products"
               autoComplete="off"
-              className="min-w-0 flex-1 border-0 bg-transparent py-2 pl-1 pr-2 text-sm font-semibold text-slate-800 placeholder:text-slate-400 outline-none focus:ring-0"
+              className="min-w-0 flex-1 border-0 bg-transparent py-2 pl-1 pr-2 text-sm font-semibold text-slate-800 placeholder:text-slate-400 outline-none focus:outline-none focus-visible:outline-none focus:ring-0 focus-visible:ring-0"
             />
             <button
               type="submit"
@@ -674,22 +674,6 @@ export function SiteHeader() {
               </span>
             ) : null}
           </Link>
-          {customer ? (
-            <span
-              className="inline-flex h-11 w-11 items-center justify-center rounded-full bg-blue-600 text-sm font-bold uppercase text-white shadow-sm ring-2 ring-blue-100"
-              aria-label={`Signed in as ${displayName ?? "you"}`}
-            >
-              {(displayName ?? "?").slice(0, 1)}
-            </span>
-          ) : (
-            <Link
-              href="/login"
-              className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-800 shadow-sm transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-800 active:scale-[0.98]"
-              aria-label="Account — sign in"
-            >
-              <ProfileIcon className="h-[1.25rem] w-[1.25rem]" />
-            </Link>
-          )}
           <Link
             href="/cart"
             className="relative inline-flex h-11 w-11 items-center justify-center rounded-full bg-blue-600 text-white shadow-md shadow-blue-600/30 transition hover:bg-blue-700 active:scale-[0.98]"
@@ -775,13 +759,32 @@ export function SiteHeader() {
                 Contact
               </Link>
               <div className="rounded-2xl border border-slate-100 bg-slate-50/90 p-4">
-                <div className="text-[10px] font-bold uppercase tracking-widest text-blue-700">Account</div>
+                <div className="flex items-center gap-3 border-b border-slate-200/80 pb-3">
+                  <span
+                    className={cn(
+                      "inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full border shadow-sm",
+                      customer
+                        ? "border-blue-200 bg-blue-600 text-white ring-2 ring-blue-100"
+                        : "border-slate-200/90 bg-white text-slate-700",
+                    )}
+                    aria-hidden
+                  >
+                    <ProfileIcon className={cn("h-[1.25rem] w-[1.25rem] shrink-0", customer ? "text-white" : undefined)} />
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <div className="text-[10px] font-bold uppercase tracking-widest text-blue-700">Profile</div>
+                    {customer ? (
+                      <>
+                        <p className="truncate text-[15px] font-semibold text-slate-900">Hello, {displayName}</p>
+                        {customer.email ? <p className="mt-0.5 truncate text-xs font-normal text-slate-500">{customer.email}</p> : null}
+                      </>
+                    ) : (
+                      <p className="text-sm font-medium text-slate-600">Sign in to manage orders and lists</p>
+                    )}
+                  </div>
+                </div>
                 {customer ? (
                   <>
-                    <div className="mt-2 rounded-xl bg-white px-3 py-3 text-[15px] font-semibold text-slate-900 ring-1 ring-blue-100">
-                      Hello, {displayName}
-                      {customer.email ? <span className="mt-2 block truncate text-xs font-normal text-slate-500">{customer.email}</span> : null}
-                    </div>
                     {customer.canAdmin ? (
                       <Link
                         href="/admin"

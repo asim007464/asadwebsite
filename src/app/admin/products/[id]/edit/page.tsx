@@ -6,7 +6,8 @@ import {
   updateProduct,
   updateProductVariant,
 } from "@/app/admin/actions";
-import { ADMIN_IMAGE_FILE_INPUT_CLASS, ADMIN_IMAGE_UPLOAD_HINT } from "@/lib/admin-media-upload";
+import { AdminProductGallery } from "@/components/admin/AdminProductGallery";
+import { AdminStockQtyField } from "@/components/admin/AdminStockQtyField";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
 export const dynamic = "force-dynamic";
@@ -19,6 +20,10 @@ function errMsg(code: string) {
   if (code === "price") return "Price (PKR) must be a whole number ≥ 0.";
   if (code === "compare") return "Compare-at price must be empty or a whole number ≥ 0.";
   if (code === "image") return "Image URL must be empty, https://, or a path starting with /.";
+  if (code === "no-gallery-files") return "Choose at least one image file to upload.";
+  if (code === "gallery-too-many") return `You can upload at most 12 images at a time.`;
+  if (code === "cover-not-found") return "That image could not be found; refresh and try again.";
+  if (code === "brand") return "Could not save that brand. Try a shorter name or try again.";
   return code.length < 220 ? code : "Something went wrong.";
 }
 
@@ -50,23 +55,20 @@ export default async function AdminEditProductPage({
 
   const supabase = createSupabaseAdminClient();
 
-  const [{ data: product }, { data: categories }, { data: brands }, { data: variants }, { data: primaryImgs }] =
-    await Promise.all([
-      supabase.from("products").select("id,name,slug,description,category_id,brand_id,is_active").eq("id", id).maybeSingle(),
-      supabase.from("categories").select("id,name").order("name"),
-      supabase.from("brands").select("id,name").order("name"),
-      supabase
-        .from("product_variants")
-        .select("id,sku,title,price_pkr,compare_at_price_pkr,is_active")
-        .eq("product_id", id)
-        .order("price_pkr", { ascending: true }),
-      supabase
-        .from("product_images")
-        .select("url")
-        .eq("product_id", id)
-        .order("sort_order", { ascending: true })
-        .limit(1),
-    ]);
+  const [{ data: product }, { data: categories }, { data: variants }, { data: galleryRows }] = await Promise.all([
+    supabase.from("products").select("id,name,slug,description,category_id,brand_id,is_active").eq("id", id).maybeSingle(),
+    supabase.from("categories").select("id,name").order("name"),
+    supabase
+      .from("product_variants")
+      .select("id,sku,title,price_pkr,compare_at_price_pkr,is_active")
+      .eq("product_id", id)
+      .order("price_pkr", { ascending: true }),
+    supabase
+      .from("product_images")
+      .select("id,url,alt,sort_order")
+      .eq("product_id", id)
+      .order("sort_order", { ascending: true }),
+  ]);
 
   if (!product) notFound();
 
@@ -81,7 +83,6 @@ export default async function AdminEditProductPage({
   };
 
   const cats = ((categories ?? []) as { id: string; name: string }[]) ?? [];
-  const brs = ((brands ?? []) as { id: string; name: string }[]) ?? [];
   const varRows = ((variants ?? []) as VariantRow[]) ?? [];
   const variantIds = varRows.map((v) => v.id);
 
@@ -91,7 +92,14 @@ export default async function AdminEditProductPage({
       : { data: [] as { variant_id: string; qty_available: number }[] };
 
   const stock = new Map((invRows ?? []).map((r) => [r.variant_id, r.qty_available]));
-  const primaryUrl = (primaryImgs?.[0] as { url?: string } | undefined)?.url?.trim() ?? "";
+  const galleryImages =
+    (galleryRows ?? []) as { id: string; url: string; alt: string; sort_order: number }[];
+
+  let brandNameDefault = "";
+  if (p.brand_id) {
+    const { data: brRow } = await supabase.from("brands").select("name").eq("id", p.brand_id).maybeSingle();
+    brandNameDefault = typeof brRow?.name === "string" ? brRow.name.trim() : "";
+  }
 
   const noticeMsg =
     notice === "created"
@@ -104,7 +112,9 @@ export default async function AdminEditProductPage({
             ? "Variant updated."
             : notice === "variant-removed"
               ? "Variant removed."
-              : "";
+              : notice === "saved-images"
+                ? "Gallery updated."
+                : "";
 
   return (
     <main className="py-6 lg:py-0">
@@ -136,7 +146,7 @@ export default async function AdminEditProductPage({
             <div className="mt-5 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-800">{error}</div>
           ) : null}
 
-          <form action={updateProduct} encType="multipart/form-data" className="mt-8 grid max-w-3xl grid-cols-1 gap-6 sm:grid-cols-2">
+          <form action={updateProduct} className="mt-8 grid max-w-3xl grid-cols-1 gap-6 sm:grid-cols-2">
             <input type="hidden" name="id" value={p.id} />
             <div className="sm:col-span-2">
               <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">Product name</label>
@@ -162,33 +172,20 @@ export default async function AdminEditProductPage({
               </select>
             </div>
             <div>
-              <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">Brand</label>
-              <select name="brand_id" defaultValue={p.brand_id ?? ""} className={input}>
-                <option value="">— None —</option>
-                {brs.map((b) => (
-                  <option key={b.id} value={b.id}>
-                    {b.name}
-                  </option>
-                ))}
-              </select>
+              <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">Brand (optional)</label>
+              <input
+                name="brand_name"
+                defaultValue={brandNameDefault}
+                placeholder="Type brand name — leave empty for no brand"
+                className={input}
+                autoComplete="off"
+              />
             </div>
             <div className="sm:col-span-2">
               <label className="flex cursor-pointer items-center gap-2 text-sm font-semibold text-slate-800">
                 <input type="checkbox" name="is_active" defaultChecked={p.is_active} className="h-4 w-4 rounded border-slate-300" />
                 visible on storefront (active)
               </label>
-            </div>
-            <div className="sm:col-span-2">
-              <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">Primary image URL</label>
-              <input name="primary_image_url" defaultValue={primaryUrl} placeholder="https://… or /file.jpg — updates first gallery image" className={monoInput} />
-              <label className="mt-3 block text-xs font-semibold uppercase tracking-wide text-slate-500">Or upload from computer</label>
-              <input
-                name="primary_image_file"
-                type="file"
-                accept="image/jpeg,image/png,image/webp,image/gif"
-                className={ADMIN_IMAGE_FILE_INPUT_CLASS}
-              />
-              <p className="mt-1 text-[11px] text-slate-500">{ADMIN_IMAGE_UPLOAD_HINT}</p>
             </div>
             <div className="sm:col-span-2">
               <button
@@ -200,6 +197,8 @@ export default async function AdminEditProductPage({
             </div>
           </form>
         </div>
+
+        <AdminProductGallery productId={p.id} productName={p.name} images={galleryImages} />
 
         <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
           <h2 className="text-lg font-semibold text-slate-900">Variants &amp; stock</h2>
@@ -236,8 +235,12 @@ export default async function AdminEditProductPage({
                       />
                     </div>
                     <div className="lg:col-span-1">
-                      <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">Stock</label>
-                      <input name="stock_qty" type="number" min={0} step={1} defaultValue={stock.get(v.id) ?? 0} className={input} />
+                      <AdminStockQtyField
+                        name="stock_qty"
+                        label="Stock"
+                        defaultQty={stock.get(v.id) ?? 0}
+                        inputClassName={input}
+                      />
                     </div>
                   </div>
                   <div className="flex flex-wrap items-center gap-4 border-t border-slate-200/80 pt-4">
@@ -289,8 +292,7 @@ export default async function AdminEditProductPage({
                 <input name="compare_at_price_pkr" type="number" min={0} step={1} className={input} />
               </div>
               <div className="lg:col-span-1">
-                <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">Stock</label>
-                <input name="stock_qty" type="number" min={0} step={1} defaultValue={0} className={input} />
+                <AdminStockQtyField name="stock_qty" label="Stock" defaultQty={0} inputClassName={input} />
               </div>
               <div className="sm:col-span-2 lg:col-span-12">
                 <button

@@ -165,58 +165,171 @@ function slugifyCatalogSlug(name: string, slugInput: string) {
     .replace(/(^-|-$)/g, "");
 }
 
+/** Escape % and _ for use in PostgREST ilike without wildcards (exact match, case-insensitive). */
+function escapeIlikeExact(value: string): string {
+  return value.replace(/\\/g, "\\\\").replace(/%/g, "\\%").replace(/_/g, "\\_");
+}
+
+/**
+ * Maps a typed brand label to `brands.id`: match existing slug/name or insert a new brand row.
+ */
+async function resolveOrCreateBrandId(
+  supabase: ReturnType<typeof createSupabaseAdminClient>,
+  brandNameRaw: string,
+): Promise<string | null> {
+  const name = brandNameRaw.trim();
+  if (!name) return null;
+
+  let baseSlug = slugifyCatalogSlug(name, "");
+  if (baseSlug.length < 2) {
+    baseSlug = `brand-${crypto.randomUUID().replace(/-/g, "").slice(0, 12)}`;
+  }
+
+  const { data: bySlug } = await supabase.from("brands").select("id").eq("slug", baseSlug).maybeSingle();
+  if (bySlug?.id) return bySlug.id;
+
+  const { data: byName } = await supabase
+    .from("brands")
+    .select("id")
+    .ilike("name", escapeIlikeExact(name))
+    .limit(1)
+    .maybeSingle();
+  if (byName?.id) return byName.id;
+
+  for (let i = 0; i < 8; i++) {
+    const trySlug = i === 0 ? baseSlug : `${baseSlug}-${i}`;
+    const { data: inserted, error } = await supabase.from("brands").insert({ name, slug: trySlug }).select("id").single();
+    if (!error && inserted?.id) return inserted.id;
+    if (error && (error as { code?: string }).code !== "23505") break;
+  }
+  return null;
+}
+
+export async function updateCategory(formData: FormData) {
+  await assertAdminAuthenticated();
+  const id = String(formData.get("id") ?? "").trim();
+  if (!id) redirect("/admin/categories?error=id");
+
+  const name = String(formData.get("name") ?? "").trim();
+  if (name.length < 2) redirect("/admin/categories?error=name");
+
+  const slug = slugifyCatalogSlug(name, String(formData.get("slug") ?? ""));
+  if (slug.length < 2) redirect("/admin/categories?error=slug");
+
+  const parentRaw = String(formData.get("parent_id") ?? "").trim();
+  const parent_id = parentRaw && parentRaw !== id ? parentRaw : null;
+
+  const supabase = createSupabaseAdminClient();
+  const { error } = await supabase.from("categories").update({ name, slug, parent_id }).eq("id", id);
+  if (error) redirect(`/admin/categories?error=${encodeURIComponent(error.message)}`);
+
+  redirect("/admin/categories?notice=category-saved");
+}
+
 function parseNonNegInt(raw: string, fallback: number): number {
   const n = Number.parseInt(raw, 10);
   if (!Number.isFinite(n) || n < 0) return fallback;
   return n;
 }
 
-async function syncPrimaryProductImage(
+const MAX_GALLERY_FILES_PER_SUBMIT = 12;
+
+async function renumberProductImageSortOrders(
   supabase: ReturnType<typeof createSupabaseAdminClient>,
   productId: string,
-  productName: string,
-  urlRaw: string,
-  fileEntry: FormDataEntryValue | null,
-): Promise<{ error: string } | null> {
-  let imgNorm: string | "" | null = null;
-  const file = fileEntry instanceof File && fileEntry.size > 0 ? fileEntry : null;
-  if (file) {
-    const up = await uploadAdminMediaImage(supabase, `products/${productId}`, file);
-    if ("error" in up) return { error: up.error };
-    imgNorm = up.publicUrl;
-  } else {
-    const n = normalizeHttpsOrSlashImage(urlRaw);
-    if (n === null) return { error: "Primary image must be empty, https:// URL, or a site path (/…)." };
-    imgNorm = n;
-  }
-  if (!String(imgNorm).trim()) return null;
-
-  const { data: first } = await supabase
+) {
+  const { data: rows } = await supabase
     .from("product_images")
     .select("id")
     .eq("product_id", productId)
-    .order("sort_order", { ascending: true })
+    .order("sort_order", { ascending: true });
+  if (!rows?.length) return;
+  for (let i = 0; i < rows.length; i++) {
+    await supabase.from("product_images").update({ sort_order: i }).eq("id", rows[i].id);
+  }
+}
+
+export async function addProductGalleryImages(formData: FormData) {
+  await assertAdminAuthenticated();
+  const product_id = String(formData.get("product_id") ?? "").trim();
+  const product_name = String(formData.get("product_name") ?? "").trim() || "Product";
+  if (!product_id) redirect("/admin/products");
+
+  const rawFiles = formData.getAll("gallery_files");
+  const files = rawFiles.filter((e): e is File => e instanceof File && e.size > 0);
+  if (files.length === 0) {
+    redirect(`/admin/products/${product_id}/edit?error=no-gallery-files`);
+  }
+  if (files.length > MAX_GALLERY_FILES_PER_SUBMIT) {
+    redirect(`/admin/products/${product_id}/edit?error=gallery-too-many`);
+  }
+
+  const supabase = createSupabaseAdminClient();
+  const { data: maxRow } = await supabase
+    .from("product_images")
+    .select("sort_order")
+    .eq("product_id", product_id)
+    .order("sort_order", { ascending: false })
     .limit(1)
     .maybeSingle();
 
-  const url = String(imgNorm);
+  let nextOrder = typeof maxRow?.sort_order === "number" ? maxRow.sort_order + 1 : 0;
 
-  if (first?.id) {
-    const { error } = await supabase
-      .from("product_images")
-      .update({ url, alt: productName.slice(0, 200) })
-      .eq("id", first.id);
-    if (error) return { error: error.message };
-  } else {
-    const { error } = await supabase.from("product_images").insert({
-      product_id: productId,
-      url,
-      alt: productName.slice(0, 200),
-      sort_order: 0,
+  for (const file of files) {
+    const up = await uploadAdminMediaImage(supabase, `products/${product_id}`, file);
+    if ("error" in up) {
+      redirect(`/admin/products/${product_id}/edit?error=${encodeURIComponent(up.error)}`);
+    }
+    const { error: insErr } = await supabase.from("product_images").insert({
+      product_id,
+      url: up.publicUrl,
+      alt: product_name.slice(0, 200),
+      sort_order: nextOrder++,
     });
-    if (error) return { error: error.message };
+    if (insErr) redirect(`/admin/products/${product_id}/edit?error=${encodeURIComponent(insErr.message)}`);
   }
-  return null;
+
+  redirect(`/admin/products/${product_id}/edit?notice=saved-images`);
+}
+
+export async function setProductCoverImage(formData: FormData) {
+  await assertAdminAuthenticated();
+  const product_id = String(formData.get("product_id") ?? "").trim();
+  const image_id = String(formData.get("image_id") ?? "").trim();
+  if (!product_id || !image_id) redirect("/admin/products");
+
+  const supabase = createSupabaseAdminClient();
+  const { data: rows } = await supabase
+    .from("product_images")
+    .select("id")
+    .eq("product_id", product_id)
+    .order("sort_order", { ascending: true });
+
+  const ordered = (rows ?? []).map((r) => r.id);
+  const idx = ordered.indexOf(image_id);
+  if (idx < 0) redirect(`/admin/products/${product_id}/edit?error=${encodeURIComponent("cover-not-found")}`);
+
+  const newOrder = [ordered[idx], ...ordered.slice(0, idx), ...ordered.slice(idx + 1)];
+  for (let i = 0; i < newOrder.length; i++) {
+    const { error } = await supabase.from("product_images").update({ sort_order: i }).eq("id", newOrder[i]);
+    if (error) redirect(`/admin/products/${product_id}/edit?error=${encodeURIComponent(error.message)}`);
+  }
+
+  redirect(`/admin/products/${product_id}/edit?notice=saved-images`);
+}
+
+export async function deleteProductImage(formData: FormData) {
+  await assertAdminAuthenticated();
+  const product_id = String(formData.get("product_id") ?? "").trim();
+  const image_id = String(formData.get("image_id") ?? "").trim();
+  if (!product_id || !image_id) redirect("/admin/products");
+
+  const supabase = createSupabaseAdminClient();
+  const { error } = await supabase.from("product_images").delete().eq("id", image_id).eq("product_id", product_id);
+  if (error) redirect(`/admin/products/${product_id}/edit?error=${encodeURIComponent(error.message)}`);
+
+  await renumberProductImageSortOrders(supabase, product_id);
+  redirect(`/admin/products/${product_id}/edit?notice=saved-images`);
 }
 
 export async function createProduct(formData: FormData) {
@@ -229,9 +342,7 @@ export async function createProduct(formData: FormData) {
 
   const description = String(formData.get("description") ?? "").trim();
   const categoryRaw = String(formData.get("category_id") ?? "").trim();
-  const brandRaw = String(formData.get("brand_id") ?? "").trim();
   const category_id = categoryRaw || null;
-  const brand_id = brandRaw || null;
   const is_active = formData.get("is_active") === "on";
 
   const sku = String(formData.get("sku") ?? "").trim();
@@ -250,14 +361,24 @@ export async function createProduct(formData: FormData) {
   if (!compareOk) redirect("/admin/products/new?error=compare");
 
   const imageRaw = String(formData.get("primary_image_url") ?? "");
-  const primaryFile = formData.get("primary_image_file");
-  const hasFile = primaryFile instanceof File && primaryFile.size > 0;
-  if (!hasFile) {
+  const galleryFiles = formData.getAll("gallery_files").filter((e): e is File => e instanceof File && e.size > 0);
+  if (galleryFiles.length === 0) {
     const imgCheck = normalizeHttpsOrSlashImage(imageRaw);
     if (imgCheck === null) redirect("/admin/products/new?error=image");
   }
+  if (galleryFiles.length > MAX_GALLERY_FILES_PER_SUBMIT) {
+    redirect("/admin/products/new?error=gallery-too-many");
+  }
 
   const supabase = createSupabaseAdminClient();
+
+  const brandName = String(formData.get("brand_name") ?? "").trim();
+  let brand_id: string | null = null;
+  if (brandName) {
+    brand_id = await resolveOrCreateBrandId(supabase, brandName);
+    if (!brand_id) redirect("/admin/products/new?error=brand");
+  }
+
   const { data: inserted, error: pErr } = await supabase
     .from("products")
     .insert({ name, slug, description, category_id, brand_id, is_active })
@@ -295,28 +416,36 @@ export async function createProduct(formData: FormData) {
     redirect(`/admin/products/new?error=${encodeURIComponent(invErr.message)}`);
   }
 
-  let primaryImageUrl = "";
-  if (hasFile) {
-    const up = await uploadAdminMediaImage(supabase, `products/${productId}`, primaryFile);
-    if ("error" in up) {
-      redirect(`/admin/products/new?error=${encodeURIComponent(up.error)}`);
+  if (galleryFiles.length > 0) {
+    for (let i = 0; i < galleryFiles.length; i++) {
+      const up = await uploadAdminMediaImage(supabase, `products/${productId}`, galleryFiles[i]);
+      if ("error" in up) {
+        redirect(`/admin/products/new?error=${encodeURIComponent(up.error)}`);
+      }
+      const { error: imgErr } = await supabase.from("product_images").insert({
+        product_id: productId,
+        url: up.publicUrl,
+        alt: name.slice(0, 200),
+        sort_order: i,
+      });
+      if (imgErr) {
+        redirect(`/admin/products/new?error=${encodeURIComponent(imgErr.message)}`);
+      }
     }
-    primaryImageUrl = up.publicUrl;
   } else {
-    primaryImageUrl = normalizeHttpsOrSlashImage(imageRaw) || "";
-  }
-
-  if (primaryImageUrl) {
-    const { error: imgErr } = await supabase.from("product_images").insert({
-      product_id: productId,
-      url: primaryImageUrl,
-      alt: name.slice(0, 200),
-      sort_order: 0,
-    });
-    if (imgErr) {
-      redirect(
-        `/admin/products/${productId}/edit?notice=created&error=${encodeURIComponent(`Product saved, but image failed: ${imgErr.message}`)}`,
-      );
+    const primaryImageUrl = normalizeHttpsOrSlashImage(imageRaw) || "";
+    if (primaryImageUrl) {
+      const { error: imgErr } = await supabase.from("product_images").insert({
+        product_id: productId,
+        url: primaryImageUrl,
+        alt: name.slice(0, 200),
+        sort_order: 0,
+      });
+      if (imgErr) {
+        redirect(
+          `/admin/products/${productId}/edit?notice=created&error=${encodeURIComponent(`Product saved, but image failed: ${imgErr.message}`)}`,
+        );
+      }
     }
   }
 
@@ -336,24 +465,24 @@ export async function updateProduct(formData: FormData) {
 
   const description = String(formData.get("description") ?? "").trim();
   const categoryRaw = String(formData.get("category_id") ?? "").trim();
-  const brandRaw = String(formData.get("brand_id") ?? "").trim();
   const category_id = categoryRaw || null;
-  const brand_id = brandRaw || null;
   const is_active = formData.get("is_active") === "on";
 
   const supabase = createSupabaseAdminClient();
+
+  const brandName = String(formData.get("brand_name") ?? "").trim();
+  let brand_id: string | null = null;
+  if (brandName) {
+    brand_id = await resolveOrCreateBrandId(supabase, brandName);
+    if (!brand_id) redirect(`/admin/products/${id}/edit?error=brand`);
+  }
+
   const { error } = await supabase
     .from("products")
     .update({ name, slug, description, category_id, brand_id, is_active })
     .eq("id", id);
 
   if (error) redirect(`/admin/products/${id}/edit?error=${encodeURIComponent(error.message)}`);
-
-  const primaryUrlField = String(formData.get("primary_image_url") ?? "");
-  const imgRes = await syncPrimaryProductImage(supabase, id, name, primaryUrlField, formData.get("primary_image_file"));
-  if (imgRes) {
-    redirect(`/admin/products/${id}/edit?error=${encodeURIComponent(imgRes.error)}`);
-  }
 
   redirect(`/admin/products/${id}/edit?notice=saved`);
 }
@@ -760,6 +889,9 @@ export async function mergeStorefrontSettings(formData: FormData) {
     bankAccountTitle: pick("bank_account_title"),
     jazzcashNumber: pick("jazzcash_number"),
     jazzcashTitle: pick("jazzcash_title"),
+    supportDeskHours: pick("support_desk_hours"),
+    supportEscalations: pick("support_escalations"),
+    supportCommitmentsIntro: pick("support_commitments_intro"),
     aboutPrimaryImage,
     aboutSecondaryImage,
     contactPrimaryImage,

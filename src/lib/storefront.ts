@@ -27,6 +27,10 @@ export type StorefrontPayload = {
   bankAccountTitle?: string;
   jazzcashNumber?: string;
   jazzcashTitle?: string;
+  /** Shown on Contact page support card, visit section, and footer (e.g. 08:00–20:00 PKT · Mon–Sat). */
+  supportDeskHours?: string;
+  supportEscalations?: string;
+  supportCommitmentsIntro?: string;
 };
 
 export const DEFAULT_STOREFRONT: StorefrontPayload & { socialLinks: SocialLinkRow[] } = {
@@ -55,6 +59,10 @@ export const DEFAULT_STOREFRONT: StorefrontPayload & { socialLinks: SocialLinkRo
   bankAccountTitle: "Al Makkah Electric Traders",
   jazzcashNumber: "03XX XXXXXXX",
   jazzcashTitle: "Business JazzCash wallet",
+  supportDeskHours: "08:00–20:00 PKT · Mon–Sat",
+  supportEscalations: "Supervisor loop via WhatsApp label “URGENT DELIVERY ISSUE”",
+  supportCommitmentsIntro:
+    "Replace this block with your legal-approved SLA copy. For now it demonstrates how promise-driven messaging pairs with contact routes.",
 };
 
 export type ResolvedStorefront = typeof DEFAULT_STOREFRONT;

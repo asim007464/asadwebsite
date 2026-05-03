@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import type { CartItem } from "@/lib/cart";
 import { cartSubtotal, readCart, writeCart } from "@/lib/cart";
+import { shippingPkrForPaymentMethod } from "@/lib/checkout-shipping";
 import { formatPKR } from "@/lib/money";
 import type { ResolvedStorefront } from "@/lib/storefront";
 import { createOrder } from "./actions";
@@ -22,6 +23,8 @@ export function CheckoutClient({ storefront }: { storefront: ResolvedStorefront 
   }, []);
 
   const subtotal = useMemo(() => cartSubtotal(items), [items]);
+  const shippingPkr = useMemo(() => shippingPkrForPaymentMethod(method), [method]);
+  const orderTotal = subtotal + shippingPkr;
 
   if (items.length === 0 && !success) {
     return (
@@ -47,7 +50,7 @@ export function CheckoutClient({ storefront }: { storefront: ResolvedStorefront 
           <h1 className="text-3xl font-semibold tracking-tight text-slate-900">Checkout &amp; payment</h1>
           <p className="mt-2 text-sm text-slate-600">Choose how you pay, then share delivery details. Payments are verified manually before dispatch.</p>
         </div>
-        <div className="rounded-full bg-blue-50 px-4 py-2 text-sm font-semibold text-blue-900 ring-1 ring-blue-100">{formatPKR(subtotal)}</div>
+        <div className="rounded-full bg-blue-50 px-4 py-2 text-sm font-semibold text-blue-900 ring-1 ring-blue-100">{formatPKR(orderTotal)}</div>
       </div>
 
       {success ? (
@@ -124,7 +127,7 @@ export function CheckoutClient({ storefront }: { storefront: ResolvedStorefront 
                   Cash on delivery
                   <input type="radio" name="payment_method" value="cod" checked={method === "cod"} onChange={() => setMethod("cod")} />
                 </span>
-                <span className="text-xs font-medium text-slate-600">Pay the courier when your parcel arrives.</span>
+                <span className="text-xs font-medium text-slate-600">Pay the courier when your parcel arrives. Delivery fee applies.</span>
               </label>
 
               <label
@@ -136,7 +139,7 @@ export function CheckoutClient({ storefront }: { storefront: ResolvedStorefront 
                   JazzCash
                   <input type="radio" name="payment_method" value="jazzcash" checked={method === "jazzcash"} onChange={() => setMethod("jazzcash")} />
                 </span>
-                <span className="text-xs font-medium text-slate-600">Send to the wallet below, then paste your TXN id.</span>
+                <span className="text-xs font-medium text-slate-600">Free shipping once payment is confirmed. Send to the wallet below, then paste your TXN id.</span>
               </label>
 
               <label
@@ -154,7 +157,7 @@ export function CheckoutClient({ storefront }: { storefront: ResolvedStorefront 
                     onChange={() => setMethod("bank_transfer")}
                   />
                 </span>
-                <span className="text-xs font-medium text-slate-600">IBAN transfer — attach your reference in the form.</span>
+                <span className="text-xs font-medium text-slate-600">Free shipping once payment is confirmed. IBAN transfer — add your reference in the form.</span>
               </label>
             </div>
 
@@ -238,12 +241,33 @@ export function CheckoutClient({ storefront }: { storefront: ResolvedStorefront 
 
           {error ? <div className="text-sm font-semibold text-red-700">{error}</div> : null}
 
+          <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
+            <div className="text-sm font-semibold text-slate-900">Order summary</div>
+            <div className="mt-4 flex items-center justify-between text-sm">
+              <span className="text-slate-600">Subtotal</span>
+              <span className="font-semibold text-slate-900">{formatPKR(subtotal)}</span>
+            </div>
+            <div className="mt-2 flex items-center justify-between text-sm">
+              <span className="text-slate-600">Shipping</span>
+              <span className="font-semibold text-slate-900">{shippingPkr === 0 ? "Free" : formatPKR(shippingPkr)}</span>
+            </div>
+            <div className="mt-4 flex items-center justify-between border-t border-slate-100 pt-4 text-sm">
+              <span className="font-semibold text-slate-900">Total</span>
+              <span className="font-semibold text-blue-900">{formatPKR(orderTotal)}</span>
+            </div>
+            {method === "cod" ? (
+              <p className="mt-3 text-xs leading-relaxed text-slate-500">COD orders include a flat delivery charge. Switch to JazzCash or bank transfer for free shipping.</p>
+            ) : (
+              <p className="mt-3 text-xs leading-relaxed text-slate-500">No delivery charge for prepaid orders — we ship after payment is matched.</p>
+            )}
+          </div>
+
           <button
             type="submit"
             disabled={submitting}
             className="inline-flex h-12 w-full items-center justify-center rounded-full bg-blue-600 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 disabled:opacity-60"
           >
-            {submitting ? "Placing order..." : `Place order — ${formatPKR(subtotal)}`}
+            {submitting ? "Placing order..." : `Place order — ${formatPKR(orderTotal)}`}
           </button>
 
           <p className="text-center text-xs leading-relaxed text-slate-600">

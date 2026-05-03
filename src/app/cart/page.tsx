@@ -128,13 +128,12 @@ export default function CartPage() {
               <div className="text-slate-600">Subtotal</div>
               <div className="font-semibold text-slate-900">{formatPKR(subtotal)}</div>
             </div>
-            <div className="mt-2 flex items-center justify-between text-sm">
+            <div className="mt-2 flex items-start justify-between gap-3 text-sm">
               <div className="text-slate-600">Shipping</div>
-              <div className="font-semibold text-slate-900">{formatPKR(0)}</div>
-            </div>
-            <div className="mt-4 border-t border-slate-100 pt-4 flex items-center justify-between">
-              <div className="text-sm font-semibold text-slate-900">Total</div>
-              <div className="text-sm font-semibold text-blue-900">{formatPKR(subtotal)}</div>
+              <div className="text-right">
+                <div className="font-semibold text-slate-900">Free if you pay first</div>
+                <div className="text-xs text-slate-500">Rs 250 on cash on delivery</div>
+              </div>
             </div>
             <Link
               href="/checkout"
@@ -142,7 +141,7 @@ export default function CartPage() {
             >
               Checkout
             </Link>
-            <div className="mt-4 text-xs leading-relaxed text-slate-600">We’ll confirm your order by phone/WhatsApp before dispatch.</div>
+            <div className="mt-4 text-xs leading-relaxed text-slate-600">Final amount is calculated at checkout from your payment choice.</div>
           </div>
         </div>
       )}
