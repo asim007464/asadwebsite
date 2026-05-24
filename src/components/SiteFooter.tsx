@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { SITE_SHOP_NAME, SITE_SHORT_TAGLINE } from "@/lib/site-brand";
+import { STORE_LOCATION } from "@/lib/store-location";
 import { getStorefrontPayload } from "@/lib/storefront";
 
 const shopLinks = [
@@ -21,7 +22,8 @@ const shopLinks = [
 
 const companyLinks = [
   { href: "/about", label: "About us" },
-  { href: "/contact", label: "Contact & map" },
+  { href: "/contact#locations", label: "Locations" },
+  { href: "/contact", label: "Contact" },
   { href: "/admin", label: "Admin" },
 ] as const;
 
@@ -240,12 +242,39 @@ export async function SiteFooter() {
               >
                 Message sales · 0335‑744‑6353
               </a>
-              <Link
-                href="/contact"
-                className="mt-3 flex h-10 w-full items-center justify-center rounded-xl border border-slate-700 bg-black text-sm font-semibold text-white transition hover:border-blue-500/40 hover:bg-zinc-950"
-              >
-                Directions & full contact
-              </Link>
+              <div className="my-5 h-px bg-slate-900" />
+
+              <div>
+                <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Locations</p>
+                <p className="mt-2 text-sm font-semibold text-slate-100">{STORE_LOCATION.name}</p>
+                <p className="mt-1 text-xs tabular-nums text-slate-500">
+                  {STORE_LOCATION.lat}, {STORE_LOCATION.lng}
+                </p>
+                <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                  <a
+                    href={STORE_LOCATION.googleMapsPlaceUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex h-10 items-center justify-center rounded-xl border border-slate-700 bg-black text-center text-xs font-semibold text-white transition hover:border-blue-500/40 hover:bg-zinc-950"
+                  >
+                    Open in Maps
+                  </a>
+                  <a
+                    href={STORE_LOCATION.googleMapsPlaceUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex h-10 items-center justify-center rounded-xl bg-blue-600 text-center text-xs font-semibold text-white transition hover:bg-blue-700"
+                  >
+                    Directions ↗
+                  </a>
+                </div>
+                <Link
+                  href="/contact#locations"
+                  className="mt-2 flex h-9 w-full items-center justify-center rounded-xl border border-slate-800 text-xs font-semibold text-slate-300 transition hover:border-slate-600 hover:text-white"
+                >
+                  Store photos & map
+                </Link>
+              </div>
 
               <div className="my-5 h-px bg-slate-900" />
 

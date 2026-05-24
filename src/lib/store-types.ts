@@ -3,6 +3,7 @@ export type ProductListing = {
   name: string;
   slug: string;
   description: string;
+  catchy_headline?: string;
   min_price_pkr: number;
   image_url: string | null;
   /** When present (see `product_listings` view): homepage “Featured picks” pool */
@@ -32,6 +33,7 @@ export type Product = {
   name: string;
   slug: string;
   description: string;
+  catchy_headline?: string;
   category_id: string | null;
   brand_id: string | null;
   is_featured?: boolean;
@@ -55,7 +57,7 @@ export type HeroSlideRow = {
   is_active: boolean;
 };
 
-/** Singleton row (`id = 1`) edited in Admin → Reviews banner; shown above testimonials on home. */
+/** Homepage promo banner row: `id = 1` after hero carousel; `id = 2` before testimonials. */
 export type HomeReviewsBannerRow = {
   id: number;
   background_image_url: string;
@@ -63,6 +65,29 @@ export type HomeReviewsBannerRow = {
   paragraph: string;
   button_label: string;
   button_href: string;
+  is_active: boolean;
+};
+
+/** Singleton row (`id = 1`) for curated category + products in the Browse categories grid. */
+export type HomeBrowseShowcaseRow = {
+  id: number;
+  category_id: string | null;
+  section_title: string;
+  is_active: boolean;
+};
+
+export type HomeBrowseShowcaseProductRow = {
+  id: string;
+  product_id: string;
+  sort_order: number;
+};
+
+/** Singleton row (`id = 1`) — full-width strip after Browse categories grid on home. */
+export type HomeAfterBrowseBannerRow = {
+  id: number;
+  image_url: string;
+  link_href: string;
+  alt_text: string;
   is_active: boolean;
 };
 

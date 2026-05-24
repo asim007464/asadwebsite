@@ -5,7 +5,6 @@ import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { cartSubtotal, readCart } from "@/lib/cart";
-import { readWishlist } from "@/lib/wishlist";
 import { formatPKR } from "@/lib/money";
 import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
 import { clientUserHasAdminPanelAccess } from "@/lib/admin-panel-client";
@@ -43,19 +42,6 @@ function ChevronDown({ className }: { className?: string }) {
   );
 }
 
-function WishlistHeartIcon({ filled, className }: { filled?: boolean; className?: string }) {
-  return (
-    <svg viewBox="0 0 24 24" className={className} aria-hidden fill="none">
-      <path
-        d="M12 20.6c-.3 0-.6-.1-.9-.4-6.3-5.8-9-9-9-12.3 0-2.8 2.3-5 5.1-5 1.4 0 2.8.6 3.8 1.6 1-.9 2.4-1.6 3.9-1.6 2.8 0 5.1 2.3 5.1 5.1 0 3.2-2.8 6.6-9 12.4-.3.3-.7.5-1 .5z"
-        fill={filled ? "currentColor" : "none"}
-        stroke="currentColor"
-        strokeWidth={1.6}
-      />
-    </svg>
-  );
-}
-
 function ProfileIcon({ className }: { className?: string }) {
   return (
     <svg aria-hidden viewBox="0 0 24 24" className={className} fill="none">
@@ -89,7 +75,6 @@ export function SiteHeader() {
   const [count, setCount] = useState(0);
   const [subtotal, setSubtotal] = useState(0);
   const [logoError, setLogoError] = useState(false);
-  const [wishCount, setWishCount] = useState(0);
   const [customer, setCustomer] = useState<{
     email?: string | null;
     name?: string | null;
@@ -120,13 +105,6 @@ export function SiteHeader() {
     sync();
     window.addEventListener("storage", sync);
     return () => window.removeEventListener("storage", sync);
-  }, []);
-
-  useEffect(() => {
-    const syncWish = () => setWishCount(readWishlist().length);
-    syncWish();
-    window.addEventListener("storage", syncWish);
-    return () => window.removeEventListener("storage", syncWish);
   }, []);
 
   useEffect(() => {
@@ -281,11 +259,6 @@ export function SiteHeader() {
     return `Shopping cart, ${count} items, subtotal ${formatPKR(subtotal)}`;
   }, [count, subtotal]);
 
-  const wishlistAriaLabel = useMemo(() => {
-    if (wishCount <= 0) return "Wishlist, empty — save favourites here";
-    return `Wishlist, ${wishCount} saved ${wishCount === 1 ? "item" : "items"}`;
-  }, [wishCount]);
-
   const displayName = useMemo(() => {
     if (!customer) return null;
     const n = customer.name?.trim();
@@ -314,6 +287,40 @@ export function SiteHeader() {
 
   const linkBase =
     "rounded-full px-4 py-2 text-sm font-semibold tracking-tight transition-all duration-150 outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2";
+
+  const searchDropdown = searchOpen ? (
+    <div className="absolute left-0 right-0 z-50 mt-3 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_16px_48px_-12px_rgba(15,23,42,0.18)] ring-1 ring-slate-100">
+      <div className="p-3">
+        {searchLoading ? (
+          <div className="rounded-xl px-3 py-3 text-sm text-slate-600">Searching…</div>
+        ) : suggestions.length === 0 ? (
+          <div className="rounded-xl px-3 py-3 text-sm text-slate-600">No matches. Press Enter to search all.</div>
+        ) : (
+          suggestions.map((s, i) => (
+            <button
+              key={`${s.kind}-${s.id}`}
+              type="button"
+              className={cn(
+                "flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-left text-sm font-semibold transition",
+                i === activeIdx ? "bg-blue-50 text-blue-900" : "text-slate-800 hover:bg-blue-50 hover:text-blue-800",
+              )}
+              onMouseEnter={() => setActiveIdx(i)}
+              onClick={() => {
+                setSearchOpen(false);
+                setMobileOpen(false);
+                router.push(s.href);
+              }}
+            >
+              <span className="min-w-0 truncate">{s.label}</span>
+              <span className="ml-3 shrink-0 rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-bold text-slate-600 ring-1 ring-slate-200">
+                {s.kind === "product" ? "Product" : "Category"}
+              </span>
+            </button>
+          ))
+        )}
+      </div>
+    </div>
+  ) : null;
 
   const linkInactive = "text-slate-600 hover:bg-white hover:text-blue-800 hover:shadow-sm";
 
@@ -418,40 +425,7 @@ export function SiteHeader() {
               Go
             </button>
           </form>
-
-          {searchOpen ? (
-            <div className="absolute left-0 right-0 z-50 mt-3 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_16px_48px_-12px_rgba(15,23,42,0.18)] ring-1 ring-slate-100">
-              <div className="p-3">
-                {searchLoading ? (
-                  <div className="rounded-xl px-3 py-3 text-sm text-slate-600">Searching…</div>
-                ) : suggestions.length === 0 ? (
-                  <div className="rounded-xl px-3 py-3 text-sm text-slate-600">No matches. Press Enter to search all.</div>
-                ) : (
-                  suggestions.map((s, i) => (
-                    <button
-                      key={`${s.kind}-${s.id}`}
-                      type="button"
-                      className={cn(
-                        "flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-left text-sm font-semibold transition",
-                        i === activeIdx ? "bg-blue-50 text-blue-900" : "text-slate-800 hover:bg-blue-50 hover:text-blue-800",
-                      )}
-                      onMouseEnter={() => setActiveIdx(i)}
-                      onClick={() => {
-                        setSearchOpen(false);
-                        setMobileOpen(false);
-                        router.push(s.href);
-                      }}
-                    >
-                      <span className="min-w-0 truncate">{s.label}</span>
-                      <span className="ml-3 shrink-0 rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-bold text-slate-600 ring-1 ring-slate-200">
-                        {s.kind === "product" ? "Product" : "Category"}
-                      </span>
-                    </button>
-                  ))
-                )}
-              </div>
-            </div>
-          ) : null}
+          {searchDropdown}
         </div>
 
         <nav className="hidden items-center gap-2 lg:flex">
@@ -478,7 +452,7 @@ export function SiteHeader() {
                 <ChevronDown className={cn("h-4 w-4 text-slate-500 transition-transform", catOpen && "rotate-180 text-blue-700")} />
               </button>
               {catOpen ? (
-                <div className="absolute left-0 z-40 mt-3 w-[34rem] origin-top-left overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-[0_16px_48px_-12px_rgba(15,23,42,0.18)] ring-1 ring-slate-100">
+                <div className="absolute left-0 z-40 mt-3 w-[min(34rem,calc(100vw-2rem))] origin-top-left overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-[0_16px_48px_-12px_rgba(15,23,42,0.18)] ring-1 ring-slate-100">
                   <div className="border-b border-slate-100 bg-gradient-to-br from-blue-50/80 to-white px-4 py-3">
                     <div className="text-[10px] font-bold uppercase tracking-widest text-blue-700/80">Browse</div>
                     <div className="mt-0.5 text-sm font-bold text-slate-900">Categories</div>
@@ -521,7 +495,7 @@ export function SiteHeader() {
             </Link>
           </div>
 
-          <div className="relative ml-1" ref={accountRef}>
+          <div className="relative ml-0.5 shrink-0" ref={accountRef}>
             <button
               type="button"
               aria-expanded={accountOpen}
@@ -531,13 +505,13 @@ export function SiteHeader() {
                 setCatOpen(false);
               }}
               className={cn(
-                "inline-flex h-11 w-11 items-center justify-center rounded-full border border-slate-200/90 bg-white text-slate-700 shadow-sm transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2",
+                "inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-200/90 bg-white text-slate-700 shadow-sm transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2",
                 accountOpen || isLoginActive || isRegisterActive || isForgotActive || isAdminActive
                   ? "border-blue-200 bg-blue-50 text-blue-800 ring-2 ring-blue-100"
                   : "",
               )}
             >
-              <ProfileIcon className="h-5 w-5 shrink-0" />
+              <ProfileIcon className="h-4 w-4 shrink-0" />
               <span className="sr-only">Account menu</span>
             </button>
             {accountOpen ? (
@@ -626,65 +600,33 @@ export function SiteHeader() {
           </div>
 
           <Link
-            href="/wishlist"
-            aria-label={wishlistAriaLabel}
-            className="relative ml-1 hidden h-11 w-11 shrink-0 items-center justify-center rounded-full border border-slate-200/90 bg-white text-slate-700 shadow-sm transition hover:border-rose-200 hover:bg-rose-50 hover:text-rose-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 focus-visible:ring-offset-2 lg:inline-flex"
-          >
-            <WishlistHeartIcon filled={wishCount > 0} className="h-[1.15rem] w-[1.15rem]" />
-            {wishCount > 0 ? (
-              <span className="absolute -right-0.5 -top-0.5 flex h-[1.125rem] min-w-[1.125rem] items-center justify-center rounded-full bg-rose-500 px-0.5 text-[10px] font-bold text-white ring-2 ring-white">
-                {wishCount > 99 ? "99+" : wishCount}
-              </span>
-            ) : null}
-          </Link>
-
-          <Link
             href="/cart"
             aria-label={cartAriaLabel}
-            className="ml-1 inline-flex items-center gap-2 rounded-full bg-blue-600 px-4 py-2.5 text-sm font-bold text-white shadow-md shadow-blue-600/25 transition hover:bg-blue-700 hover:shadow-lg hover:shadow-blue-600/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+            className="ml-1 inline-flex shrink-0 items-center gap-1.5 rounded-full bg-blue-600 px-2.5 py-1.5 text-white shadow-md shadow-blue-600/25 transition hover:bg-blue-700 hover:shadow-lg hover:shadow-blue-600/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 lg:px-3 lg:py-2"
           >
-            <CartIcon className="h-[1.125rem] w-[1.125rem] shrink-0 text-white" />
-            <span className="hidden lg:inline">Cart</span>
+            <CartIcon className="h-[1.125rem] w-[1.125rem] shrink-0" />
             <span
               className={cn(
-                "flex h-6 min-w-[1.5rem] items-center justify-center rounded-full px-1.5 text-xs font-bold tabular-nums",
+                "flex h-5 min-w-[1.25rem] items-center justify-center rounded-full px-1 text-[11px] font-bold tabular-nums lg:h-6 lg:min-w-[1.5rem] lg:px-1.5 lg:text-xs",
                 count > 0 ? "bg-white text-blue-700" : "bg-white/20 text-white ring-1 ring-white/30",
               )}
             >
               {count > 99 ? "99+" : count}
             </span>
-            {count > 0 ? (
-              <span className="hidden border-l border-white/30 pl-2 text-xs font-semibold text-white/95 lg:inline">
-                {formatPKR(subtotal)}
-              </span>
-            ) : null}
           </Link>
         </nav>
 
-        <div className="flex shrink-0 items-center gap-2 lg:hidden">
-          <Link
-            href="/wishlist"
-            className="relative inline-flex h-11 w-11 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-800 shadow-sm transition hover:border-rose-200 hover:bg-rose-50 hover:text-rose-800 active:scale-[0.98]"
-            aria-label={wishlistAriaLabel}
-          >
-            <WishlistHeartIcon filled={wishCount > 0} className="h-[1.25rem] w-[1.25rem]" />
-            {wishCount > 0 ? (
-              <span className="absolute -right-0.5 -top-0.5 flex h-[1.125rem] min-w-[1.125rem] items-center justify-center rounded-full bg-rose-500 px-0.5 text-[10px] font-bold text-white ring-2 ring-white">
-                {wishCount > 99 ? "99+" : wishCount}
-              </span>
-            ) : null}
-          </Link>
+        <div className="order-2 ml-auto flex shrink-0 items-center gap-1.5 sm:gap-2 lg:hidden">
           <Link
             href="/cart"
-            className="relative inline-flex h-11 w-11 items-center justify-center rounded-full bg-blue-600 text-white shadow-md shadow-blue-600/30 transition hover:bg-blue-700 active:scale-[0.98]"
             aria-label={cartAriaLabel}
+            className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-blue-600 px-2.5 py-1.5 text-white shadow-md shadow-blue-600/25 transition hover:bg-blue-700 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
           >
-            <span className="sr-only">{cartAriaLabel}</span>
-            <CartIcon className="h-[1.15rem] w-[1.15rem]" />
+            <CartIcon className="h-[1.125rem] w-[1.125rem] shrink-0" />
             <span
               className={cn(
-                "absolute -right-0.5 -top-0.5 flex h-[1.125rem] min-w-[1.125rem] items-center justify-center rounded-full px-0.5 text-[10px] font-bold tabular-nums ring-2 ring-white",
-                count > 0 ? "bg-amber-400 text-slate-900" : "bg-white/90 text-slate-700",
+                "flex h-5 min-w-[1.25rem] items-center justify-center rounded-full px-1 text-[11px] font-bold tabular-nums",
+                count > 0 ? "bg-white text-blue-700" : "bg-white/20 text-white ring-1 ring-white/30",
               )}
             >
               {count > 99 ? "99+" : count}
@@ -695,7 +637,7 @@ export function SiteHeader() {
             aria-expanded={mobileOpen}
             aria-controls="mobile-nav"
             onClick={() => setMobileOpen((v) => !v)}
-            className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-800 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 active:scale-[0.98]"
+            className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-800 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 active:scale-[0.98]"
           >
             <span className="sr-only">{mobileOpen ? "Close menu" : "Open menu"}</span>
             <svg aria-hidden viewBox="0 0 24 24" className="h-5 w-5" fill="none">
@@ -871,22 +813,19 @@ export function SiteHeader() {
               ) : null}
               <Link
                 href="/cart"
-                className="mt-2 flex items-center justify-between gap-3 rounded-2xl bg-blue-600 px-4 py-4 text-[15px] font-bold text-white shadow-lg shadow-blue-600/25"
+                className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-blue-600 px-4 py-4 text-[15px] font-bold text-white shadow-lg shadow-blue-600/25"
                 onClick={closeMobile}
+                aria-label={cartAriaLabel}
               >
-                <span className="inline-flex items-center gap-3">
-                  <CartIcon className="h-6 w-6 shrink-0" />
-                  <span>View cart</span>
-                  <span
-                    className={cn(
-                      "rounded-full px-2.5 py-0.5 text-sm tabular-nums",
-                      count > 0 ? "bg-white text-blue-700" : "bg-white/20 text-white",
-                    )}
-                  >
-                    {count > 99 ? "99+" : count}
-                  </span>
+                <CartIcon className="h-6 w-6 shrink-0" />
+                <span
+                  className={cn(
+                    "flex h-7 min-w-[1.75rem] items-center justify-center rounded-full px-2 text-sm tabular-nums",
+                    count > 0 ? "bg-white text-blue-700" : "bg-white/20 text-white ring-1 ring-white/30",
+                  )}
+                >
+                  {count > 99 ? "99+" : count}
                 </span>
-                {count > 0 ? <span className="text-sm font-bold text-white/95">{formatPKR(subtotal)}</span> : null}
               </Link>
             </div>
           </div>

@@ -1,4 +1,5 @@
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+import { PRODUCT_LISTING_SELECT } from "@/lib/product-listing-columns";
 import type { ProductListing } from "@/lib/store-types";
 
 export type HomeSection = "featured" | "gadgets";
@@ -23,9 +24,7 @@ export async function getHomeSectionListings(section: HomeSection, catalogFallba
   if (ids.length > 0) {
     const { data: listings } = await supabase
       .from("product_listings")
-      .select(
-        "id,name,slug,description,min_price_pkr,image_url,is_featured,featured_sort_order,default_variant_id,default_variant_sku,default_variant_title,default_variant_price_pkr",
-      )
+      .select(PRODUCT_LISTING_SELECT)
       .in("id", ids);
 
     const list = ((listings as ProductListing[] | null) ?? []) as ProductListing[];
@@ -37,9 +36,7 @@ export async function getHomeSectionListings(section: HomeSection, catalogFallba
   if (section === "featured") {
     const featured = await supabase
       .from("product_listings")
-      .select(
-        "id,name,slug,description,min_price_pkr,image_url,is_featured,featured_sort_order,default_variant_id,default_variant_sku,default_variant_title,default_variant_price_pkr",
-      )
+      .select(PRODUCT_LISTING_SELECT)
       .eq("is_featured", true)
       .order("featured_sort_order", { ascending: true })
       .order("name", { ascending: true })
@@ -51,9 +48,7 @@ export async function getHomeSectionListings(section: HomeSection, catalogFallba
 
   const fb = await supabase
     .from("product_listings")
-    .select(
-      "id,name,slug,description,min_price_pkr,image_url,default_variant_id,default_variant_sku,default_variant_title,default_variant_price_pkr",
-    )
+    .select(PRODUCT_LISTING_SELECT)
     .order("name", { ascending: true })
     .limit(catalogFallbackLimit);
 

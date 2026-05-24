@@ -30,21 +30,33 @@ export default async function AdminDashboardPage({
     { data: pendingOrders },
     heroSlidesRes,
     reviewsBannerRes,
+    browseShowcaseRes,
+    afterBrowseBannerRes,
     homepageRowsRes,
   ] = await Promise.all([
       supabase.from("categories").select("id"),
       supabase.from("products").select("id,is_featured"),
       supabase.from("orders").select("id").eq("status", "pending"),
       supabase.from("hero_slides").select("id"),
-      supabase.from("home_reviews_banner").select("is_active,id").eq("id", 1).maybeSingle(),
+      supabase.from("home_reviews_banner").select("is_active,id").in("id", [1, 2]),
+      supabase.from("home_browse_showcase").select("is_active,id").eq("id", 1).maybeSingle(),
+      supabase.from("home_after_browse_banner").select("is_active,id").eq("id", 1).maybeSingle(),
       supabase.from("homepage_section_products").select("id", { count: "exact", head: true }),
     ]);
 
   const heroSlidesCount = heroSlidesRes.error ? 0 : (heroSlidesRes.data?.length ?? 0);
-  const reviewsBannerOn =
-    !reviewsBannerRes.error &&
-    Boolean(reviewsBannerRes.data?.is_active) &&
-    reviewsBannerRes.data != null;
+  const promoBannersLive =
+    !reviewsBannerRes.error && (reviewsBannerRes.data ?? []).filter((r: { is_active?: boolean }) => r.is_active).length;
+
+  const browseShowcaseOn =
+    !browseShowcaseRes.error &&
+    Boolean(browseShowcaseRes.data?.is_active) &&
+    browseShowcaseRes.data != null;
+
+  const afterBrowseBannerOn =
+    !afterBrowseBannerRes.error &&
+    Boolean(afterBrowseBannerRes.data?.is_active) &&
+    afterBrowseBannerRes.data != null;
 
   const featuredCount = products?.filter((r: { is_featured?: boolean }) => r.is_featured).length ?? 0;
   const homepageCuratedCount = homepageRowsRes.error ? 0 : (homepageRowsRes.count ?? 0);
@@ -58,10 +70,22 @@ export default async function AdminDashboardPage({
     { label: "Featured picks", value: featuredCount, href: "/admin/featured", hint: "Home carousel" },
     { label: "Hero slides", value: heroSlidesCount, href: "/admin/hero", hint: "Home backgrounds" },
     {
-      label: "Reviews banner",
-      value: reviewsBannerOn ? "Live" : "Off",
+      label: "Promo banners",
+      value: promoBannersLive ? `${promoBannersLive} live` : "Off",
       href: "/admin/reviews-banner",
-      hint: "Home promo strip",
+      hint: "Two homepage strips",
+    },
+    {
+      label: "Browse grid",
+      value: browseShowcaseOn ? "Live" : "Off",
+      href: "/admin/browse-showcase",
+      hint: "Category products",
+    },
+    {
+      label: "After browse banner",
+      value: afterBrowseBannerOn ? "Live" : "Off",
+      href: "/admin/after-browse-banner",
+      hint: "Below browse grid",
     },
     { label: "Homepage rows", value: homepageCuratedCount, href: "/admin/home-sections", hint: "Curated SKUs" },
     { label: "Site CMS", value: "Edit", href: "/admin/site", hint: "Copy & payments" },

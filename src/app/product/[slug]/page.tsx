@@ -4,9 +4,9 @@ import { notFound } from "next/navigation";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import type { Product, ProductVariant } from "@/lib/store-types";
 import { formatPKR } from "@/lib/money";
+import { SPEC_LISTS_OPTIONS_KEY, specListsFromOptions } from "@/lib/product-spec-lists";
 import { AddToCart } from "./ui";
 import { ProductImageGallery } from "./gallery";
-import { AddToWishlistButton } from "@/components/AddToWishlistButton";
 
 export const dynamic = "force-dynamic";
 
@@ -15,19 +15,57 @@ function humanizeKey(key: string) {
 }
 
 function VariantSpecs({ options }: { options: Record<string, unknown> }) {
-  const entries = Object.entries(options).filter(([, v]) => v != null && String(v).trim() !== "");
-  if (!entries.length) return null;
+  const lists = specListsFromOptions(options);
+  const entries = Object.entries(options).filter(
+    ([k, v]) => k !== SPEC_LISTS_OPTIONS_KEY && v != null && String(v).trim() !== "",
+  );
+
+  if (!lists.length && !entries.length) return null;
+
   return (
-    <dl className="mt-3 grid grid-cols-1 gap-2 text-xs sm:grid-cols-2">
-      {entries.map(([k, v]) => (
-        <div key={k} className="flex justify-between gap-3 rounded-xl bg-white/90 px-3 py-2 ring-1 ring-slate-200/90">
-          <dt className="text-slate-500">{humanizeKey(k)}</dt>
-          <dd className="text-right font-semibold text-slate-900">{String(v)}</dd>
+    <div className="space-y-3">
+      {lists.map((list, i) => (
+        <div key={i}>
+          {list.heading ? (
+            <h3 className="text-sm font-semibold text-slate-900">{list.heading}</h3>
+          ) : null}
+          {list.points.length ? (
+            <ul
+              className={`list-disc space-y-0.5 pl-4 text-sm leading-snug text-slate-600 marker:text-blue-600 ${list.heading ? "mt-1" : ""}`}
+            >
+              {list.points.map((point, j) => (
+                <li key={j} className="pl-0.5">
+                  {point}
+                </li>
+              ))}
+            </ul>
+          ) : null}
         </div>
       ))}
-    </dl>
+      {entries.length ? (
+        <dl className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+          {entries.map(([k, v]) => (
+            <div
+              key={k}
+              className="flex justify-between gap-3 rounded-xl border border-slate-100 bg-slate-50/80 px-3 py-2.5 text-sm"
+            >
+              <dt className="text-slate-500">{humanizeKey(k)}</dt>
+              <dd className="text-right font-semibold text-slate-900">{String(v)}</dd>
+            </div>
+          ))}
+        </dl>
+      ) : null}
+    </div>
   );
 }
+
+function variantTitleVisible(productName: string, variantTitle: string, multipleVariants: boolean) {
+  if (!multipleVariants) return false;
+  return variantTitle.trim().toLowerCase() !== productName.trim().toLowerCase();
+}
+
+const addToCartClass =
+  "inline-flex h-12 w-full items-center justify-center rounded-xl bg-blue-600 px-6 text-sm font-semibold text-white shadow-md shadow-blue-600/20 transition hover:bg-blue-700 disabled:opacity-60 sm:w-auto sm:min-w-[11rem]";
 
 function stockBadge(qty: number | undefined) {
   if (qty === undefined) {
@@ -44,12 +82,14 @@ function stockBadge(qty: number | undefined) {
   }
   if (qty < 10) {
     return (
-      <span className="rounded-full bg-orange-50 px-2.5 py-0.5 text-[11px] font-semibold text-orange-900 ring-1 ring-orange-100">Low stock ({qty} available)</span>
+      <span className="rounded-full bg-orange-50 px-2.5 py-0.5 text-[11px] font-semibold text-orange-900 ring-1 ring-orange-100">
+        Low stock
+      </span>
     );
   }
   return (
     <span className="rounded-full bg-emerald-50 px-2.5 py-0.5 text-[11px] font-semibold text-emerald-900 ring-1 ring-emerald-100">
-      In stock ({qty}+)
+      In stock
     </span>
   );
 }
@@ -92,7 +132,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
 
   const { data: product } = await supabase
     .from("products")
-    .select("id,name,slug,description,category_id,brand_id,is_active")
+    .select("id,name,slug,catchy_headline,description,category_id,brand_id,is_active")
     .eq("slug", slug)
     .maybeSingle();
 
@@ -129,6 +169,18 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
     alt: img.alt || product.name,
   }));
 
+  const leadVariant = variantRows[0];
+  const minPrice = leadVariant?.price_pkr ?? null;
+  const maxPrice = variantRows.length > 0 ? variantRows[variantRows.length - 1]!.price_pkr : null;
+  const showFromPrice = variantRows.length > 1 && minPrice != null && maxPrice != null && minPrice !== maxPrice;
+  const multipleVariants = variantRows.length > 1;
+  const productDescription = (product.description ?? "").trim();
+  const catchyHeadline = String((product as Product).catchy_headline ?? "").trim();
+  const introText = catchyHeadline || productDescription;
+  const bodyDescription = catchyHeadline ? productDescription : "";
+  const compareAt = leadVariant?.compare_at_price_pkr ?? null;
+  const showCompare = compareAt != null && minPrice != null && compareAt > minPrice;
+
   return (
     <main className="mx-auto w-full max-w-6xl px-4 py-10">
       <div className="text-xs text-slate-600">
@@ -148,49 +200,114 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
         </div>
 
         <div className="flex flex-col gap-6">
-          <div>
-            <h1 className="text-3xl font-semibold tracking-tight text-slate-900">{product.name}</h1>
-            <p className="mt-3 whitespace-pre-line text-sm leading-relaxed text-slate-600">{product.description}</p>
-          </div>
-
-          <div className="rounded-3xl border border-slate-200 bg-white/95 p-6 shadow-sm ring-1 ring-white/60 backdrop-blur-sm">
-            <div className="flex flex-wrap items-center justify-between gap-4">
-              <div className="text-sm font-semibold text-slate-900">Variants</div>
-              <div className="text-xs text-slate-500">Each line shows live inventory where synced</div>
-            </div>
-            <div className="mt-4 grid gap-3">
-              {variantRows.map((v) => (
-                <div key={v.id} className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-slate-50/80 p-4 ring-1 ring-white/70">
-                  <div className="flex flex-wrap items-start justify-between gap-4">
-                    <div className="min-w-0">
-                      <div className="truncate text-sm font-semibold text-slate-900">{v.title}</div>
-                      <div className="mt-1 text-xs text-slate-500">SKU: {v.sku}</div>
-                      <div className="mt-2">{stockBadge(qtyByVariant.get(v.id))}</div>
-                      <VariantSpecs options={v.options as Record<string, unknown>} />
-                    </div>
-                    <div className="shrink-0 text-right">
-                      <div className="text-sm font-semibold text-blue-800">{formatPKR(v.price_pkr)}</div>
-                      {v.compare_at_price_pkr ? (
-                        <div className="mt-1 text-xs text-slate-500 line-through">{formatPKR(v.compare_at_price_pkr)}</div>
+          <div className="rounded-3xl border border-slate-200/90 bg-white p-5 shadow-sm sm:p-6">
+            <div className="flex gap-4">
+              <div className="min-w-0 flex-1">
+                <h1 className="text-2xl font-semibold tracking-tight text-slate-900 capitalize sm:text-[1.75rem] sm:leading-tight">
+                  {product.name}
+                </h1>
+                {introText ? (
+                  <p
+                    className={
+                      catchyHeadline
+                        ? "mt-1 text-sm font-semibold leading-snug text-blue-800"
+                        : "mt-1 whitespace-pre-line text-sm leading-normal text-slate-600"
+                    }
+                  >
+                    {introText}
+                  </p>
+                ) : null}
+                {bodyDescription ? (
+                  <p className="mt-2 whitespace-pre-line text-sm leading-normal text-slate-600">{bodyDescription}</p>
+                ) : null}
+              </div>
+              {(leadVariant && !multipleVariants) || minPrice != null ? (
+                <div className="flex shrink-0 flex-col items-end gap-1 self-start text-right">
+                  {leadVariant && !multipleVariants ? stockBadge(qtyByVariant.get(leadVariant.id)) : null}
+                  {minPrice != null ? (
+                    <>
+                      {showFromPrice ? (
+                        <p className="text-xs font-medium text-slate-500">Starting from</p>
                       ) : null}
-                    </div>
-                  </div>
-                  <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-200/80 pt-3">
-                    <div className="text-xs text-slate-600">Cart & wishlist persist on this device until checkout.</div>
-                    <div className="flex flex-wrap items-center justify-end gap-2">
-                      <AddToWishlistButton
-                        variant={{
-                          variantId: v.id,
-                          productSlug: (product as Product).slug,
-                          productName: (product as Product).name,
-                          variantTitle: v.title,
-                          sku: v.sku,
-                          unitPricePkr: v.price_pkr,
-                          imageUrl: hero?.url ?? null,
-                        }}
-                        className="inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-full border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-rose-200 hover:bg-rose-50 hover:text-rose-800"
-                      />
+                      <p className="text-2xl font-bold tabular-nums tracking-tight text-blue-800 sm:text-[1.65rem]">
+                        {formatPKR(minPrice)}
+                      </p>
+                      {showCompare ? (
+                        <p className="text-sm text-slate-400 line-through tabular-nums">{formatPKR(compareAt)}</p>
+                      ) : null}
+                    </>
+                  ) : null}
+                </div>
+              ) : null}
+            </div>
+
+            {variantRows.length === 0 ? (
+              <p className="mt-4 text-sm text-slate-600">This product is not available for order yet.</p>
+            ) : null}
+
+            <div className={multipleVariants ? "mt-4 space-y-3" : "mt-4"}>
+              {variantRows.map((v) => {
+                const specs = v.options as Record<string, unknown>;
+                const hasSpecs =
+                  specListsFromOptions(specs).length > 0 ||
+                  Object.entries(specs).some(
+                    ([k, val]) => k !== SPEC_LISTS_OPTIONS_KEY && val != null && String(val).trim() !== "",
+                  );
+                const showTitle = variantTitleVisible(product.name, v.title, multipleVariants);
+
+                return (
+                  <div
+                    key={v.id}
+                    className={
+                      multipleVariants
+                        ? "rounded-2xl border border-slate-200 bg-slate-50/50 p-4 sm:p-5"
+                        : undefined
+                    }
+                  >
+                    {multipleVariants ? (
+                      <div className="flex flex-wrap items-start justify-between gap-3 border-b border-slate-200/80 pb-4">
+                        <div className="min-w-0">
+                          {showTitle ? (
+                            <p className="text-sm font-semibold text-slate-900">{v.title}</p>
+                          ) : (
+                            stockBadge(qtyByVariant.get(v.id))
+                          )}
+                        </div>
+                        <div className="text-right">
+                          <p className="text-base font-bold tabular-nums text-blue-800">{formatPKR(v.price_pkr)}</p>
+                          {v.compare_at_price_pkr && v.compare_at_price_pkr > v.price_pkr ? (
+                            <p className="text-xs text-slate-400 line-through tabular-nums">
+                              {formatPKR(v.compare_at_price_pkr)}
+                            </p>
+                          ) : null}
+                        </div>
+                      </div>
+                    ) : null}
+
+                    {multipleVariants && showTitle ? (
+                      <div className="mt-3">{stockBadge(qtyByVariant.get(v.id))}</div>
+                    ) : null}
+
+                    {hasSpecs ? (
+                      <div
+                        className={`${multipleVariants ? "mt-3 border-t border-slate-100 pt-3" : introText || bodyDescription ? "mt-3 border-t border-slate-100 pt-3" : "mt-3"}`}
+                      >
+                        <VariantSpecs options={specs} />
+                      </div>
+                    ) : null}
+
+                    <div
+                      className={
+                        multipleVariants
+                          ? "mt-4 flex justify-end border-t border-slate-100 pt-3"
+                          : "mt-4 flex flex-col gap-2 border-t border-slate-100 pt-4 sm:flex-row sm:items-center sm:justify-between"
+                      }
+                    >
+                      {!multipleVariants ? (
+                        <p className="text-xs text-slate-500">Cash on delivery · confirmed before dispatch</p>
+                      ) : null}
                       <AddToCart
+                        className={multipleVariants ? `${addToCartClass} sm:w-auto` : addToCartClass}
                         variant={{
                           id: v.id,
                           sku: v.sku,
@@ -203,12 +320,26 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
                       />
                     </div>
                   </div>
-                </div>
-              ))}
-              {variantRows.length === 0 ? (
-                <div className="text-sm text-slate-600">No active variants yet — add rows in Supabase.</div>
-              ) : null}
+                );
+              })}
             </div>
+
+            {variantRows.length === 1 ? (
+              <div className="mt-4 flex flex-wrap gap-2">
+                <Link
+                  href="/products"
+                  className="inline-flex h-11 items-center justify-center rounded-xl border border-slate-200 bg-white px-5 text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50"
+                >
+                  Continue shopping
+                </Link>
+                <Link
+                  href="/cart"
+                  className="inline-flex h-11 items-center justify-center rounded-xl border border-blue-200 bg-blue-50 px-5 text-sm font-semibold text-blue-800 transition hover:bg-blue-100"
+                >
+                  View cart
+                </Link>
+              </div>
+            ) : null}
           </div>
 
           <div className="rounded-3xl border border-blue-100 bg-blue-50/90 p-5 text-sm text-blue-950 shadow-sm ring-1 ring-white/60 backdrop-blur-sm">

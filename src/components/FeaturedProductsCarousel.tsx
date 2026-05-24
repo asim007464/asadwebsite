@@ -1,11 +1,7 @@
 "use client";
 
-import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ProductCardMedia } from "@/components/ProductCardMedia";
-import { AddToCartButton } from "@/components/AddToCartButton";
-import { AddToWishlistButton } from "@/components/AddToWishlistButton";
-import { formatPKR } from "@/lib/money";
+import { ProductGridCard } from "@/components/ProductGridCard";
 import type { ProductListing } from "@/lib/store-types";
 
 export function FeaturedProductsCarousel({ products }: { products: ProductListing[] }) {
@@ -13,7 +9,7 @@ export function FeaturedProductsCarousel({ products }: { products: ProductListin
   const [perView, setPerView] = useState(3);
   const [active, setActive] = useState(0);
   const scrollerRef = useRef<HTMLDivElement | null>(null);
-  const itemRefs = useRef<(HTMLAnchorElement | null)[]>([]);
+  const itemRefs = useRef<(HTMLDivElement | null)[]>([]);
 
   const stepPrev = useCallback(() => {
     setActive((i) => (i - 1 + n) % n);
@@ -42,17 +38,16 @@ export function FeaturedProductsCarousel({ products }: { products: ProductListin
     };
   }, []);
 
-  // Keep scroller aligned when active changes (smooth).
+  // Align carousel horizontally only — scrollIntoView also moves the document vertically.
   useEffect(() => {
+    const scroller = scrollerRef.current;
     const el = itemRefs.current[active];
-    if (!el) return;
-    el.scrollIntoView({ behavior: "smooth", inline: "start", block: "nearest" });
+    if (!scroller || !el) return;
+    const targetLeft = scroller.scrollLeft + (el.getBoundingClientRect().left - scroller.getBoundingClientRect().left);
+    scroller.scrollTo({ left: targetLeft, behavior: "smooth" });
   }, [active]);
 
   const showNav = n > 4;
-
-  const cardClass =
-    "group flex h-full min-h-0 min-w-0 flex-col overflow-hidden rounded-3xl border border-slate-200 bg-white/95 shadow-sm ring-1 ring-white/60 backdrop-blur-sm transition duration-200 ease-smooth-out motion-reduce:transition-none hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-md motion-reduce:hover:translate-y-0";
 
   const imgSizes = "(max-width:640px) 100vw, (max-width:1024px) 50vw, (max-width:1536px) 33vw, 25vw";
 
@@ -110,80 +105,21 @@ export function FeaturedProductsCarousel({ products }: { products: ProductListin
           aria-label="Featured products"
         >
           {products.map((p, i) => (
-            <article
+            <div
               key={p.id}
-              className={`${cardClass} snap-start`}
+              ref={(el) => {
+                itemRefs.current[i] = el;
+              }}
+              className="snap-start"
               style={{
                 flex: `0 0 calc((100% - ${(perView - 1) * 1.5}rem) / ${perView})`,
-                minWidth: perView >= 3 ? "18rem" : perView === 2 ? "16rem" : "100%",
+                minWidth: perView >= 3 ? "11rem" : perView === 2 ? "10rem" : "100%",
               }}
               onMouseEnter={() => setActive(i)}
+              onFocus={() => setActive(i)}
             >
-              <Link
-                href={`/product/${p.slug}`}
-                ref={(el) => {
-                  itemRefs.current[i] = el;
-                }}
-                onFocus={() => setActive(i)}
-                className="block"
-              >
-                <ProductCardMedia imageUrl={p.image_url} alt={p.name} aspectClassName="aspect-[4/3] sm:aspect-[5/3]" sizes={imgSizes} />
-              </Link>
-              <div className="flex flex-1 flex-col p-4">
-                <Link
-                  href={`/product/${p.slug}`}
-                  onFocus={() => setActive(i)}
-                  className="min-h-[2.6rem] text-sm font-semibold leading-snug tracking-tight text-slate-900 line-clamp-2 sm:text-[15px] hover:text-blue-800 hover:underline"
-                >
-                  {p.name}
-                </Link>
-                <p className="mt-2 min-h-[2.5rem] text-sm leading-relaxed text-slate-600 line-clamp-2">{p.description}</p>
-                <div className="mt-auto space-y-3 border-t border-slate-100 pt-3">
-                  <div className="inline-flex rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold tabular-nums text-blue-800 ring-1 ring-blue-100/80">
-                    {formatPKR(p.min_price_pkr)}
-                  </div>
-                  <div className="flex flex-wrap items-center justify-between gap-3">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <AddToWishlistButton
-                        variant={
-                          p.default_variant_id && p.default_variant_sku && p.default_variant_title && typeof p.default_variant_price_pkr === "number"
-                            ? {
-                                variantId: p.default_variant_id,
-                                productSlug: p.slug,
-                                productName: p.name,
-                                variantTitle: p.default_variant_title,
-                                sku: p.default_variant_sku,
-                                unitPricePkr: p.default_variant_price_pkr,
-                                imageUrl: p.image_url,
-                              }
-                            : null
-                        }
-                        className="inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-full border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-rose-200 hover:bg-rose-50 hover:text-rose-800"
-                      />
-                      <AddToCartButton
-                        variant={
-                          p.default_variant_id && p.default_variant_sku && p.default_variant_title && typeof p.default_variant_price_pkr === "number"
-                            ? {
-                                id: p.default_variant_id,
-                                sku: p.default_variant_sku,
-                                title: p.default_variant_title,
-                                price_pkr: p.default_variant_price_pkr,
-                                product_slug: p.slug,
-                                product_name: p.name,
-                                image_url: p.image_url,
-                              }
-                            : null
-                        }
-                        className="inline-flex h-10 items-center justify-center rounded-full bg-blue-600 px-4 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 disabled:opacity-60"
-                      />
-                    </div>
-                    <Link href="/cart" className="text-sm font-semibold text-blue-700 hover:text-blue-800">
-                      Cart →
-                    </Link>
-                  </div>
-                </div>
-              </div>
-            </article>
+              <ProductGridCard product={p} sizes={imgSizes} />
+            </div>
           ))}
         </div>
 

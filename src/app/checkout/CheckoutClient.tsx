@@ -293,7 +293,7 @@ function Field({
   return (
     <div>
       <label className="text-sm font-semibold text-slate-900">
-        {label} {required ? <span className="text-red-600">*</span> : null}
+        {label} {required ? <span className="text-blue-800">*</span> : null}
       </label>
       <input
         name={name}

@@ -10,6 +10,7 @@ alter table public.products add column if not exists meta_keywords text not null
 alter table public.products add column if not exists meta_description text not null default '';
 alter table public.categories add column if not exists thumbnail_url text not null default '';
 alter table public.categories add column if not exists hero_icon_hint text not null default '';
+alter table public.products add column if not exists catchy_headline text not null default '';
 
 drop view if exists public.product_listings cascade;
 
@@ -19,6 +20,7 @@ select
   p.name,
   p.slug,
   p.description,
+  p.catchy_headline,
   p.category_id,
   p.brand_id,
   p.is_active,
@@ -323,8 +325,7 @@ update public.products
 set is_featured = true, featured_sort_order = 4
 where slug = 'room-heater-quartz-1200w';
 
--- Homepage strip above reviews (editable in Admin → Reviews banner).
--- Applies only while the banner is inactive and unset (won’t overwrite a configured banner).
+-- Homepage promo banners (Admin → Promo banners). Banner 1 = after hero; banner 2 = before reviews.
 update public.home_reviews_banner
 set
   background_image_url = 'https://picsum.photos/id/866/2400/1200',
@@ -336,6 +337,21 @@ set
   updated_at = now()
 where
   id = 1
+  and is_active is false
+  and coalesce(trim(background_image_url), '') = ''
+  and coalesce(trim(heading), '') = '';
+
+update public.home_reviews_banner
+set
+  background_image_url = 'https://picsum.photos/id/867/2400/1200',
+  heading = 'Real shoppers. Real COD orders.',
+  paragraph = 'Read customer feedback below — then browse nationwide delivery with phone-confirmed COD.',
+  button_label = 'Browse products',
+  button_href = '/products',
+  is_active = true,
+  updated_at = now()
+where
+  id = 2
   and is_active is false
   and coalesce(trim(background_image_url), '') = ''
   and coalesce(trim(heading), '') = '';
