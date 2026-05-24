@@ -1,7 +1,22 @@
 import Link from "next/link";
 import type { HomeReviewsBannerRow } from "@/lib/store-types";
 
-export function ReviewsBannerSection({ banner }: { banner: HomeReviewsBannerRow }) {
+function cn(...parts: Array<string | false | null | undefined>) {
+  return parts.filter(Boolean).join(" ");
+}
+
+export function ReviewsBannerSection({
+  banner,
+  layout = "fullBleed",
+  className,
+  headingId = "reviews-banner-heading",
+}: {
+  banner: HomeReviewsBannerRow;
+  /** `contained` — inside homepage content column; `fullBleed` — breaks out to viewport width. */
+  layout?: "contained" | "fullBleed";
+  className?: string;
+  headingId?: string;
+}) {
   const bg = banner.background_image_url.trim();
   const heading = banner.heading.trim();
   const paragraph = banner.paragraph.trim();
@@ -14,9 +29,14 @@ export function ReviewsBannerSection({ banner }: { banner: HomeReviewsBannerRow 
 
   return (
     <section
-      aria-labelledby={heading ? "reviews-banner-heading" : undefined}
-      aria-label={heading ? undefined : "Highlighted message before reviews"}
-      className="relative left-1/2 isolate mt-12 w-[min(100dvw,100%)] max-w-none -translate-x-1/2 overflow-hidden rounded-3xl shadow-lg ring-1 ring-slate-200/70 sm:min-h-[280px] md:min-h-[320px] lg:min-h-[340px]"
+      aria-labelledby={heading ? headingId : undefined}
+      aria-label={heading ? undefined : "Promotional banner"}
+      className={cn(
+        "relative isolate overflow-hidden rounded-3xl shadow-lg ring-1 ring-slate-200/70 sm:min-h-[240px] md:min-h-[280px] lg:min-h-[300px]",
+        layout === "fullBleed" && "left-1/2 mt-12 w-[min(100dvw,100%)] max-w-none -translate-x-1/2",
+        layout === "contained" && "w-full",
+        className,
+      )}
     >
       {/* Background image */}
       <div
@@ -38,7 +58,7 @@ export function ReviewsBannerSection({ banner }: { banner: HomeReviewsBannerRow 
       <div className="relative z-10 mx-auto flex max-w-7xl flex-col gap-6 px-5 py-10 sm:px-8 md:flex-row md:items-center md:justify-between md:py-14 lg:px-10">
         <div className="max-w-2xl space-y-3 text-white">
           {heading ? (
-            <h2 id="reviews-banner-heading" className="text-2xl font-bold tracking-tight sm:text-3xl lg:text-[1.875rem]">
+            <h2 id={headingId} className="text-2xl font-bold tracking-tight sm:text-3xl lg:text-[1.875rem]">
               {heading}
             </h2>
           ) : null}

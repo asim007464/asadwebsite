@@ -91,9 +91,9 @@ create index if not exists hero_slides_active_sort_idx on public.hero_slides(is_
 
 alter table public.hero_slides enable row level security;
 
--- Homepage strip above testimonials/reviews — managed in Admin → Reviews banner.
+-- Homepage promo strips (id 1 = after hero, id 2 = before testimonials) — Admin → Home promo banners.
 create table if not exists public.home_reviews_banner (
-  id integer primary key default 1 check (id = 1),
+  id integer primary key check (id in (1, 2)),
   background_image_url text not null default '',
   heading text not null default '',
   paragraph text not null default '',
@@ -104,10 +104,101 @@ create table if not exists public.home_reviews_banner (
 );
 
 insert into public.home_reviews_banner (id)
-values (1)
+values (1), (2)
 on conflict (id) do nothing;
 
 alter table public.home_reviews_banner enable row level security;
+
+-- Full-width clickable image above "Browse categories" — Admin → Categories promo.
+create table if not exists public.home_categories_promo (
+  id integer primary key default 1 check (id = 1),
+  image_url text not null default '',
+  link_href text not null default '',
+  alt_text text not null default '',
+  is_active boolean not null default false,
+  updated_at timestamptz not null default now()
+);
+
+insert into public.home_categories_promo (id)
+values (1)
+on conflict (id) do nothing;
+
+alter table public.home_categories_promo enable row level security;
+
+do $$
+begin
+  if not exists (select 1 from pg_policies where schemaname='public' and tablename='home_categories_promo' and policyname='Public read home categories promo active') then
+    create policy "Public read home categories promo active"
+      on public.home_categories_promo for select using (is_active = true);
+  end if;
+end$$;
+
+-- Homepage "Browse categories" grid: admin picks one category + curated products (max 5 columns on desktop).
+create table if not exists public.home_browse_showcase (
+  id integer primary key default 1 check (id = 1),
+  category_id uuid references public.categories(id) on delete set null,
+  section_title text not null default '',
+  is_active boolean not null default false,
+  updated_at timestamptz not null default now()
+);
+
+insert into public.home_browse_showcase (id)
+values (1)
+on conflict (id) do nothing;
+
+create table if not exists public.home_browse_showcase_products (
+  id uuid primary key default gen_random_uuid(),
+  product_id uuid not null references public.products(id) on delete cascade,
+  sort_order integer not null default 0,
+  created_at timestamptz not null default now(),
+  unique (product_id)
+);
+
+create index if not exists home_browse_showcase_products_sort_idx
+  on public.home_browse_showcase_products(sort_order);
+
+alter table public.home_browse_showcase enable row level security;
+alter table public.home_browse_showcase_products enable row level security;
+
+do $$
+begin
+  if not exists (select 1 from pg_policies where schemaname='public' and tablename='home_browse_showcase' and policyname='Public read home browse showcase active') then
+    create policy "Public read home browse showcase active"
+      on public.home_browse_showcase for select using (is_active = true);
+  end if;
+end$$;
+
+do $$
+begin
+  if not exists (select 1 from pg_policies where schemaname='public' and tablename='home_browse_showcase_products' and policyname='Public read home browse showcase products') then
+    create policy "Public read home browse showcase products"
+      on public.home_browse_showcase_products for select using (true);
+  end if;
+end$$;
+
+-- Full-width image after Browse categories / showcase grid — Admin → After browse banner.
+create table if not exists public.home_after_browse_banner (
+  id integer primary key default 1 check (id = 1),
+  image_url text not null default '',
+  link_href text not null default '',
+  alt_text text not null default '',
+  is_active boolean not null default false,
+  updated_at timestamptz not null default now()
+);
+
+insert into public.home_after_browse_banner (id)
+values (1)
+on conflict (id) do nothing;
+
+alter table public.home_after_browse_banner enable row level security;
+
+do $$
+begin
+  if not exists (select 1 from pg_policies where schemaname='public' and tablename='home_after_browse_banner' and policyname='Public read home after browse banner active') then
+    create policy "Public read home after browse banner active"
+      on public.home_after_browse_banner for select using (is_active = true);
+  end if;
+end$$;
 
 do $$
 begin
@@ -218,6 +309,7 @@ end$$;
 
 alter table public.products add column if not exists meta_keywords text not null default '';
 alter table public.products add column if not exists meta_description text not null default '';
+alter table public.products add column if not exists catchy_headline text not null default '';
 
 alter table public.categories add column if not exists thumbnail_url text not null default '';
 alter table public.categories add column if not exists hero_icon_hint text not null default '';
@@ -292,6 +384,7 @@ select
   p.name,
   p.slug,
   p.description,
+  p.catchy_headline,
   p.category_id,
   p.brand_id,
   p.is_active,

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { createProduct } from "@/app/admin/actions";
 import { ADMIN_IMAGE_FILE_INPUT_CLASS, ADMIN_IMAGE_UPLOAD_HINT } from "@/lib/admin-media-upload";
+import { AdminSpecListsField } from "@/components/admin/AdminSpecListsField";
 import { AdminStockQtyField } from "@/components/admin/AdminStockQtyField";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
@@ -9,8 +10,6 @@ export const dynamic = "force-dynamic";
 function errMsg(code: string) {
   if (code === "name") return "Enter a product name (at least 2 characters).";
   if (code === "slug") return "Enter a valid slug or leave it blank to generate from the name.";
-  if (code === "sku") return "SKU must be at least 2 characters.";
-  if (code === "variant") return "Enter a label for the first variant (e.g. “Default” or size/color).";
   if (code === "price") return "Price (PKR) must be a whole number ≥ 0.";
   if (code === "compare") return "Compare-at price must be empty or a whole number ≥ 0.";
   if (code === "image") return "Image URL must be empty, https://, or a path starting with /.";
@@ -45,7 +44,7 @@ export default async function AdminNewProductPage({
             <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Catalog</p>
             <h1 className="text-2xl font-semibold tracking-tight text-slate-900">Add product</h1>
             <p className="mt-2 max-w-2xl text-sm text-slate-600">
-              You can add more SKUs and tweak images after saving. At least one variant with price and stock is required.
+              You can add more variants and tweak images after saving. At least one variant with price and stock is required.
             </p>
           </div>
           <Link href="/admin/products" className="text-sm font-semibold text-blue-700 hover:text-blue-800">
@@ -61,6 +60,15 @@ export default async function AdminNewProductPage({
           <div className="sm:col-span-2">
             <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">Product name</label>
             <input name="name" required placeholder="e.g. Ceiling fan 56″ with remote" className={input} />
+          </div>
+          <div className="sm:col-span-2">
+            <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">Catchy headline (optional)</label>
+            <input
+              name="catchy_headline"
+              placeholder="e.g. Stay charged on the go — fast charge, pocket size"
+              className={input}
+            />
+            <p className="mt-1 text-[11px] text-slate-500">Short line under the product name on the storefront.</p>
           </div>
           <div className="sm:col-span-2">
             <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">Slug (optional)</label>
@@ -103,16 +111,18 @@ export default async function AdminNewProductPage({
           </div>
 
           <div className="sm:col-span-2 border-t border-slate-100 pt-6">
-            <h2 className="text-sm font-bold text-slate-900">First variant (SKU)</h2>
-            <p className="mt-1 text-xs text-slate-500">Inventory is tracked per variant.</p>
+            <h2 className="text-sm font-bold text-slate-900">Product lists</h2>
+            <p className="mt-1 text-xs text-slate-500">
+              Add a heading, then bullet points underneath. Use “Add point” for more lines or “Add another list” for a second
+              section. Shown on the product page; price and stock are below.
+            </p>
           </div>
-          <div>
-            <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">SKU</label>
-            <input name="sku" required placeholder="e.g. CF-56-WHT" className={monoInput} />
+          <div className="sm:col-span-2">
+            <AdminSpecListsField inputClassName={input} />
           </div>
-          <div>
-            <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">Variant label</label>
-            <input name="variant_title" required placeholder="e.g. 56″ Matte white + Remote" className={input} />
+          <div className="sm:col-span-2 border-t border-slate-100 pt-2">
+            <h2 className="text-sm font-bold text-slate-900">Price &amp; stock</h2>
+            <p className="mt-1 text-xs text-slate-500">Stock code is created automatically from the product slug.</p>
           </div>
           <div>
             <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">Price (PKR)</label>

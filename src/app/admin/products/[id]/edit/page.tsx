@@ -56,7 +56,11 @@ export default async function AdminEditProductPage({
   const supabase = createSupabaseAdminClient();
 
   const [{ data: product }, { data: categories }, { data: variants }, { data: galleryRows }] = await Promise.all([
-    supabase.from("products").select("id,name,slug,description,category_id,brand_id,is_active").eq("id", id).maybeSingle(),
+    supabase
+      .from("products")
+      .select("id,name,slug,catchy_headline,description,category_id,brand_id,is_active")
+      .eq("id", id)
+      .maybeSingle(),
     supabase.from("categories").select("id,name").order("name"),
     supabase
       .from("product_variants")
@@ -76,6 +80,7 @@ export default async function AdminEditProductPage({
     id: string;
     name: string;
     slug: string;
+    catchy_headline: string;
     description: string;
     category_id: string | null;
     brand_id: string | null;
@@ -151,6 +156,15 @@ export default async function AdminEditProductPage({
             <div className="sm:col-span-2">
               <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">Product name</label>
               <input name="name" required defaultValue={p.name} className={input} />
+            </div>
+            <div className="sm:col-span-2">
+              <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">Catchy headline (optional)</label>
+              <input
+                name="catchy_headline"
+                defaultValue={p.catchy_headline ?? ""}
+                placeholder="e.g. Stay charged on the go — fast charge, pocket size"
+                className={input}
+              />
             </div>
             <div className="sm:col-span-2">
               <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">Slug</label>

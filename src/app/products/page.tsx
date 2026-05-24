@@ -1,13 +1,11 @@
 import Link from "next/link";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import type { Category, ProductListing } from "@/lib/store-types";
-import { PRICE_FILTER_MAX_PKR, formatPKR } from "@/lib/money";
-import { DEMO_PRODUCTS } from "@/lib/demo-products";
-import { ProductCardMedia } from "@/components/ProductCardMedia";
+import { PRICE_FILTER_MAX_PKR } from "@/lib/money";
+import { ProductGridCard } from "@/components/ProductGridCard";
 import { ProductsCatalogToolbar } from "@/components/ProductsCatalogToolbar";
 import { ProductsFilters } from "@/components/ProductsFilters";
-import { AddToCartButton } from "@/components/AddToCartButton";
-import { AddToWishlistButton } from "@/components/AddToWishlistButton";
+import { queryProductListingsPage } from "@/lib/product-listings-query";
 
 export const dynamic = "force-dynamic";
 
@@ -39,15 +37,12 @@ export default async function ProductsPage({
   const rangeFrom = (page - 1) * PAGE_SIZE;
   const rangeTo = rangeFrom + PAGE_SIZE - 1;
 
-  const columns =
-    "id,name,slug,description,min_price_pkr,image_url,category_id,default_variant_id,default_variant_sku,default_variant_title,default_variant_price_pkr";
-
   const supabase = createSupabaseAdminClient();
   const [{ data: categories }, listingsPack] = await Promise.all([
     supabase.from("categories").select("id,name,slug,parent_id,thumbnail_url,hero_icon_hint").order("name"),
-    (async (): Promise<{ data: ProductListing[] | null; count: number | null }> => {
+    queryProductListingsPage(supabase, async (select) => {
       const started = () => {
-        let qb = supabase.from("product_listings").select(columns, { count: "exact" });
+        let qb = supabase.from("product_listings").select(select, { count: "exact" });
         if (featured) qb = qb.eq("is_featured", true);
         return qb;
       };
@@ -65,33 +60,28 @@ export default async function ProductsPage({
       };
 
       if (!category && q) {
-        const res = await applySort(
-          applyPrice(started().or(`name.ilike.%${q}%,description.ilike.%${q}%`)),
-        ).range(rangeFrom, rangeTo);
-        return { data: (res.data as ProductListing[] | null) ?? null, count: res.count ?? null };
+        return applySort(applyPrice(started().or(`name.ilike.%${q}%,description.ilike.%${q}%`))).range(rangeFrom, rangeTo);
       }
 
       if (!category) {
-        const res = await applySort(applyPrice(started())).range(rangeFrom, rangeTo);
-        return { data: (res.data as ProductListing[] | null) ?? null, count: res.count ?? null };
+        return applySort(applyPrice(started())).range(rangeFrom, rangeTo);
       }
 
       const { data: cat } = await supabase.from("categories").select("id").eq("slug", category).maybeSingle();
       if (!cat?.id) {
-        const res = await applySort(applyPrice(started())).range(rangeFrom, rangeTo);
-        return { data: (res.data as ProductListing[] | null) ?? null, count: res.count ?? null };
+        return applySort(applyPrice(started())).range(rangeFrom, rangeTo);
       }
 
       let scoped = started().eq("category_id", cat.id);
       scoped = applyPrice(scoped);
       if (q) scoped = scoped.or(`name.ilike.%${q}%,description.ilike.%${q}%`);
-      const res = await applySort(scoped).range(rangeFrom, rangeTo);
-      return { data: (res.data as ProductListing[] | null) ?? null, count: res.count ?? null };
-    })(),
+      return applySort(scoped).range(rangeFrom, rangeTo);
+    }),
   ]);
 
-  const listings = listingsPack.data ?? [];
-  const totalCount = listingsPack.count ?? listings.length;
+  const listings = listingsPack.error ? [] : (listingsPack.data ?? []);
+  const totalCount = listingsPack.error ? 0 : (listingsPack.count ?? listings.length);
+  const listingsError = listingsPack.error;
   const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
   const hasLiveProducts = listings.length > 0;
   const showingFrom = totalCount === 0 ? 0 : rangeFrom + 1;
@@ -165,12 +155,24 @@ export default async function ProductsPage({
         </div>
       </div>
 
-      {!hasLiveProducts ? (
-        <div className="mt-6 rounded-3xl border border-amber-200 bg-amber-50 p-6 text-sm text-amber-950 shadow-sm">
-          <div className="font-semibold">Catalog connection looks empty</div>
+      {listingsError ? (
+        <div className="mt-6 rounded-3xl border border-red-200 bg-red-50 p-6 text-sm text-red-950 shadow-sm">
+          <div className="font-semibold">Could not load your catalog</div>
           <p className="mt-2 leading-relaxed">
-            Run <code className="rounded bg-white px-1 py-0.5 text-xs ring-1 ring-amber-100">supabase/seed.sql</code> or publish SKUs from Supabase to populate this grid. Below is a{" "}
-            <span className="font-semibold">non-clickable demo strip</span> so stakeholders can review spacing, imagery, and typography before inventory lands.
+            {listingsError}. In Supabase SQL editor, run{" "}
+            <code className="rounded bg-white px-1 py-0.5 text-xs ring-1 ring-red-100">supabase/migrations/20260523150000_product_listings_catchy_headline.sql</code>{" "}
+            (or the latest <code className="rounded bg-white px-1 py-0.5 text-xs ring-1 ring-red-100">schema.sql</code>), then refresh.
+          </p>
+        </div>
+      ) : !hasLiveProducts ? (
+        <div className="mt-6 rounded-3xl border border-amber-200 bg-amber-50 p-6 text-sm text-amber-950 shadow-sm">
+          <div className="font-semibold">No products on the shop yet</div>
+          <p className="mt-2 leading-relaxed">
+            Add products in{" "}
+            <Link href="/admin/products" className="font-semibold text-blue-800 underline underline-offset-2 hover:text-blue-900">
+              Admin → Products
+            </Link>{" "}
+            and turn on <span className="font-semibold">Visible on storefront (active)</span>. If you ran demo seed data and only want your own items, open each sample SKU in admin and deactivate or delete it.
           </p>
         </div>
       ) : (
@@ -187,110 +189,16 @@ export default async function ProductsPage({
       <div className="mt-8 grid gap-6 md:grid-cols-[18rem_1fr]">
         <ProductsFilters categories={((categories as Category[] | null) ?? []) as Category[]} />
 
-        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:gap-4">
           {hasLiveProducts
             ? listings.map((p) => (
-                <article
+                <ProductGridCard
                   key={p.id}
-                  className="group overflow-hidden rounded-3xl border border-slate-200 bg-white/95 shadow-sm ring-1 ring-white/60 backdrop-blur-sm transition duration-200 ease-smooth-out motion-reduce:transition-none hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-md motion-reduce:hover:translate-y-0"
-                >
-                  <Link href={`/product/${p.slug}`} className="block">
-                    <ProductCardMedia imageUrl={p.image_url} alt={p.name} />
-                  </Link>
-                  <div className="flex flex-col gap-4 p-5">
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="min-w-0">
-                        <Link href={`/product/${p.slug}`} className="block truncate text-base font-semibold text-slate-900 hover:text-blue-800 hover:underline">
-                          {p.name}
-                        </Link>
-                        <div className="mt-1 line-clamp-2 text-sm text-slate-600">{p.description}</div>
-                        <div className="mt-2 text-[11px] font-semibold text-slate-500">
-                          <span className="rounded-full bg-slate-100 px-2 py-0.5 text-slate-700 ring-1 ring-slate-200/80">Specs on detail page</span>
-                        </div>
-                      </div>
-                      <div className="shrink-0 rounded-full bg-blue-50 px-3 py-1 text-sm font-semibold text-blue-800">{formatPKR(p.min_price_pkr)}</div>
-                    </div>
-
-                    <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 pt-4">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <AddToWishlistButton
-                          variant={
-                            p.default_variant_id && p.default_variant_sku && p.default_variant_title && typeof p.default_variant_price_pkr === "number"
-                              ? {
-                                  variantId: p.default_variant_id,
-                                  productSlug: p.slug,
-                                  productName: p.name,
-                                  variantTitle: p.default_variant_title,
-                                  sku: p.default_variant_sku,
-                                  unitPricePkr: p.default_variant_price_pkr,
-                                  imageUrl: p.image_url,
-                                }
-                              : null
-                          }
-                          className="inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-full border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-rose-200 hover:bg-rose-50 hover:text-rose-800"
-                        />
-                        <AddToCartButton
-                          variant={
-                            p.default_variant_id && p.default_variant_sku && p.default_variant_title && typeof p.default_variant_price_pkr === "number"
-                              ? {
-                                  id: p.default_variant_id,
-                                  sku: p.default_variant_sku,
-                                  title: p.default_variant_title,
-                                  price_pkr: p.default_variant_price_pkr,
-                                  product_slug: p.slug,
-                                  product_name: p.name,
-                                  image_url: p.image_url,
-                                }
-                              : null
-                          }
-                          className="inline-flex h-10 items-center justify-center rounded-full bg-blue-600 px-4 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 disabled:opacity-60"
-                        />
-                      </div>
-                      <Link href="/cart" className="text-sm font-semibold text-blue-700 hover:text-blue-800">
-                        View cart →
-                      </Link>
-                    </div>
-                  </div>
-                </article>
+                  product={p}
+                  sizes="(max-width:640px) 50vw, (max-width:1024px) 25vw, 20vw"
+                />
               ))
-            : DEMO_PRODUCTS.map((p) => (
-              <article key={p.sku} className="flex flex-col overflow-hidden rounded-3xl border border-dashed border-blue-200 bg-white/95 shadow-sm ring-1 ring-white/60 backdrop-blur-sm">
-                <div className="relative">
-                  <ProductCardMedia imageUrl={p.imageUrl} alt={p.name} />
-                  <div className="pointer-events-none absolute left-4 top-4 z-20 rounded-full bg-white/85 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-blue-900 shadow-sm ring-1 ring-blue-100 backdrop-blur">
-                    Demo preview
-                  </div>
-                </div>
-                <div className="flex flex-1 flex-col p-5">
-                  <div className="text-[11px] font-semibold uppercase tracking-wide text-blue-700">{p.category}</div>
-                  <div className="mt-2 text-base font-semibold text-slate-900">{p.name}</div>
-                  <div className="mt-1 text-xs font-medium text-slate-500">SKU {p.sku}</div>
-                  <div className="mt-2 flex flex-wrap gap-2">
-                    {p.unit ? (
-                      <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-slate-700 ring-1 ring-slate-200">{p.unit}</span>
-                    ) : null}
-                    {p.warranty ? (
-                      <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-semibold text-emerald-800 ring-1 ring-emerald-100">{p.warranty}</span>
-                    ) : null}
-                  </div>
-                  <p className="mt-3 text-sm leading-relaxed text-slate-600">{p.description}</p>
-                  {p.stockHint ? <p className="mt-2 text-xs text-slate-500">{p.stockHint}</p> : null}
-                  <ul className="mt-4 space-y-1.5 text-sm text-slate-700">
-                    {p.specs.map((spec) => (
-                      <li key={spec} className="flex gap-2">
-                        <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-blue-500" />
-                        <span>{spec}</span>
-                      </li>
-                    ))}
-                  </ul>
-                  <div className="mt-6 flex flex-wrap items-center gap-3 border-t border-slate-100 pt-5">
-                    <div className="text-lg font-semibold text-slate-900">{formatPKR(p.pricePkr)}</div>
-                    {p.compareAtPkr ? <div className="text-sm text-slate-400 line-through">{formatPKR(p.compareAtPkr)}</div> : null}
-                    <span className="ml-auto rounded-full bg-slate-900 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-white">Layout sample</span>
-                  </div>
-                </div>
-              </article>
-            ))}
+            : null}
         </div>
       </div>
 

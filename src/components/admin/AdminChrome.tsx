@@ -70,7 +70,9 @@ export function AdminChrome({ owner, shopName, children }: { owner: boolean; sho
               <div className="my-2 border-t border-white/10" />
               <p className="px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-500">Site</p>
               <NavItem href="/admin/hero" label="Hero slides" variant="sidebar" />
-              <NavItem href="/admin/reviews-banner" label="Reviews banner" variant="sidebar" />
+              <NavItem href="/admin/reviews-banner" label="Promo banners" variant="sidebar" />
+              <NavItem href="/admin/browse-showcase" label="Browse grid" variant="sidebar" />
+              <NavItem href="/admin/after-browse-banner" label="After browse banner" variant="sidebar" />
               <NavItem href="/admin/site" label="Site & payments" variant="sidebar" />
               {owner ? (
                 <>
@@ -118,7 +120,9 @@ export function AdminChrome({ owner, shopName, children }: { owner: boolean; sho
                   <NavItem href="/admin/site" label="Site" variant="pill" />
                   <NavItem href="/admin/home-sections" label="Strips" variant="pill" />
                   <NavItem href="/admin/products/seo" label="SEO" variant="pill" />
-                  <NavItem href="/admin/reviews-banner" label="Reviews" variant="pill" />
+                  <NavItem href="/admin/reviews-banner" label="Promo banner" variant="pill" />
+                  <NavItem href="/admin/browse-showcase" label="Grid" variant="pill" />
+                  <NavItem href="/admin/after-browse-banner" label="Banner" variant="pill" />
                   {owner ? <NavItem href="/admin/team" label="Users" variant="pill" /> : null}
                   <NavItem href="/" label="Store" variant="pill" />
                 </div>

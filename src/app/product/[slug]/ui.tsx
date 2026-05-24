@@ -4,6 +4,8 @@ import { AddToCartButton } from "@/components/AddToCartButton";
 
 export function AddToCart({
   variant,
+  className,
+  label,
 }: {
   variant: {
     id: string;
@@ -14,6 +16,8 @@ export function AddToCart({
     product_name: string;
     image_url: string | null;
   };
+  className?: string;
+  label?: string;
 }) {
   return (
     <AddToCartButton
@@ -26,6 +30,8 @@ export function AddToCart({
         product_name: variant.product_name,
         image_url: variant.image_url,
       }}
+      className={className}
+      label={label}
     />
   );
 }
