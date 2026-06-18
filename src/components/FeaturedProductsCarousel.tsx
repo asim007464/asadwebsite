@@ -101,7 +101,7 @@ export function FeaturedProductsCarousel({ products }: { products: ProductListin
       <div className="mx-auto" aria-live="polite" aria-label="Featured products carousel">
         <div
           ref={scrollerRef}
-          className="flex items-stretch gap-6 overflow-x-auto scroll-smooth pb-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden [scroll-snap-type:x_mandatory]"
+          className="flex items-start gap-4 overflow-x-auto scroll-smooth pb-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden [scroll-snap-type:x_mandatory] sm:gap-5 lg:gap-6"
           aria-label="Featured products"
         >
           {products.map((p, i) => (
@@ -112,8 +112,9 @@ export function FeaturedProductsCarousel({ products }: { products: ProductListin
               }}
               className="snap-start"
               style={{
-                flex: `0 0 calc((100% - ${(perView - 1) * 1.5}rem) / ${perView})`,
-                minWidth: perView >= 3 ? "11rem" : perView === 2 ? "10rem" : "100%",
+                flex: `0 0 calc((100% - ${(perView - 1) * 1.25}rem) / ${perView})`,
+                minWidth: perView >= 3 ? "13.5rem" : perView === 2 ? "11.5rem" : "min(100%, 18rem)",
+                maxWidth: perView === 1 ? "20rem" : undefined,
               }}
               onMouseEnter={() => setActive(i)}
               onFocus={() => setActive(i)}
