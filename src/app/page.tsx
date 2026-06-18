@@ -301,13 +301,10 @@ async function HomeServer() {
         <section className="mt-12 rounded-3xl border border-slate-200 bg-gradient-to-br from-blue-50 via-white to-white p-6 shadow-sm sm:p-8">
           <div className="max-w-3xl">
             <h2 className="text-2xl font-semibold tracking-tight text-slate-900 sm:text-3xl">
-              Trusted home appliances & electrical accessories — with
-              transparent pricing.
+              {storefront.homeStatsTitle}
             </h2>
             <p className="mt-3 text-sm leading-relaxed text-slate-600 sm:text-[15px]">
-              Cash on delivery, phone confirmation, and nationwide dispatch.
-              These figures are placeholders — swap to real business stats
-              anytime.
+              {storefront.homeStatsLead}
             </p>
           </div>
 

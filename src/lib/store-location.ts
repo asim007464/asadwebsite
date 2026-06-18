@@ -1,3 +1,5 @@
+import type { ResolvedStorefront } from "@/lib/storefront";
+
 /**
  * Registered Google Business Profile for this shop.
  * Embed uses Google's place feature id so the named listing shows (not only raw coordinates).
@@ -6,11 +8,26 @@ export const STORE_LOCATION = {
   name: "Al Makkah Electric Traders",
   lat: 31.0658769,
   lng: 72.9439501,
-  /** From Maps URL …1s0x3922f15e62348bcf:0xd4712bb9e23c818e — ties iframe to the Business Profile */
   googlePlaceFeatureRef: "0x3922f15e62348bcf:0xd4712bb9e23c818e",
   googleMapsPlaceUrl:
     "https://www.google.com/maps/place/Al+Makkah+Electric+Traders/@31.0658769,72.9439501,17z/data=!3m1!4b1!4m6!3m5!1s0x3922f15e62348bcf:0xd4712bb9e23c818e!8m2!3d31.0658769!4d72.9439501!16s%2Fg%2F11ynf8lkz5",
 } as const;
+
+export function resolveStoreLocation(
+  storefront: Pick<
+    ResolvedStorefront,
+    "storeLocationName" | "storeLat" | "storeLng" | "googlePlaceFeatureRef" | "googleMapsPlaceUrl"
+  >,
+) {
+  return {
+    name: (storefront.storeLocationName ?? "").trim() || STORE_LOCATION.name,
+    lat: Number.isFinite(storefront.storeLat) ? Number(storefront.storeLat) : STORE_LOCATION.lat,
+    lng: Number.isFinite(storefront.storeLng) ? Number(storefront.storeLng) : STORE_LOCATION.lng,
+    googlePlaceFeatureRef:
+      (storefront.googlePlaceFeatureRef ?? "").trim() || STORE_LOCATION.googlePlaceFeatureRef,
+    googleMapsPlaceUrl: (storefront.googleMapsPlaceUrl ?? "").trim() || STORE_LOCATION.googleMapsPlaceUrl,
+  };
+}
 
 /** Official `/maps/embed?pb=…` payload — pins the registered Business Profile (not only lat/lng). */
 export function googleMapsEmbedSrc(lat: number, lng: number, placeFeatureRef: string, placeTitleForEmbed: string) {

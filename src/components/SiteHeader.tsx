@@ -452,36 +452,38 @@ export function SiteHeader() {
                 <ChevronDown className={cn("h-4 w-4 text-slate-500 transition-transform", catOpen && "rotate-180 text-blue-700")} />
               </button>
               {catOpen ? (
-                <div className="absolute left-0 z-40 mt-3 w-[min(34rem,calc(100vw-2rem))] origin-top-left overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-[0_16px_48px_-12px_rgba(15,23,42,0.18)] ring-1 ring-slate-100">
-                  <div className="border-b border-slate-100 bg-gradient-to-br from-blue-50/80 to-white px-4 py-3">
+                <div className="absolute left-0 z-40 mt-3 w-[min(22rem,calc(100vw-2rem))] origin-top-left overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-[0_16px_48px_-12px_rgba(15,23,42,0.18)] ring-1 ring-slate-100">
+                  <div className="border-b border-slate-100 bg-gradient-to-br from-blue-50/80 to-white px-3 py-2.5">
                     <div className="text-[10px] font-bold uppercase tracking-widest text-blue-700/80">Browse</div>
                     <div className="mt-0.5 text-sm font-bold text-slate-900">Categories</div>
                   </div>
                   <div className="p-2">
                     {categories.length === 0 ? (
-                      <div className="rounded-xl px-3 py-3 text-sm text-slate-600">No categories yet.</div>
+                      <div className="rounded-lg px-2 py-2 text-sm text-slate-600">No categories yet.</div>
                     ) : (
-                      <div className="grid grid-flow-col grid-rows-5 gap-1.5">
-                        {categories.slice(0, 10).map((c) => (
-                          <Link
-                            key={c.id}
-                            href={`/products?category=${encodeURIComponent(c.slug)}`}
-                            className="rounded-xl px-3 py-2.5 text-sm font-semibold text-slate-800 transition hover:bg-blue-50 hover:text-blue-800"
-                            onClick={() => setCatOpen(false)}
-                          >
-                            {c.name}
-                          </Link>
-                        ))}
-                        {categories.length > 10 ? (
-                          <Link
-                            href="/products"
-                            className="col-span-full mt-1 rounded-xl px-3 py-2.5 text-sm font-semibold text-blue-800 hover:bg-blue-50"
-                            onClick={() => setCatOpen(false)}
-                          >
-                            View all categories →
-                          </Link>
-                        ) : null}
-                      </div>
+                      <>
+                        <Link
+                          href="/products"
+                          className="block rounded-lg px-2 py-2 text-sm font-semibold text-blue-800 transition hover:bg-blue-50"
+                          onClick={() => setCatOpen(false)}
+                        >
+                          View all categories →
+                        </Link>
+                        <div className="mt-0.5 max-h-[min(18rem,60vh)] overflow-y-auto">
+                          <div className="grid grid-cols-2 gap-x-2 gap-y-0">
+                            {categories.map((c) => (
+                              <Link
+                                key={c.id}
+                                href={`/products?category=${encodeURIComponent(c.slug)}`}
+                                className="rounded-lg px-2 py-2 text-sm font-semibold leading-snug text-slate-800 transition hover:bg-blue-50 hover:text-blue-800"
+                                onClick={() => setCatOpen(false)}
+                              >
+                                {c.name}
+                              </Link>
+                            ))}
+                          </div>
+                        </div>
+                      </>
                     )}
                   </div>
                 </div>

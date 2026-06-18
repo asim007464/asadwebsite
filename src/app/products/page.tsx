@@ -189,7 +189,7 @@ export default async function ProductsPage({
       <div className="mt-8 grid gap-6 md:grid-cols-[18rem_1fr]">
         <ProductsFilters categories={((categories as Category[] | null) ?? []) as Category[]} />
 
-        <div className="grid grid-cols-2 items-start gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:gap-4">
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:gap-4">
           {hasLiveProducts
             ? listings.map((p) => (
                 <ProductGridCard

@@ -1190,17 +1190,173 @@ async function storefrontImageFromForm(
   urlKey: string,
   fileKey: string,
   pathPrefix: string,
+  redirectOnError: string,
+  existingUrl = "",
 ): Promise<string | null> {
   const file = formData.get(fileKey);
   if (file instanceof File && file.size > 0) {
     const up = await uploadAdminMediaImage(supabase, pathPrefix, file);
     if ("error" in up) {
-      redirect(`/admin/site?error=${encodeURIComponent(up.error)}`);
+      redirect(`${redirectOnError}?error=${encodeURIComponent(up.error)}`);
     }
     return up.publicUrl;
   }
   const raw = String(formData.get(urlKey) ?? "").trim();
+  if (!raw) return existingUrl;
   return normalizeHttpsOrSlashImage(raw);
+}
+
+async function loadStorefrontBase(supabase: ReturnType<typeof createSupabaseAdminClient>) {
+  const { data: existing } = await supabase.from("storefront_settings").select("data").eq("id", 1).maybeSingle();
+  return ((existing?.data as Record<string, unknown> | null) ?? {}) as Record<string, unknown>;
+}
+
+async function saveStorefrontMerged(
+  supabase: ReturnType<typeof createSupabaseAdminClient>,
+  merged: Record<string, unknown>,
+  redirectTo: string,
+) {
+  merged.updated_marker = Date.now();
+  const { error } = await supabase
+    .from("storefront_settings")
+    .upsert({ id: 1, data: merged as never, updated_at: new Date().toISOString() }, { onConflict: "id" });
+  if (error) redirect(`${redirectTo}?error=${encodeURIComponent(error.message)}`);
+  redirect(redirectTo);
+}
+
+function parseTestimonialsFromForm(formData: FormData, pick: (k: string) => string) {
+  const testRaw = pick("testimonials_json");
+  if (!testRaw.length) return undefined;
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(testRaw);
+  } catch {
+    redirect("/admin/home-content?error=testimonials-json");
+  }
+  if (!Array.isArray(parsed)) redirect("/admin/home-content?error=testimonials-json");
+  const cleaned = parsed.filter(isStorefrontTestimonial).slice(0, 24);
+  if (cleaned.length === 0) redirect("/admin/home-content?error=testimonials-json");
+  return cleaned;
+}
+
+export async function updateHomePageContent(formData: FormData) {
+  await assertAdminAuthenticated();
+  const pick = (k: string) => String(formData.get(k) ?? "").trim();
+  const supabase = createSupabaseAdminClient();
+  const base = await loadStorefrontBase(supabase);
+  const patch: Record<string, unknown> = {
+    homeStatsTitle: pick("home_stats_title"),
+    homeStatsLead: pick("home_stats_lead"),
+    testimonialsLead: pick("testimonials_lead"),
+  };
+  const testimonials = parseTestimonialsFromForm(formData, pick);
+  if (testimonials) patch.testimonials = testimonials;
+  await saveStorefrontMerged(supabase, { ...base, ...patch }, "/admin/home-content");
+}
+
+export async function updateAboutPageContent(formData: FormData) {
+  await assertAdminAuthenticated();
+  const pick = (k: string) => String(formData.get(k) ?? "").trim();
+  const supabase = createSupabaseAdminClient();
+  const base = await loadStorefrontBase(supabase);
+  const aboutPrimaryImage = await storefrontImageFromForm(
+    supabase,
+    formData,
+    "about_primary_image",
+    "about_primary_image_file",
+    "site/about-primary",
+    "/admin/about-content",
+    String(base.aboutPrimaryImage ?? ""),
+  );
+  const aboutSecondaryImage = await storefrontImageFromForm(
+    supabase,
+    formData,
+    "about_secondary_image",
+    "about_secondary_image_file",
+    "site/about-secondary",
+    "/admin/about-content",
+    String(base.aboutSecondaryImage ?? ""),
+  );
+  if (aboutPrimaryImage === null || aboutSecondaryImage === null) {
+    redirect("/admin/about-content?error=bad-image-url");
+  }
+  const chips = pick("about_chips")
+    .split(/\r?\n/)
+    .map((s) => s.trim())
+    .filter(Boolean)
+    .slice(0, 12);
+  await saveStorefrontMerged(
+    supabase,
+    {
+      ...base,
+      aboutPageTitle: pick("about_page_title"),
+      aboutPageLead: pick("about_page_lead"),
+      aboutChips: chips.length ? chips : base.aboutChips,
+      aboutPrimaryImage,
+      aboutSecondaryImage,
+    },
+    "/admin/about-content",
+  );
+}
+
+export async function updateContactPageContent(formData: FormData) {
+  await assertAdminAuthenticated();
+  const pick = (k: string) => String(formData.get(k) ?? "").trim();
+  const supabase = createSupabaseAdminClient();
+  const base = await loadStorefrontBase(supabase);
+  const contactPrimaryImage = await storefrontImageFromForm(
+    supabase,
+    formData,
+    "contact_primary_image",
+    "contact_primary_image_file",
+    "site/contact-primary",
+    "/admin/contact-content",
+    String(base.contactPrimaryImage ?? ""),
+  );
+  const contactSecondaryImage = await storefrontImageFromForm(
+    supabase,
+    formData,
+    "contact_secondary_image",
+    "contact_secondary_image_file",
+    "site/contact-secondary",
+    "/admin/contact-content",
+    String(base.contactSecondaryImage ?? ""),
+  );
+  if (contactPrimaryImage === null || contactSecondaryImage === null) {
+    redirect("/admin/contact-content?error=bad-image-url");
+  }
+  const lat = Number.parseFloat(pick("store_lat"));
+  const lng = Number.parseFloat(pick("store_lng"));
+  await saveStorefrontMerged(
+    supabase,
+    {
+      ...base,
+      contactPageTitle: pick("contact_page_title"),
+      contactPageLead: pick("contact_page_lead"),
+      contactEmail: pick("contact_email"),
+      contactChannel1Label: pick("contact_channel1_label"),
+      contactChannel1Display: pick("contact_channel1_display"),
+      contactChannel1Tel: pick("contact_channel1_tel"),
+      contactChannel1Wa: pick("contact_channel1_wa"),
+      contactChannel1Notes: pick("contact_channel1_notes"),
+      contactChannel2Label: pick("contact_channel2_label"),
+      contactChannel2Display: pick("contact_channel2_display"),
+      contactChannel2Tel: pick("contact_channel2_tel"),
+      contactChannel2Wa: pick("contact_channel2_wa"),
+      contactChannel2Notes: pick("contact_channel2_notes"),
+      supportDeskHours: pick("support_desk_hours"),
+      supportEscalations: pick("support_escalations"),
+      supportCommitmentsIntro: pick("support_commitments_intro"),
+      storeLocationName: pick("store_location_name"),
+      storeLat: Number.isFinite(lat) ? lat : base.storeLat,
+      storeLng: Number.isFinite(lng) ? lng : base.storeLng,
+      googleMapsPlaceUrl: pick("google_maps_place_url"),
+      googlePlaceFeatureRef: pick("google_place_feature_ref"),
+      contactPrimaryImage,
+      contactSecondaryImage,
+    },
+    "/admin/contact-content",
+  );
 }
 
 export async function mergeStorefrontSettings(formData: FormData) {
@@ -1211,13 +1367,7 @@ export async function mergeStorefrontSettings(formData: FormData) {
 
   const supabase = createSupabaseAdminClient();
 
-  const { data: existing } = await supabase
-    .from("storefront_settings")
-    .select("data")
-    .eq("id", 1)
-    .maybeSingle();
-  const base = ((existing?.data as Record<string, unknown> | null) ??
-    {}) as Record<string, unknown>;
+  const base = await loadStorefrontBase(supabase);
 
   const aboutPrimaryImage = await storefrontImageFromForm(
     supabase,
@@ -1225,6 +1375,8 @@ export async function mergeStorefrontSettings(formData: FormData) {
     "about_primary_image",
     "about_primary_image_file",
     "site/about-primary",
+    "/admin/site",
+    String(base.aboutPrimaryImage ?? ""),
   );
   const aboutSecondaryImage = await storefrontImageFromForm(
     supabase,
@@ -1232,6 +1384,8 @@ export async function mergeStorefrontSettings(formData: FormData) {
     "about_secondary_image",
     "about_secondary_image_file",
     "site/about-secondary",
+    "/admin/site",
+    String(base.aboutSecondaryImage ?? ""),
   );
   const contactPrimaryImage = await storefrontImageFromForm(
     supabase,
@@ -1239,6 +1393,8 @@ export async function mergeStorefrontSettings(formData: FormData) {
     "contact_primary_image",
     "contact_primary_image_file",
     "site/contact-primary",
+    "/admin/site",
+    String(base.contactPrimaryImage ?? ""),
   );
   const contactSecondaryImage = await storefrontImageFromForm(
     supabase,
@@ -1246,6 +1402,8 @@ export async function mergeStorefrontSettings(formData: FormData) {
     "contact_secondary_image",
     "contact_secondary_image_file",
     "site/contact-secondary",
+    "/admin/site",
+    String(base.contactSecondaryImage ?? ""),
   );
   if (
     aboutPrimaryImage === null ||
@@ -1313,17 +1471,7 @@ export async function mergeStorefrontSettings(formData: FormData) {
   }
 
   const merged = { ...base, ...patch };
-  merged.updated_marker = Date.now();
-
-  const { error } = await supabase
-    .from("storefront_settings")
-    .upsert(
-      { id: 1, data: merged as never, updated_at: new Date().toISOString() },
-      { onConflict: "id" },
-    );
-
-  if (error) redirect(`/admin/site?error=${encodeURIComponent(error.message)}`);
-  redirect("/admin/site");
+  await saveStorefrontMerged(supabase, merged, "/admin/site");
 }
 
 export async function updateProductSeoFields(formData: FormData) {

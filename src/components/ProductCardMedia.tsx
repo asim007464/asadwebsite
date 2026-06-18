@@ -36,7 +36,7 @@ export function ProductCardMedia({
           src={imageUrl}
           alt={alt}
           fill
-          className={`z-10 object-contain p-3 transition-transform duration-200 ease-smooth-out motion-reduce:transition-none group-hover:scale-[1.03] motion-reduce:group-hover:scale-100 ${catalog ? "object-center" : "object-cover"}`}
+          className={`z-10 object-contain p-3 ${catalog ? "object-center" : "object-cover transition-transform duration-200 ease-smooth-out motion-reduce:transition-none group-hover:scale-[1.03] motion-reduce:group-hover:scale-100"}`}
           sizes={sizes}
         />
       ) : (

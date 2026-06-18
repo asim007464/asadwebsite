@@ -26,7 +26,7 @@ export function HomeBrowseShowcaseGrid({
         </Link>
       </div>
 
-      <div className="mt-6 grid grid-cols-2 items-start gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:gap-4">
+      <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:gap-4">
         {products.map((p) => (
           <ProductGridCard key={p.id} product={p} sizes="(max-width:640px) 50vw, 20vw" />
         ))}

@@ -73,6 +73,9 @@ export function AdminChrome({ owner, shopName, children }: { owner: boolean; sho
               <NavItem href="/admin/reviews-banner" label="Promo banners" variant="sidebar" />
               <NavItem href="/admin/browse-showcase" label="Browse grid" variant="sidebar" />
               <NavItem href="/admin/after-browse-banner" label="After browse banner" variant="sidebar" />
+              <NavItem href="/admin/home-content" label="Home page" variant="sidebar" />
+              <NavItem href="/admin/about-content" label="About page" variant="sidebar" />
+              <NavItem href="/admin/contact-content" label="Contact page" variant="sidebar" />
               <NavItem href="/admin/site" label="Site & payments" variant="sidebar" />
               {owner ? (
                 <>

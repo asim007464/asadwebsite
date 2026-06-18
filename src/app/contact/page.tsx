@@ -1,6 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
-import { googleMapsEmbedSrc, STORE_LOCATION } from "@/lib/store-location";
+import { googleMapsEmbedSrc, resolveStoreLocation } from "@/lib/store-location";
 import { getStorefrontPayload } from "@/lib/storefront";
 
 const CONTACT_FALLBACK_PRIMARY = "/20260401_153109.jpg.jpeg";
@@ -14,28 +14,24 @@ export default async function ContactPage() {
   const deskHours = storefront.supportDeskHours;
   const supportIntro = storefront.supportCommitmentsIntro;
   const escalations = storefront.supportEscalations;
+  const store = resolveStoreLocation(storefront);
 
-  const mapEmbedSrc = googleMapsEmbedSrc(
-    STORE_LOCATION.lat,
-    STORE_LOCATION.lng,
-    STORE_LOCATION.googlePlaceFeatureRef,
-    STORE_LOCATION.name,
-  );
+  const mapEmbedSrc = googleMapsEmbedSrc(store.lat, store.lng, store.googlePlaceFeatureRef, store.name);
 
   const whatsappCards = [
     {
-      label: "Sales desk · Lahore",
-      phoneDisplay: "0335‑744‑6353",
-      tel: "+923357446353",
-      wa: "https://wa.me/923357446353",
-      notes: "Quickest channel for quotes, fan finishes, cooler availability, and wattage checks.",
+      label: storefront.contactChannel1Label,
+      phoneDisplay: storefront.contactChannel1Display,
+      tel: storefront.contactChannel1Tel,
+      wa: storefront.contactChannel1Wa,
+      notes: storefront.contactChannel1Notes,
     },
     {
-      label: "Dispatch & COD confirmations",
-      phoneDisplay: "0326‑715‑3153",
-      tel: "+923267153153",
-      wa: "https://wa.me/923267153153",
-      notes: "Share airway bills, reschedule courier drops, or update quantities mid-flight.",
+      label: storefront.contactChannel2Label,
+      phoneDisplay: storefront.contactChannel2Display,
+      tel: storefront.contactChannel2Tel,
+      wa: storefront.contactChannel2Wa,
+      notes: storefront.contactChannel2Notes,
     },
   ];
 
@@ -53,10 +49,8 @@ export default async function ContactPage() {
         <div className="inline-flex rounded-full bg-white px-3 py-1 text-xs font-semibold text-blue-800 ring-1 ring-blue-100">
           Talk to our sales desk
         </div>
-        <h1 className="mt-4 text-3xl font-semibold tracking-tight text-slate-900">We coordinate COD packs like procurement teammates</h1>
-        <p className="mt-4 max-w-3xl text-sm leading-relaxed text-slate-700">
-          Reach out for live pricing, seasonal bundles, or to sanity-check SKUs before big buys. Share lists or photos via WhatsApp—nothing ships until both sides confirm the order.
-        </p>
+        <h1 className="mt-4 text-3xl font-semibold tracking-tight text-slate-900">{storefront.contactPageTitle}</h1>
+        <p className="mt-4 max-w-3xl text-sm leading-relaxed text-slate-700">{storefront.contactPageLead}</p>
         <div className="mt-6 flex flex-wrap gap-3">
           <Link href="/products" className="inline-flex h-11 items-center justify-center rounded-full bg-blue-600 px-6 text-sm font-semibold text-white shadow-sm hover:bg-blue-700">
             Explore catalog
@@ -100,8 +94,8 @@ export default async function ContactPage() {
         <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
           <div className="text-sm font-semibold text-slate-900">Email · Purchase orders</div>
           <div className="mt-4 text-sm text-slate-600">
-            <a className="font-semibold text-blue-700 hover:text-blue-800" href="mailto:almakkahelectrictraders@gmail.com">
-              almakkahelectrictraders@gmail.com
+            <a className="font-semibold text-blue-700 hover:text-blue-800" href={`mailto:${storefront.contactEmail}`}>
+              {storefront.contactEmail}
             </a>
           </div>
           <p className="mt-4 text-sm leading-relaxed text-slate-600">Attach Excel BOMs, site notices, or tax particulars—we reconcile against variant specs before issuing COD confirmations.</p>
@@ -147,7 +141,7 @@ export default async function ContactPage() {
             <div className="inline-flex rounded-full bg-blue-50 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-blue-800 ring-1 ring-blue-100">
               Visit us
             </div>
-            <h2 className="mt-3 text-xl font-semibold tracking-tight text-slate-900">{STORE_LOCATION.name}</h2>
+            <h2 className="mt-3 text-xl font-semibold tracking-tight text-slate-900">{store.name}</h2>
             <p className="mt-2 text-sm leading-relaxed text-slate-600">
               Find us on Google Maps. The map below uses your Business Profile place pin—same listing as when customers search{" "}
               <span className="font-medium text-slate-800">Al Makkah Electric Traders</span> or your shorter profile name (e.g.{" "}
@@ -157,7 +151,7 @@ export default async function ContactPage() {
               <div className="flex flex-wrap gap-x-2">
                 <dt className="font-semibold text-slate-900">Coordinates</dt>
                 <dd className="tabular-nums text-slate-600">
-                  {STORE_LOCATION.lat}, {STORE_LOCATION.lng}
+                  {store.lat}, {store.lng}
                 </dd>
               </div>
               <div className="flex flex-wrap gap-x-2">
@@ -169,7 +163,7 @@ export default async function ContactPage() {
             </dl>
             <div className="mt-5 flex flex-wrap gap-3">
               <a
-                href={STORE_LOCATION.googleMapsPlaceUrl}
+                href={store.googleMapsPlaceUrl}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex h-11 items-center justify-center rounded-full bg-blue-600 px-6 text-sm font-semibold text-white shadow-sm hover:bg-blue-700"
@@ -177,7 +171,7 @@ export default async function ContactPage() {
                 Open in Google Maps
               </a>
               <a
-                href={STORE_LOCATION.googleMapsPlaceUrl}
+                href={store.googleMapsPlaceUrl}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex h-11 items-center justify-center rounded-full border border-slate-200 bg-white px-6 text-sm font-semibold text-blue-800 hover:bg-blue-50"
@@ -195,7 +189,7 @@ export default async function ContactPage() {
           <div className="relative aspect-[16/11] overflow-hidden rounded-2xl border border-slate-200 bg-slate-100 shadow-inner">
             <Image
               src={CONTACT_STORE_IMAGE}
-              alt={`${STORE_LOCATION.name} — store photo`}
+              alt={`${store.name} — store photo`}
               fill
               className="object-cover"
               sizes="(max-width:1024px) 100vw, 50vw"
@@ -205,7 +199,7 @@ export default async function ContactPage() {
           <div className="relative aspect-[16/11] overflow-hidden rounded-2xl border border-slate-200 bg-slate-100 shadow-inner">
             <Image
               src={CONTACT_SECOND_IMAGE}
-              alt={`${STORE_LOCATION.name} — inside store`}
+              alt={`${store.name} — inside store`}
               fill
               className="object-cover"
               sizes="(max-width:1024px) 100vw, 50vw"
@@ -216,7 +210,7 @@ export default async function ContactPage() {
         <div className="mt-6 overflow-hidden rounded-2xl border border-slate-200 bg-slate-100 shadow-inner">
           <div className="relative aspect-[16/10] w-full min-h-[280px]">
             <iframe
-              title={`${STORE_LOCATION.name} — Google Maps`}
+              title={`${store.name} — Google Maps`}
               src={mapEmbedSrc}
               className="absolute inset-0 h-full w-full border-0"
               loading="eager"
