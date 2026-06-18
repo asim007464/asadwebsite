@@ -101,7 +101,7 @@ export function FeaturedProductsCarousel({ products }: { products: ProductListin
       <div className="mx-auto" aria-live="polite" aria-label="Featured products carousel">
         <div
           ref={scrollerRef}
-          className="flex items-start gap-4 overflow-x-auto scroll-smooth pb-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden [scroll-snap-type:x_mandatory] sm:gap-5 lg:gap-6"
+          className="flex items-stretch gap-4 overflow-x-auto scroll-smooth pb-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden [scroll-snap-type:x_mandatory] sm:gap-5 lg:gap-6"
           aria-label="Featured products"
         >
           {products.map((p, i) => (
@@ -110,14 +110,12 @@ export function FeaturedProductsCarousel({ products }: { products: ProductListin
               ref={(el) => {
                 itemRefs.current[i] = el;
               }}
-              className="snap-start"
+              className="flex h-full snap-start flex-col"
               style={{
                 flex: `0 0 calc((100% - ${(perView - 1) * 1.25}rem) / ${perView})`,
                 minWidth: perView >= 3 ? "13.5rem" : perView === 2 ? "11.5rem" : "min(100%, 18rem)",
                 maxWidth: perView === 1 ? "20rem" : undefined,
               }}
-              onMouseEnter={() => setActive(i)}
-              onFocus={() => setActive(i)}
             >
               <ProductGridCard product={p} sizes={imgSizes} />
             </div>

@@ -31,28 +31,30 @@ export function ProductGridCard({
       : null;
 
   return (
-    <article className="group flex flex-col overflow-hidden border border-slate-200 bg-white shadow-sm transition duration-200 hover:border-blue-200 hover:shadow-md motion-reduce:transition-none">
-      <Link href={href} className="block bg-white">
+    <article className="group flex h-full flex-col overflow-hidden border border-slate-200 bg-white shadow-sm ring-2 ring-transparent transition-colors duration-200 hover:border-blue-300 hover:ring-blue-100 motion-reduce:transition-none">
+      <Link href={href} className="block shrink-0 bg-white">
         <ProductCardMedia
           imageUrl={product.image_url}
           alt={product.name}
-          aspectClassName="aspect-[4/5] bg-white sm:aspect-square"
+          aspectClassName="aspect-square bg-white"
           sizes={sizes}
           tone="catalog"
         />
       </Link>
-      <div className="flex flex-col gap-2 px-2.5 pb-2.5 pt-2 sm:px-3 sm:pb-3">
-        <Link href={href} className="block min-h-0 transition hover:opacity-90">
-          <span className="line-clamp-2 text-center text-sm font-medium leading-snug text-blue-800 group-hover:text-blue-900">
+      <div className="flex min-h-0 flex-1 flex-col px-2.5 pb-2.5 pt-2 sm:px-3 sm:pb-3">
+        <Link href={href} className="block shrink-0 transition hover:opacity-90">
+          <span className="line-clamp-2 min-h-[2.5rem] text-center text-sm font-medium leading-snug text-blue-800 group-hover:text-blue-900">
             {product.name}
           </span>
-          {catchyLine ? (
-            <span className="mt-1 line-clamp-2 block text-center text-[11px] leading-snug text-slate-500 sm:text-xs" title={catchyLine}>
-              {catchyLine}
-            </span>
-          ) : null}
+          <span
+            className={`mt-1 line-clamp-2 block min-h-[2.5rem] text-center text-[11px] leading-snug text-slate-500 sm:text-xs ${catchyLine ? "" : "invisible"}`}
+            title={catchyLine || undefined}
+            aria-hidden={!catchyLine}
+          >
+            {catchyLine || "—"}
+          </span>
         </Link>
-        <div className="mt-0.5 border-t border-slate-100 pt-2">
+        <div className="mt-auto border-t border-slate-100 pt-2">
           <p className="text-center text-sm font-bold tabular-nums text-blue-900">{formatPKR(product.min_price_pkr)}</p>
           <div className="mt-1.5">
             <AddToCartButton variant={cartVariant} className={gridAddToCartClass} label="Add to cart" />

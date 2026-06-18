@@ -88,6 +88,9 @@ export default async function AdminDashboardPage({
       hint: "Below browse grid",
     },
     { label: "Homepage rows", value: homepageCuratedCount, href: "/admin/home-sections", hint: "Curated SKUs" },
+    { label: "Home page content", value: "Edit", href: "/admin/home-content", hint: "Stats & reviews" },
+    { label: "About page", value: "Edit", href: "/admin/about-content", hint: "Text & photos" },
+    { label: "Contact page", value: "Edit", href: "/admin/contact-content", hint: "Phones & map" },
     { label: "Site CMS", value: "Edit", href: "/admin/site", hint: "Copy & payments" },
     { label: "SEO snippets", value: products?.length ?? 0, href: "/admin/products/seo", hint: "Meta & titles" },
   ] as const;

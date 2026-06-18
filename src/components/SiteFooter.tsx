@@ -2,7 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { SITE_SHOP_NAME, SITE_SHORT_TAGLINE } from "@/lib/site-brand";
-import { STORE_LOCATION } from "@/lib/store-location";
+import { resolveStoreLocation } from "@/lib/store-location";
 import { getStorefrontPayload } from "@/lib/storefront";
 
 const shopLinks = [
@@ -126,6 +126,7 @@ function YouTubeIcon() {
 
 export async function SiteFooter() {
   const storefront = await getStorefrontPayload();
+  const store = resolveStoreLocation(storefront);
   const socialLinksResolved = storefront.socialLinks.filter((x) => x.url?.trim()?.length && x.label?.trim()?.length);
 
   return (
@@ -235,24 +236,24 @@ export async function SiteFooter() {
               <p className="text-xs font-semibold uppercase tracking-wide text-emerald-400/95">WhatsApp fastest</p>
               <p className="mt-2 text-sm leading-relaxed text-slate-400">Quotes, finishes, stock checks — we reply on WhatsApp during desk hours.</p>
               <a
-                href="https://wa.me/923357446353"
+                href={storefront.contactChannel1Wa}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="mt-4 flex h-11 w-full items-center justify-center rounded-xl bg-[#25D366] text-sm font-bold text-white shadow-lg shadow-emerald-950/40 transition hover:bg-[#20BD5A]"
               >
-                Message sales · 0335‑744‑6353
+                Message sales · {storefront.contactChannel1Display}
               </a>
               <div className="my-5 h-px bg-slate-900" />
 
               <div>
                 <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Locations</p>
-                <p className="mt-2 text-sm font-semibold text-slate-100">{STORE_LOCATION.name}</p>
+                <p className="mt-2 text-sm font-semibold text-slate-100">{store.name}</p>
                 <p className="mt-1 text-xs tabular-nums text-slate-500">
-                  {STORE_LOCATION.lat}, {STORE_LOCATION.lng}
+                  {store.lat}, {store.lng}
                 </p>
                 <div className="mt-3 grid gap-2 sm:grid-cols-2">
                   <a
-                    href={STORE_LOCATION.googleMapsPlaceUrl}
+                    href={store.googleMapsPlaceUrl}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="flex h-10 items-center justify-center rounded-xl border border-slate-700 bg-black text-center text-xs font-semibold text-white transition hover:border-blue-500/40 hover:bg-zinc-950"
@@ -260,7 +261,7 @@ export async function SiteFooter() {
                     Open in Maps
                   </a>
                   <a
-                    href={STORE_LOCATION.googleMapsPlaceUrl}
+                    href={store.googleMapsPlaceUrl}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="flex h-10 items-center justify-center rounded-xl bg-blue-600 text-center text-xs font-semibold text-white transition hover:bg-blue-700"

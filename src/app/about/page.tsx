@@ -30,17 +30,15 @@ export default async function AboutPage() {
             </div>
 
             <h1 className="mt-5 text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl lg:text-[2.55rem] lg:leading-[1.15]">
-              Home appliances & electrical accessories for everyday Pakistan households
+              {storefront.aboutPageTitle}
             </h1>
 
             <p className="mt-5 max-w-2xl text-sm leading-relaxed text-slate-700 sm:text-[15px]">
-              {SITE_SHOP_NAME} is built for fans, LED lighting, heaters, coolers, kitchen helpers, grooming tools, and power accessories — organized by
-              category with variant‑level specs and COD checkout. Every listing should spell out wattage, finishes, and what’s in the box before you
-              order.
+              {storefront.aboutPageLead}
             </p>
 
             <div className="mt-6 flex flex-wrap gap-2">
-              {["Genuine brands", "COD with confirmation", "Nationwide dispatch", "Specs per variant"].map((chip) => (
+              {storefront.aboutChips.map((chip) => (
                 <span
                   key={chip}
                   className="rounded-full border border-slate-200 bg-white/70 px-3 py-1 text-xs font-semibold text-slate-700 shadow-sm"
