@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { BulkProductUpload } from "@/components/admin/BulkProductUpload";
 import { ConfirmDeleteProduct } from "@/components/admin/ConfirmDeleteProduct";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
@@ -51,26 +52,27 @@ export default async function AdminProductsPage({
                 Add catalog items with at least one SKU, price, and stock. Listings and product pages use the first image and cheapest active variant by default.
               </p>
             </div>
-            <div className="flex w-full shrink-0 flex-col gap-3 sm:max-w-md md:w-auto md:max-w-none md:items-end">
-              <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-end sm:gap-x-4 sm:gap-y-2">
-                <Link
-                  href="/admin/products/new"
-                  className="inline-flex min-h-[44px] w-full items-center justify-center rounded-full bg-blue-600 px-7 text-sm font-semibold text-white shadow-md shadow-blue-600/20 transition hover:bg-blue-700 active:bg-blue-800 sm:min-h-0 sm:w-auto"
-                >
-                  Add product
-                </Link>
-                <Link
-                  href="/admin/products/seo"
-                  className="inline-flex min-h-[44px] w-full items-center justify-center text-sm font-semibold text-blue-700 transition hover:text-blue-800 sm:w-auto sm:min-h-0 sm:justify-center"
-                >
-                  SEO snippets →
-                </Link>
-              </div>
+            <div className="flex w-full shrink-0 flex-wrap items-center gap-2 md:w-auto md:max-w-xl md:justify-end">
+              <Link
+                href="/admin/products/new"
+                className="inline-flex h-11 min-w-[9rem] flex-1 items-center justify-center rounded-full bg-blue-600 px-5 text-sm font-semibold text-white shadow-md shadow-blue-600/20 transition hover:bg-blue-700 sm:flex-none"
+              >
+                Add product
+              </Link>
+              <BulkProductUpload
+                categoryNames={(categories ?? []).map((c: { name: string }) => c.name)}
+              />
+              <Link
+                href="/admin/products/seo"
+                className="inline-flex h-11 min-w-[9rem] flex-1 items-center justify-center rounded-full border border-slate-200 bg-white px-5 text-sm font-semibold text-slate-800 shadow-sm transition hover:bg-slate-50 sm:flex-none"
+              >
+                SEO snippets
+              </Link>
               <Link
                 href="/admin"
-                className="inline-flex min-h-[44px] items-center text-sm font-semibold text-slate-500 transition hover:text-slate-800 sm:min-h-0 sm:self-end"
+                className="inline-flex h-11 min-w-[9rem] flex-1 items-center justify-center rounded-full border border-slate-200 bg-white px-5 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 sm:flex-none"
               >
-                ← Dashboard
+                Dashboard
               </Link>
             </div>
           </div>

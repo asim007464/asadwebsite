@@ -32,8 +32,8 @@ export function ReviewsBannerSection({
       aria-labelledby={heading ? headingId : undefined}
       aria-label={heading ? undefined : "Promotional banner"}
       className={cn(
-        "relative isolate overflow-hidden rounded-3xl shadow-lg ring-1 ring-slate-200/70 sm:min-h-[240px] md:min-h-[280px] lg:min-h-[300px]",
-        layout === "fullBleed" && "left-1/2 mt-12 w-[min(100dvw,100%)] max-w-none -translate-x-1/2",
+        "relative isolate overflow-hidden rounded-2xl shadow-lg ring-1 ring-slate-200/70 sm:rounded-3xl sm:min-h-[240px] md:min-h-[280px] lg:min-h-[300px]",
+        layout === "fullBleed" && "mt-8 w-full sm:mt-12",
         layout === "contained" && "w-full",
         className,
       )}
@@ -72,14 +72,14 @@ export function ReviewsBannerSection({
                 href={href}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex h-12 min-w-[10.5rem] items-center justify-center rounded-full bg-white px-8 text-sm font-bold text-blue-900 shadow-md shadow-blue-950/35 transition hover:bg-blue-50"
+                className="inline-flex h-11 w-full items-center justify-center rounded-full bg-white px-6 text-sm font-bold text-blue-900 shadow-md shadow-blue-950/35 transition hover:bg-blue-50 sm:h-12 sm:w-auto sm:min-w-[10.5rem] sm:px-8"
               >
                 {label}
               </a>
             ) : (
               <Link
                 href={href}
-                className="inline-flex h-12 min-w-[10.5rem] items-center justify-center rounded-full bg-white px-8 text-sm font-bold text-blue-900 shadow-md shadow-blue-950/35 transition hover:bg-blue-50"
+                className="inline-flex h-11 w-full items-center justify-center rounded-full bg-white px-6 text-sm font-bold text-blue-900 shadow-md shadow-blue-950/35 transition hover:bg-blue-50 sm:h-12 sm:w-auto sm:min-w-[10.5rem] sm:px-8"
               >
                 {label}
               </Link>

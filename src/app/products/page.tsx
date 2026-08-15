@@ -100,10 +100,10 @@ export default async function ProductsPage({
   }
 
   return (
-    <main className="mx-auto w-full max-w-7xl px-4 py-10">
+    <main className="mx-auto w-full max-w-7xl px-3 py-8 sm:px-4 sm:py-10">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <h1 className="text-3xl font-semibold tracking-tight text-slate-900">Shop</h1>
+        <div className="min-w-0">
+          <h1 className="text-2xl font-semibold tracking-tight text-slate-900 sm:text-3xl">Shop</h1>
           <p className="mt-1.5 text-sm text-slate-600">
             {category ? (
               <>
@@ -128,10 +128,10 @@ export default async function ProductsPage({
             ) : null}
           </p>
         </div>
-        <div className="flex flex-wrap gap-2 md:hidden">
+        <div className="-mx-3 flex gap-2 overflow-x-auto px-3 pb-1 md:hidden [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           <Link
             href="/products"
-            className={`rounded-full border px-3 py-1.5 text-sm font-semibold transition ${
+              className={`shrink-0 rounded-full border px-3 py-1.5 text-sm font-semibold transition ${
               !category
                 ? "border-blue-600 bg-blue-600 text-white shadow-sm"
                 : "border-slate-200 bg-white text-blue-800 hover:border-blue-200 hover:bg-blue-50"
@@ -143,7 +143,7 @@ export default async function ProductsPage({
             <Link
               key={c.id}
               href={`/products?category=${encodeURIComponent(c.slug)}`}
-              className={`rounded-full border px-3 py-1.5 text-sm font-semibold transition ${
+              className={`shrink-0 rounded-full border px-3 py-1.5 text-sm font-semibold transition ${
                 category === c.slug
                   ? "border-blue-600 bg-blue-600 text-white shadow-sm"
                   : "border-slate-200 bg-white text-blue-800 hover:border-blue-200 hover:bg-blue-50"
@@ -186,10 +186,10 @@ export default async function ProductsPage({
         />
       )}
 
-      <div className="mt-8 grid gap-6 md:grid-cols-[18rem_1fr]">
+      <div className="mt-8 grid items-start gap-6 md:grid-cols-[18rem_1fr]">
         <ProductsFilters categories={((categories as Category[] | null) ?? []) as Category[]} />
 
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:gap-4">
+        <div className="grid grid-cols-2 items-stretch gap-2 sm:gap-3 md:grid-cols-3 lg:grid-cols-4 xl:gap-5">
           {hasLiveProducts
             ? listings.map((p) => (
                 <ProductGridCard

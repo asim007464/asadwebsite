@@ -18,7 +18,7 @@ export function HomeAfterBrowseBanner({ banner }: { banner: HomeAfterBrowseBanne
   );
 
   const shellClass =
-    "group relative left-1/2 mt-12 block w-[100dvw] max-w-none -translate-x-1/2 overflow-hidden rounded-none shadow-md ring-1 ring-slate-200/60 sm:rounded-2xl sm:shadow-lg";
+    "group relative mt-8 block w-full overflow-hidden rounded-2xl shadow-md ring-1 ring-slate-200/60 sm:mt-12 sm:shadow-lg";
 
   if (!href) {
     return <div className={shellClass}>{imageBlock}</div>;

@@ -23,7 +23,7 @@ export function SafeRemoteImage({ src, alt, className, ...rest }: SafeRemoteImag
   if (fallback) {
     const imgClass =
       "fill" in rest && rest.fill
-        ? `absolute inset-0 h-full w-full object-cover ${className ?? ""}`
+        ? `absolute inset-0 h-full w-full ${className?.includes("object-") ? "" : "object-cover"} ${className ?? ""}`
         : className;
     return (
       <img

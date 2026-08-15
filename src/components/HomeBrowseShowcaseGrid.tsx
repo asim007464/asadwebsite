@@ -16,7 +16,7 @@ export function HomeBrowseShowcaseGrid({
 
   return (
     <>
-      <div className="flex items-end justify-between gap-4">
+      <div className="flex items-start justify-between gap-3 sm:items-end sm:gap-4">
         <div className="min-w-0">
           <h2 className="text-lg font-semibold tracking-tight text-slate-900">{title}</h2>
           <p className="mt-1 text-sm text-slate-600">Hand-picked from {category.name} — tap a product for details.</p>
@@ -26,7 +26,7 @@ export function HomeBrowseShowcaseGrid({
         </Link>
       </div>
 
-      <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:gap-4">
+      <div className="mt-5 grid grid-cols-2 items-stretch gap-2 sm:mt-6 sm:gap-3 md:grid-cols-3 lg:grid-cols-4 xl:gap-5">
         {products.map((p) => (
           <ProductGridCard key={p.id} product={p} sizes="(max-width:640px) 50vw, 20vw" />
         ))}

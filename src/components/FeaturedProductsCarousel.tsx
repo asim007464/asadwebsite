@@ -1,31 +1,20 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { ProductGridCard } from "@/components/ProductGridCard";
 import type { ProductListing } from "@/lib/store-types";
 
 export function FeaturedProductsCarousel({ products }: { products: ProductListing[] }) {
   const n = products.length;
+  const scrollerRef = useRef<HTMLDivElement>(null);
   const [perView, setPerView] = useState(3);
-  const [active, setActive] = useState(0);
-  const scrollerRef = useRef<HTMLDivElement | null>(null);
-  const itemRefs = useRef<(HTMLDivElement | null)[]>([]);
-
-  const stepPrev = useCallback(() => {
-    setActive((i) => (i - 1 + n) % n);
-  }, [n]);
-
-  const stepNext = useCallback(() => {
-    setActive((i) => (i + 1) % n);
-  }, [n]);
-
-  if (n === 0) return null;
+  const [page, setPage] = useState(0);
+  const imgSizes = "(max-width:640px) 100vw, (max-width:1024px) 50vw, (max-width:1536px) 33vw, 25vw";
 
   useEffect(() => {
     const xxl = window.matchMedia("(min-width: 1536px)");
     const lg = window.matchMedia("(min-width: 1024px)");
     const sm = window.matchMedia("(min-width: 640px)");
-    // Keep cards roomy: 4-up only on very wide screens.
     const sync = () => setPerView(xxl.matches ? 4 : lg.matches ? 3 : sm.matches ? 2 : 1);
     sync();
     xxl.addEventListener("change", sync);
@@ -38,59 +27,82 @@ export function FeaturedProductsCarousel({ products }: { products: ProductListin
     };
   }, []);
 
-  // Align carousel horizontally only — scrollIntoView also moves the document vertically.
+  const maxPage = Math.max(0, n - perView);
+  const canSlide = n > perView;
+  const gapPx = 16;
+
+  const scrollToPage = useCallback(
+    (nextPage: number) => {
+      const el = scrollerRef.current;
+      if (!el) return;
+      const last = Math.max(0, n - perView);
+      const target = ((nextPage % (last + 1)) + (last + 1)) % (last + 1);
+      const card = el.children[target] as HTMLElement | undefined;
+      if (!card) return;
+      el.scrollTo({ left: card.offsetLeft, behavior: "smooth" });
+      setPage(target);
+    },
+    [n, perView],
+  );
+
   useEffect(() => {
-    const scroller = scrollerRef.current;
-    const el = itemRefs.current[active];
-    if (!scroller || !el) return;
-    const targetLeft = scroller.scrollLeft + (el.getBoundingClientRect().left - scroller.getBoundingClientRect().left);
-    scroller.scrollTo({ left: targetLeft, behavior: "smooth" });
-  }, [active]);
+    const el = scrollerRef.current;
+    if (!el) return;
+    let ticking = false;
+    const onScroll = () => {
+      if (ticking) return;
+      ticking = true;
+      window.requestAnimationFrame(() => {
+        ticking = false;
+        const first = el.children[0] as HTMLElement | undefined;
+        const step = first ? first.offsetWidth + gapPx : el.clientWidth / perView;
+        if (step <= 0) return;
+        const idx = Math.round(el.scrollLeft / step);
+        setPage(Math.max(0, Math.min(maxPage, idx)));
+      });
+    };
+    el.addEventListener("scroll", onScroll, { passive: true });
+    return () => el.removeEventListener("scroll", onScroll);
+  }, [maxPage, perView]);
 
-  const showNav = n > 4;
+  useEffect(() => {
+    if (page > maxPage) scrollToPage(maxPage);
+  }, [maxPage, page, scrollToPage]);
 
-  const imgSizes = "(max-width:640px) 100vw, (max-width:1024px) 50vw, (max-width:1536px) 33vw, 25vw";
-
-  const dotCount = useMemo(() => Math.min(n, 8), [n]);
+  if (n === 0) return null;
 
   return (
-    <div className="relative px-0 sm:px-12 lg:px-14">
-      {showNav ? (
+    <div className="relative sm:px-12 lg:px-14">
+      {canSlide ? (
         <>
           <button
             type="button"
-            onClick={stepPrev}
-            aria-label="Show previous featured products"
-            className="absolute left-0 top-[38%] z-10 hidden h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-700 shadow-md transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-800 sm:flex"
+            onClick={() => scrollToPage(page - 1)}
+            aria-label="Show previous products"
+            className="absolute left-0 top-[42%] z-20 hidden h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-slate-200 bg-white text-lg font-semibold text-slate-700 shadow-md transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-800 sm:flex"
           >
-            <span aria-hidden className="text-xl leading-none">
-              ‹
-            </span>
+            ‹
           </button>
           <button
             type="button"
-            onClick={stepNext}
-            aria-label="Show next featured products"
-            className="absolute right-0 top-[38%] z-10 hidden h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-700 shadow-md transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-800 sm:flex"
+            onClick={() => scrollToPage(page + 1)}
+            aria-label="Show next products"
+            className="absolute right-0 top-[42%] z-20 hidden h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-slate-200 bg-white text-lg font-semibold text-slate-700 shadow-md transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-800 sm:flex"
           >
-            <span aria-hidden className="text-xl leading-none">
-              ›
-            </span>
+            ›
           </button>
-          <div className="mb-5 flex justify-center gap-3 sm:hidden">
+          <div className="mb-4 flex justify-center gap-3 sm:hidden">
             <button
               type="button"
-              onClick={stepPrev}
-              aria-label="Previous featured products"
-              className="inline-flex h-11 min-w-[6rem] items-center justify-center rounded-full border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 shadow-sm hover:border-blue-200 hover:bg-blue-50"
+              onClick={() => scrollToPage(page - 1)}
+              className="inline-flex h-10 min-w-[5.5rem] items-center justify-center rounded-full border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 shadow-sm"
             >
               ‹ Prev
             </button>
             <button
               type="button"
-              onClick={stepNext}
-              aria-label="Next featured products"
-              className="inline-flex h-11 min-w-[6rem] items-center justify-center rounded-full border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 shadow-sm hover:border-blue-200 hover:bg-blue-50"
+              onClick={() => scrollToPage(page + 1)}
+              className="inline-flex h-10 min-w-[5.5rem] items-center justify-center rounded-full border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 shadow-sm"
             >
               Next ›
             </button>
@@ -98,51 +110,45 @@ export function FeaturedProductsCarousel({ products }: { products: ProductListin
         </>
       ) : null}
 
-      <div className="mx-auto" aria-live="polite" aria-label="Featured products carousel">
-        <div
-          ref={scrollerRef}
-          className="flex items-stretch gap-4 overflow-x-auto scroll-smooth pb-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden [scroll-snap-type:x_mandatory] sm:gap-5 lg:gap-6"
-          aria-label="Featured products"
-        >
-          {products.map((p, i) => (
-            <div
-              key={p.id}
-              ref={(el) => {
-                itemRefs.current[i] = el;
-              }}
-              className="flex h-full snap-start flex-col"
-              style={{
-                flex: `0 0 calc((100% - ${(perView - 1) * 1.25}rem) / ${perView})`,
-                minWidth: perView >= 3 ? "13.5rem" : perView === 2 ? "11.5rem" : "min(100%, 18rem)",
-                maxWidth: perView === 1 ? "20rem" : undefined,
-              }}
-            >
+      <div
+        ref={scrollerRef}
+        className="flex w-full min-w-0 snap-x snap-mandatory gap-4 overflow-x-auto scroll-smooth pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        aria-roledescription="carousel"
+        aria-label="Products"
+      >
+        {products.map((p) => (
+          <div
+            key={p.id}
+            className="flex shrink-0 snap-start"
+            style={{
+              flexBasis: `calc((100% - ${gapPx * (perView - 1)}px) / ${perView})`,
+              width: `calc((100% - ${gapPx * (perView - 1)}px) / ${perView})`,
+            }}
+          >
+            <div className="flex h-full w-full flex-col">
               <ProductGridCard product={p} sizes={imgSizes} />
             </div>
+          </div>
+        ))}
+      </div>
+
+      {canSlide && maxPage > 0 ? (
+        <div className="mt-5 flex flex-wrap items-center justify-center gap-1.5" role="tablist" aria-label="Product slides">
+          {Array.from({ length: maxPage + 1 }, (_, i) => (
+            <button
+              key={i}
+              type="button"
+              role="tab"
+              aria-selected={i === page}
+              aria-label={`Go to slide ${i + 1}`}
+              onClick={() => scrollToPage(i)}
+              className="inline-flex h-8 w-8 items-center justify-center"
+            >
+              <span className={`block h-2 rounded-full transition-all ${i === page ? "w-8 bg-blue-600" : "w-2 bg-slate-300 hover:bg-slate-400"}`} />
+            </button>
           ))}
         </div>
-
-        {showNav ? (
-          <div className="mt-6 flex items-center justify-center gap-2" role="tablist" aria-label="Featured product positions">
-            {Array.from({ length: dotCount }, (_, i) => {
-              const isActive = i === Math.min(active, dotCount - 1);
-              return (
-                <button
-                  key={i}
-                  type="button"
-                  role="tab"
-                  aria-selected={isActive}
-                  aria-label={`Go to item ${i + 1}`}
-                  onClick={() => setActive(i)}
-                  className={`h-2 rounded-full transition-[width,background-color] duration-300 ${
-                    isActive ? "w-8 bg-blue-600" : "w-2 bg-slate-300 hover:bg-slate-400"
-                  }`}
-                />
-              );
-            })}
-          </div>
-        ) : null}
-      </div>
+      ) : null}
     </div>
   );
 }

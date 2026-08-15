@@ -11,6 +11,7 @@ import { DEMO_PRODUCTS } from "@/lib/demo-products";
 import { DemoProductSection } from "@/components/DemoProductSection";
 import { FALLBACK_HERO_BACKDROP_SLIDES } from "@/lib/site-visuals";
 import {
+  HeroCarouselArrows,
   HeroCarouselDots,
   HeroCarouselImagePanel,
   HeroCarouselProvider,
@@ -151,9 +152,10 @@ async function HomeServer() {
   return (
     <>
       {/* Image-only hero carousel (slides: /admin/hero). */}
-      <section className="relative h-[55vh] min-h-[12rem] w-full border-b border-slate-200">
+      <section className="relative h-[38vh] min-h-[14rem] w-full border-b border-slate-200 sm:h-[48vh] sm:min-h-[16rem] lg:h-[55vh]">
         <HeroCarouselProvider slides={heroBackdropSlides}>
           <HeroCarouselImagePanel variant="banner" className="h-full" />
+          <HeroCarouselArrows />
           <div className="pointer-events-none absolute inset-x-0 bottom-4 z-10 flex justify-center sm:bottom-6">
             <div className="pointer-events-auto">
               <HeroCarouselDots tone="onImage" />
@@ -173,9 +175,9 @@ async function HomeServer() {
       ) : null}
 
       <main
-        className={`mx-auto w-full max-w-7xl px-4 pb-12 ${showPromoAfterHero ? "pt-8" : "pt-10"}`}
+        className={`mx-auto w-full max-w-7xl px-3 pb-10 sm:px-4 sm:pb-12 ${showPromoAfterHero ? "pt-6 sm:pt-8" : "pt-7 sm:pt-10"}`}
       >
-        <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
+        <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:rounded-3xl sm:p-6 lg:p-8">
           {useBrowseShowcase && browseShowcaseCategory ? (
             <HomeBrowseShowcaseGrid
               category={browseShowcaseCategory}
@@ -184,7 +186,7 @@ async function HomeServer() {
             />
           ) : (
             <>
-              <div className="flex items-end justify-between gap-4">
+              <div className="flex items-start justify-between gap-3 sm:items-end sm:gap-4">
                 <div className="min-w-0">
                   <h2 className="text-lg font-semibold tracking-tight text-slate-900">
                     Browse categories
@@ -357,7 +359,7 @@ async function HomeServer() {
         ) : null}
 
         <section
-          className={`relative left-1/2 w-[100dvw] -translate-x-1/2 border-y border-slate-200 bg-white py-14 text-slate-900 sm:py-16 -mb-12 ${showPromoBeforeReviews ? "mt-8 sm:mt-10" : "mt-16"}`}
+          className={`-mx-3 border-y border-slate-200 bg-white py-10 text-slate-900 sm:-mx-4 sm:py-14 lg:mx-0 lg:rounded-none -mb-12 ${showPromoBeforeReviews ? "mt-8 sm:mt-10" : "mt-12 sm:mt-16"}`}
         >
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <TestimonialsSection

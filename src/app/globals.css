@@ -5,11 +5,11 @@
 :root {
   --background: #ffffff;
   --foreground: #0f172a;
-  /* Matches SiteHeader row + border; keeps content below fixed navbar */
-  --site-header-height: 5rem;
+  /* Logo row + mobile search row */
+  --site-header-height: 7.25rem;
 }
 
-@media (min-width: 768px) {
+@media (min-width: 1024px) {
   :root {
     --site-header-height: 5.5rem;
   }
@@ -18,11 +18,20 @@
 html {
   scroll-behavior: auto;
   scroll-padding-top: var(--site-header-height);
+  -webkit-text-size-adjust: 100%;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
+  overflow-wrap: anywhere;
+}
+
+img,
+video,
+svg,
+canvas {
+  max-width: 100%;
 }
 
 /* Homepage category strip — infinite horizontal scroll */
@@ -70,6 +79,36 @@ body {
     url("https://images.unsplash.com/photo-1556912176747-54fa81bcbd03?auto=format&fit=crop&w=2400&q=65");
   background-size: cover;
   background-position: center;
+}
+
+/* Catalog product photos — consistent studio lightbox behind every SKU */
+.product-studio-bg {
+  background-color: #eef2f6;
+  background-image:
+    radial-gradient(ellipse 78% 68% at 50% 40%, #ffffff 0%, rgba(255, 255, 255, 0.55) 38%, transparent 72%),
+    linear-gradient(180deg, #f8fafc 0%, #e8eef5 100%);
+}
+
+.product-studio-sheen {
+  background: linear-gradient(
+    125deg,
+    transparent 40%,
+    rgba(255, 255, 255, 0.55) 48%,
+    transparent 56%
+  );
+  transform: translateX(-120%);
+  transition: transform 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.group:hover .product-studio-sheen {
+  transform: translateX(120%);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .group:hover .product-studio-sheen {
+    transform: none;
+    transition: none;
+  }
 }
 
 /* Accessible keyboard focus */
