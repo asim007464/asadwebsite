@@ -20,10 +20,10 @@ export default function CartPage() {
   const subtotal = useMemo(() => cartSubtotal(items), [items]);
 
   return (
-    <main className="mx-auto w-full max-w-6xl px-4 py-10">
-      <div className="flex items-end justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-semibold tracking-tight text-slate-900">Cart</h1>
+    <main className="mx-auto w-full max-w-6xl px-3 py-8 sm:px-4 sm:py-10">
+      <div className="flex items-end justify-between gap-3">
+        <div className="min-w-0">
+          <h1 className="text-2xl font-semibold tracking-tight text-slate-900 sm:text-3xl">Cart</h1>
           <p className="mt-2 text-sm text-slate-600">Review your items, then continue to checkout.</p>
         </div>
         {items.length > 0 ? (
@@ -54,8 +54,8 @@ export default function CartPage() {
             <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
               <div className="divide-y divide-slate-100">
                 {items.map((it) => (
-                  <div key={it.variantId} className="flex gap-4 p-5">
-                    <div className="relative h-24 w-32 overflow-hidden rounded-2xl bg-slate-50 ring-1 ring-slate-200">
+                  <div key={it.variantId} className="flex flex-col gap-3 p-4 sm:flex-row sm:gap-4 sm:p-5">
+                    <div className="relative h-28 w-full overflow-hidden rounded-2xl bg-slate-50 ring-1 ring-slate-200 sm:h-24 sm:w-32 sm:shrink-0">
                       {it.imageUrl ? (
                         <SafeRemoteImage src={it.imageUrl} alt={it.productName} fill className="object-cover" sizes="128px" />
                       ) : null}
@@ -112,7 +112,8 @@ export default function CartPage() {
                         </button>
                       </div>
                     </div>
-                    <div className="shrink-0 text-right">
+                    <div className="flex items-center justify-between sm:block sm:shrink-0 sm:text-right">
+                      <span className="text-xs text-slate-500 sm:hidden">Line total</span>
                       <div className="text-sm font-semibold text-blue-900">{formatPKR(it.unitPricePkr * it.quantity)}</div>
                       <div className="mt-1 text-xs text-slate-500">{formatPKR(it.unitPricePkr)} each</div>
                     </div>

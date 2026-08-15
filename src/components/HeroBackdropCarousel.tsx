@@ -1,6 +1,7 @@
 "use client";
 
-import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useMemo, useState, type PointerEvent, type ReactNode } from "react";
+import { useSlider } from "@/lib/use-slider";
 
 export type HeroBackdropSlide = { id?: string; url: string; alt: string };
 
@@ -9,6 +10,13 @@ const INTERVAL_MS = 5000;
 type HeroCarouselCtx = {
   index: number;
   setIndex: (i: number) => void;
+  next: () => void;
+  prev: () => void;
+  swipe: {
+    onPointerDown: (e: PointerEvent<HTMLElement>) => void;
+    onPointerUp: (e: PointerEvent<HTMLElement>) => void;
+    onPointerCancel: () => void;
+  };
   slideCount: number;
   slides: HeroBackdropSlide[];
 };
@@ -29,7 +37,7 @@ export function HeroCarouselProvider({
 }) {
   const list = slides.length > 0 ? slides : [];
   const slideKey = list.map((s) => s.id ?? s.url).join("|");
-  const [index, setIndex] = useState(0);
+  const slider = useSlider(list.length, { loop: true });
   const [reducedMotion, setReducedMotion] = useState(false);
 
   useEffect(() => {
@@ -41,20 +49,28 @@ export function HeroCarouselProvider({
   }, []);
 
   useEffect(() => {
-    setIndex(0);
-  }, [slideKey]);
+    slider.go(0);
+  }, [slideKey, slider.go]);
 
   useEffect(() => {
     if (list.length <= 1 || reducedMotion) return;
     const t = window.setInterval(() => {
-      setIndex((i) => (i + 1) % list.length);
+      slider.next();
     }, INTERVAL_MS);
     return () => window.clearInterval(t);
-  }, [list.length, reducedMotion]);
+  }, [list.length, reducedMotion, slider.next]);
 
   const value = useMemo(
-    () => ({ index, setIndex, slideCount: list.length, slides: list }),
-    [index, list],
+    () => ({
+      index: slider.index,
+      setIndex: slider.go,
+      next: slider.next,
+      prev: slider.prev,
+      swipe: slider.swipe,
+      slideCount: list.length,
+      slides: list,
+    }),
+    [list, slider.go, slider.index, slider.next, slider.prev, slider.swipe],
   );
 
   return <HeroCarouselContext.Provider value={value}>{children}</HeroCarouselContext.Provider>;
@@ -87,6 +103,7 @@ export function HeroCarouselImagePanel({
       aria-live="polite"
       aria-atomic="true"
       aria-label="Homepage banner slideshow"
+      {...(ctx && ctx.slideCount > 1 ? ctx.swipe : {})}
     >
       {slides.map((s, i) => (
         <div
@@ -106,6 +123,32 @@ export function HeroCarouselImagePanel({
         </div>
       ))}
     </div>
+  );
+}
+
+export function HeroCarouselArrows() {
+  const ctx = useHeroCarousel();
+  if (!ctx || ctx.slideCount <= 1) return null;
+
+  return (
+    <>
+      <button
+        type="button"
+        aria-label="Previous banner slide"
+        onClick={ctx.prev}
+        className="absolute left-2 top-1/2 z-20 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-white/40 bg-white/90 text-lg font-semibold text-slate-800 shadow-md backdrop-blur-sm transition hover:bg-white sm:left-5 sm:h-11 sm:w-11"
+      >
+        ‹
+      </button>
+      <button
+        type="button"
+        aria-label="Next banner slide"
+        onClick={ctx.next}
+        className="absolute right-2 top-1/2 z-20 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-white/40 bg-white/90 text-lg font-semibold text-slate-800 shadow-md backdrop-blur-sm transition hover:bg-white sm:right-5 sm:h-11 sm:w-11"
+      >
+        ›
+      </button>
+    </>
   );
 }
 

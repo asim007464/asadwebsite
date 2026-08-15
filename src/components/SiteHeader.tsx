@@ -288,8 +288,9 @@ export function SiteHeader() {
   const linkBase =
     "rounded-full px-4 py-2 text-sm font-semibold tracking-tight transition-all duration-150 outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2";
 
-  const searchDropdown = searchOpen ? (
-    <div className="absolute left-0 right-0 z-50 mt-3 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_16px_48px_-12px_rgba(15,23,42,0.18)] ring-1 ring-slate-100">
+  const renderSearchDropdown = () =>
+    !searchOpen ? null : (
+    <div className="absolute left-0 right-0 z-50 mt-2 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_16px_48px_-12px_rgba(15,23,42,0.18)] ring-1 ring-slate-100 sm:mt-3">
       <div className="p-3">
         {searchLoading ? (
           <div className="rounded-xl px-3 py-3 text-sm text-slate-600">Searching…</div>
@@ -320,7 +321,7 @@ export function SiteHeader() {
         )}
       </div>
     </div>
-  ) : null;
+    );
 
   const linkInactive = "text-slate-600 hover:bg-white hover:text-blue-800 hover:shadow-sm";
 
@@ -336,13 +337,14 @@ export function SiteHeader() {
 
   return (
     <header className="fixed inset-x-0 top-0 z-30 w-full border-b border-slate-200 bg-white shadow-[0_4px_24px_-8px_rgba(15,23,42,0.12)] backdrop-blur-xl backdrop-saturate-150">
-      <div className="mx-auto flex min-h-[3.5rem] w-full max-w-6xl items-center justify-between gap-4 px-4 py-2 md:min-h-[4rem] md:py-2.5 lg:px-6">
+      <div ref={searchWrapRef} className="mx-auto w-full max-w-6xl">
+      <div className="flex min-h-[3.25rem] w-full items-center justify-between gap-2 px-3 py-1.5 sm:gap-3 sm:px-4 sm:py-2 md:min-h-[3.75rem] lg:px-6 lg:py-2.5">
         <Link
           href="/"
-          className="group flex shrink-0 items-center gap-2 rounded-2xl py-0.5 font-semibold tracking-tight text-slate-900 transition-opacity hover:opacity-90 sm:gap-3.5 lg:min-w-0 lg:flex-none lg:shrink-0"
+          className="group flex min-w-0 shrink items-center gap-2 rounded-2xl py-0.5 font-semibold tracking-tight text-slate-900 transition-opacity hover:opacity-90 sm:gap-3"
         >
           {!logoError ? (
-            <span className="relative flex h-14 w-14 shrink-0 items-center justify-center sm:h-16 sm:w-16 md:h-[4.25rem] md:w-[4.25rem]">
+            <span className="relative flex h-11 w-11 shrink-0 items-center justify-center sm:h-14 sm:w-14 md:h-16 md:w-16">
               <Image
                 src="/website-logo.jpeg"
                 alt={`${SITE_SHOP_NAME} logo`}
@@ -354,22 +356,22 @@ export function SiteHeader() {
               />
             </span>
           ) : (
-            <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-blue-600 text-sm font-bold text-white sm:h-16 sm:w-16 md:h-[4.25rem] md:w-[4.25rem] md:text-base">
+            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-blue-600 text-xs font-bold text-white sm:h-14 sm:w-14 sm:text-sm md:h-16 md:w-16 md:text-base">
               AM
             </span>
           )}
-          <span className="hidden min-w-0 flex-col lg:flex">
-            <span className="text-[13px] font-bold leading-snug text-slate-900 sm:text-[15px] md:text-lg md:leading-tight">
+          <span className="hidden min-w-0 flex-col sm:flex">
+            <span className="truncate text-[13px] font-bold leading-snug text-slate-900 sm:text-[15px] md:text-lg md:leading-tight">
               {SITE_SHOP_NAME}
             </span>
-            <span className="mt-0.5 hidden text-[11px] font-medium leading-snug text-slate-500 sm:block">
+            <span className="mt-0.5 hidden truncate text-[11px] font-medium leading-snug text-slate-500 md:block">
               {SITE_SHORT_TAGLINE}
             </span>
           </span>
         </Link>
 
         {/* Desktop search: right after logo */}
-        <div className="relative hidden max-w-[44rem] flex-1 lg:block" ref={searchWrapRef}>
+        <div className="relative hidden max-w-[44rem] flex-1 lg:block">
           <form
             onSubmit={(e) => {
               e.preventDefault();
@@ -425,7 +427,7 @@ export function SiteHeader() {
               Go
             </button>
           </form>
-          {searchDropdown}
+          {renderSearchDropdown()}
         </div>
 
         <nav className="hidden items-center gap-2 lg:flex">
@@ -651,6 +653,45 @@ export function SiteHeader() {
             </svg>
           </button>
         </div>
+      </div>
+
+      <div className="relative px-3 pb-2 lg:hidden sm:px-4">
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            submitSearch();
+          }}
+          className="flex h-10 w-full items-center rounded-full border border-slate-200 bg-white shadow-sm focus-within:border-blue-300 focus-within:ring-4 focus-within:ring-blue-100"
+        >
+          <span className="flex shrink-0 items-center pl-3 text-slate-400" aria-hidden>
+            <SearchIcon className="h-4 w-4" />
+          </span>
+          <label htmlFor="site-header-search-mobile" className="sr-only">
+            Search products
+          </label>
+          <input
+            id="site-header-search-mobile"
+            value={search}
+            onChange={(e) => {
+              const v = e.target.value;
+              setSearch(v);
+              setSearchOpen(v.trim().length >= 2);
+              setActiveIdx(-1);
+            }}
+            onFocus={() => setSearchOpen(search.trim().length >= 2)}
+            placeholder="Search products"
+            autoComplete="off"
+            className="min-w-0 flex-1 border-0 bg-transparent py-2 pl-1 pr-2 text-sm font-semibold text-slate-800 placeholder:text-slate-400 outline-none"
+          />
+          <button
+            type="submit"
+            className="mr-1 inline-flex h-8 shrink-0 items-center justify-center rounded-full bg-blue-600 px-3 text-xs font-semibold text-white"
+          >
+            Go
+          </button>
+        </form>
+        {renderSearchDropdown()}
+      </div>
       </div>
 
       {mobileOpen ? (

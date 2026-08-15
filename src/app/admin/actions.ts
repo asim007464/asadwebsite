@@ -577,6 +577,208 @@ export async function createProduct(formData: FormData) {
   redirect(`/admin/products/${productId}/edit?notice=created`);
 }
 
+async function uniqueProductSlug(
+  supabase: ReturnType<typeof createSupabaseAdminClient>,
+  base: string,
+  reserved: Set<string>,
+) {
+  let candidate = base;
+  for (let i = 2; i < 60; i++) {
+    if (!reserved.has(candidate)) {
+      const { data } = await supabase.from("products").select("id").eq("slug", candidate).maybeSingle();
+      if (!data) {
+        reserved.add(candidate);
+        return candidate;
+      }
+    }
+    candidate = `${base}-${i}`;
+  }
+  const fallback = `${base}-${Date.now()}`;
+  reserved.add(fallback);
+  return fallback;
+}
+
+async function uniqueVariantSku(
+  supabase: ReturnType<typeof createSupabaseAdminClient>,
+  base: string,
+  reserved: Set<string>,
+) {
+  let candidate = base.slice(0, 64) || "ITEM";
+  for (let i = 2; i < 60; i++) {
+    if (!reserved.has(candidate)) {
+      const { data } = await supabase.from("product_variants").select("id").eq("sku", candidate).maybeSingle();
+      if (!data) {
+        reserved.add(candidate);
+        return candidate;
+      }
+    }
+    candidate = `${base.slice(0, 56)}-${i}`;
+  }
+  const fallback = `${base.slice(0, 48)}-${Date.now()}`;
+  reserved.add(fallback);
+  return fallback;
+}
+
+async function resolveCategoryIdByLabel(
+  supabase: ReturnType<typeof createSupabaseAdminClient>,
+  raw: string,
+): Promise<{ id: string | null; error?: string }> {
+  const label = raw.trim();
+  if (!label) return { id: null };
+
+  const slug = slugifyCatalogSlug(label, label);
+  const { data: bySlug } = await supabase.from("categories").select("id").eq("slug", slug).maybeSingle();
+  if (bySlug?.id) return { id: bySlug.id };
+
+  const { data: byName } = await supabase
+    .from("categories")
+    .select("id")
+    .ilike("name", escapeIlikeExact(label))
+    .limit(1)
+    .maybeSingle();
+  if (byName?.id) return { id: byName.id };
+
+  return { id: null, error: `Unknown category "${label}". Use an existing category name or slug.` };
+}
+
+export async function bulkCreateProducts(rows: import("@/lib/admin-bulk-products").BulkProductInput[]) {
+  await assertAdminAuthenticated();
+
+  const {
+    BULK_PRODUCT_MAX_ROWS,
+    normalizeHttpsOrSlashImage: normalizeImage,
+    validateBulkProductRow,
+  } = await import("@/lib/admin-bulk-products");
+
+  if (!Array.isArray(rows) || rows.length === 0) {
+    return { created: 0, errors: [{ row: 0, message: "No products to import." }] };
+  }
+  if (rows.length > BULK_PRODUCT_MAX_ROWS) {
+    return {
+      created: 0,
+      errors: [{ row: 0, message: `Import up to ${BULK_PRODUCT_MAX_ROWS} products at a time.` }],
+    };
+  }
+
+  const supabase = createSupabaseAdminClient();
+  const usedSlugs = new Set<string>();
+  const usedSkus = new Set<string>();
+  const errors: { row: number; message: string }[] = [];
+  let created = 0;
+
+  for (let i = 0; i < rows.length; i++) {
+    const rowNumber = Number.isFinite(rows[i].rowNumber) ? Number(rows[i].rowNumber) : i + 2;
+    const issues = validateBulkProductRow(rows[i]);
+    if (issues.length) {
+      errors.push({ row: rowNumber, message: issues[0] });
+      continue;
+    }
+
+    const name = rows[i].name.trim();
+    const slugBase = slugifyCatalogSlug(name, rows[i].slug ?? "");
+    if (slugBase.length < 2) {
+      errors.push({ row: rowNumber, message: "Could not build a valid slug." });
+      continue;
+    }
+
+    const imageCheck = rows[i].image_url ? normalizeImage(rows[i].image_url) : "";
+    if (imageCheck === null) {
+      errors.push({ row: rowNumber, message: "image_url must start with https:// or /." });
+      continue;
+    }
+
+    const category = await resolveCategoryIdByLabel(supabase, rows[i].category ?? "");
+    if (category.error) {
+      errors.push({ row: rowNumber, message: category.error });
+      continue;
+    }
+
+    let brand_id: string | null = null;
+    const brandName = (rows[i].brand ?? "").trim();
+    if (brandName) {
+      brand_id = await resolveOrCreateBrandId(supabase, brandName);
+      if (!brand_id) {
+        errors.push({ row: rowNumber, message: "Could not create or match brand." });
+        continue;
+      }
+    }
+
+    const slug = await uniqueProductSlug(supabase, slugBase, usedSlugs);
+    const skuManual = (rows[i].sku ?? "").trim();
+    const skuBase = skuManual.length >= 2 ? skuManual : defaultVariantSkuFromSlug(slug);
+    const sku = await uniqueVariantSku(supabase, skuBase, usedSkus);
+
+    const { data: inserted, error: pErr } = await supabase
+      .from("products")
+      .insert({
+        name,
+        slug,
+        catchy_headline: (rows[i].catchy_headline ?? "").trim(),
+        description: (rows[i].description ?? "").trim(),
+        category_id: category.id,
+        brand_id,
+        is_active: rows[i].is_active !== false,
+        is_featured: rows[i].is_featured === true,
+      })
+      .select("id")
+      .single();
+
+    if (pErr || !inserted?.id) {
+      errors.push({ row: rowNumber, message: pErr?.message ?? "Could not create product." });
+      continue;
+    }
+
+    const productId = inserted.id;
+    const { data: vRow, error: vErr } = await supabase
+      .from("product_variants")
+      .insert({
+        product_id: productId,
+        sku,
+        title: name,
+        options: {},
+        price_pkr: rows[i].price_pkr,
+        compare_at_price_pkr: rows[i].compare_at_price_pkr,
+        is_active: true,
+      })
+      .select("id")
+      .single();
+
+    if (vErr || !vRow?.id) {
+      await supabase.from("products").delete().eq("id", productId);
+      errors.push({ row: rowNumber, message: vErr?.message ?? "Could not create variant." });
+      continue;
+    }
+
+    const { error: invErr } = await supabase
+      .from("inventory")
+      .insert({ variant_id: vRow.id, qty_available: rows[i].stock_qty || 0 });
+    if (invErr) {
+      await supabase.from("products").delete().eq("id", productId);
+      errors.push({ row: rowNumber, message: invErr.message });
+      continue;
+    }
+
+    if (imageCheck) {
+      const { error: imgErr } = await supabase.from("product_images").insert({
+        product_id: productId,
+        url: imageCheck,
+        alt: name.slice(0, 200),
+        sort_order: 0,
+      });
+      if (imgErr) {
+        errors.push({
+          row: rowNumber,
+          message: `Product saved, but image failed: ${imgErr.message}`,
+        });
+      }
+    }
+
+    created += 1;
+  }
+
+  return { created, errors };
+}
+
 export async function updateProduct(formData: FormData) {
   await assertAdminAuthenticated();
   const id = String(formData.get("id") ?? "").trim();
