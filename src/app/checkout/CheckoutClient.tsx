@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import { CheckoutPageSkeleton } from "@/components/skeletons";
 import type { CartItem } from "@/lib/cart";
 import { cartSubtotal, readCart, writeCart } from "@/lib/cart";
 import { shippingPkrForPaymentMethod } from "@/lib/checkout-shipping";
@@ -13,6 +14,7 @@ type Method = "cod" | "jazzcash" | "bank_transfer";
 
 export function CheckoutClient({ storefront }: { storefront: ResolvedStorefront }) {
   const [items, setItems] = useState<CartItem[]>([]);
+  const [ready, setReady] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<{ orderNumber: string; totalPkr: number } | null>(null);
@@ -20,11 +22,14 @@ export function CheckoutClient({ storefront }: { storefront: ResolvedStorefront 
 
   useEffect(() => {
     setItems(readCart());
+    setReady(true);
   }, []);
 
   const subtotal = useMemo(() => cartSubtotal(items), [items]);
   const shippingPkr = useMemo(() => shippingPkrForPaymentMethod(method), [method]);
   const orderTotal = subtotal + shippingPkr;
+
+  if (!ready) return <CheckoutPageSkeleton />;
 
   if (items.length === 0 && !success) {
     return (

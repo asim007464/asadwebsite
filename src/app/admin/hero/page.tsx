@@ -1,5 +1,5 @@
 import Link from "next/link";
-import Image from "next/image";
+import { SafeRemoteImage } from "@/components/SafeRemoteImage";
 import { createHeroSlide, deleteHeroSlide, updateHeroSlide } from "@/app/admin/actions";
 import { ADMIN_IMAGE_FILE_INPUT_CLASS, ADMIN_IMAGE_UPLOAD_HINT } from "@/lib/admin-media-upload";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
@@ -45,7 +45,7 @@ export default async function AdminHeroSlidesPage({
 
         {error ? (
           <div className="mt-5 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-800">
-            {error === "invalid-url" ? "Image URL must start with https://" : error}
+            {error === "invalid-url" ? "Add an https:// image URL, a path starting with /, or upload a file." : error}
           </div>
         ) : null}
 
@@ -96,7 +96,7 @@ export default async function AdminHeroSlidesPage({
             <div key={s.id} className="overflow-hidden rounded-3xl border border-slate-200 bg-white">
               <div className="grid grid-cols-[140px_1fr] gap-0 border-b border-slate-100">
                 <div className="relative h-28 bg-slate-100">
-                  <Image src={s.url} alt="" fill className="object-cover" sizes="140px" />
+                  <SafeRemoteImage src={s.url} alt="" fill className="object-cover" sizes="140px" />
                 </div>
                 <div className="p-4">
                   <form id={`hero-slide-edit-${s.id}`} action={updateHeroSlide} className="grid gap-3 sm:grid-cols-12">
@@ -163,7 +163,7 @@ export default async function AdminHeroSlidesPage({
           {slides.map((s) => (
             <div key={s.id} className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
               <div className="relative mx-auto aspect-[16/10] w-full max-w-sm overflow-hidden rounded-2xl bg-slate-100">
-                <Image src={s.url} alt="" fill className="object-cover" sizes="(max-width:400px) 100vw, 400px" />
+                <SafeRemoteImage src={s.url} alt="" fill className="object-cover" sizes="(max-width:400px) 100vw, 400px" />
               </div>
               <form id={`hero-slide-edit-m-${s.id}`} action={updateHeroSlide} className="mt-4 space-y-3">
                 <input type="hidden" name="id" value={s.id} />

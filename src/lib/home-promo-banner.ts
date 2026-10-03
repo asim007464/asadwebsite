@@ -14,6 +14,12 @@ export function isHomePromoBannerVisible(banner: HomeReviewsBannerRow | null | u
   return heading.length > 0 || paragraph.length > 0 || label.length > 0;
 }
 
+function clampPct(raw: unknown, fallback: number) {
+  const n = typeof raw === "number" ? raw : Number.parseInt(String(raw ?? ""), 10);
+  if (!Number.isFinite(n)) return fallback;
+  return Math.min(100, Math.max(0, Math.round(n)));
+}
+
 export function parseHomePromoBannerRow(data: unknown, id: number): HomeReviewsBannerRow {
   const row = (data ?? {}) as Partial<HomeReviewsBannerRow>;
   return {
@@ -23,6 +29,8 @@ export function parseHomePromoBannerRow(data: unknown, id: number): HomeReviewsB
     paragraph: String(row.paragraph ?? ""),
     button_label: String(row.button_label ?? ""),
     button_href: String(row.button_href ?? "/products"),
+    image_opacity: clampPct(row.image_opacity, 100),
+    overlay_opacity: clampPct(row.overlay_opacity, 70),
     is_active: Boolean(row.is_active),
   };
 }

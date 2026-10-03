@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { SafeRemoteImage } from "@/components/SafeRemoteImage";
+import { CartPageSkeleton } from "@/components/skeletons";
 import { useEffect, useMemo, useState } from "react";
 import type { CartItem } from "@/lib/cart";
 import { cartSubtotal, readCart, writeCart } from "@/lib/cart";
@@ -9,15 +10,19 @@ import { formatPKR } from "@/lib/money";
 
 export default function CartPage() {
   const [items, setItems] = useState<CartItem[]>([]);
+  const [ready, setReady] = useState(false);
 
   useEffect(() => {
     const sync = () => setItems(readCart());
     sync();
+    setReady(true);
     window.addEventListener("storage", sync);
     return () => window.removeEventListener("storage", sync);
   }, []);
 
   const subtotal = useMemo(() => cartSubtotal(items), [items]);
+
+  if (!ready) return <CartPageSkeleton />;
 
   return (
     <main className="mx-auto w-full max-w-6xl px-3 py-8 sm:px-4 sm:py-10">

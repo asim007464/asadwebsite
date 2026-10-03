@@ -65,6 +65,10 @@ export type HomeReviewsBannerRow = {
   paragraph: string;
   button_label: string;
   button_href: string;
+  /** Background photo opacity 0–100 (admin). */
+  image_opacity: number;
+  /** Dark overlay strength 0–100 (admin). */
+  overlay_opacity: number;
   is_active: boolean;
 };
 

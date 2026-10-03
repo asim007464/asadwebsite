@@ -1,5 +1,5 @@
 import Link from "next/link";
-import Image from "next/image";
+import { SafeRemoteImage } from "@/components/SafeRemoteImage";
 import { googleMapsEmbedSrc, resolveStoreLocation } from "@/lib/store-location";
 import { getStorefrontPayload } from "@/lib/storefront";
 
@@ -187,7 +187,7 @@ export default async function ContactPage() {
 
         <div className="mt-6 grid gap-4 lg:grid-cols-2">
           <div className="relative aspect-[16/11] overflow-hidden rounded-2xl border border-slate-200 bg-slate-100 shadow-inner">
-            <Image
+            <SafeRemoteImage
               src={CONTACT_STORE_IMAGE}
               alt={`${store.name} — store photo`}
               fill
@@ -197,7 +197,7 @@ export default async function ContactPage() {
             />
           </div>
           <div className="relative aspect-[16/11] overflow-hidden rounded-2xl border border-slate-200 bg-slate-100 shadow-inner">
-            <Image
+            <SafeRemoteImage
               src={CONTACT_SECOND_IMAGE}
               alt={`${store.name} — inside store`}
               fill

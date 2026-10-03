@@ -55,7 +55,7 @@ export function AdminChrome({ owner, shopName, children }: { owner: boolean; sho
     <div className="min-h-screen bg-gradient-to-b from-slate-100 via-slate-50 to-slate-100">
       <div className="mx-auto flex w-full max-w-7xl flex-col gap-6 px-4 py-6 lg:flex-row lg:gap-8 lg:py-10">
         <aside className="hidden w-[15.5rem] shrink-0 lg:block">
-          <div className="sticky top-[calc(var(--site-header-height)+1rem)] overflow-hidden rounded-2xl bg-slate-900 shadow-xl shadow-slate-900/25 ring-1 ring-slate-800">
+          <div className="overflow-hidden rounded-2xl bg-slate-900 shadow-xl shadow-slate-900/25 ring-1 ring-slate-800">
             <div className="bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-800 px-4 py-5">
               <div className="text-[10px] font-bold uppercase tracking-[0.2em] text-blue-100/90">Control center</div>
               <div className="mt-2 line-clamp-2 text-base font-bold leading-snug text-white">{shopName}</div>
@@ -100,7 +100,7 @@ export function AdminChrome({ owner, shopName, children }: { owner: boolean; sho
 
         <div className="min-w-0 flex-1">
           <div className="lg:hidden">
-            <div className="sticky top-[calc(var(--site-header-height)+0.25rem)] z-40 -mx-4 overflow-hidden rounded-2xl border border-slate-800 bg-slate-900 shadow-lg shadow-slate-900/30">
+            <div className="mb-6 -mx-4 overflow-hidden rounded-2xl border border-slate-800 bg-slate-900 shadow-lg shadow-slate-900/30">
               <div className="flex items-center justify-between gap-3 px-4 py-3">
                 <div>
                   <div className="text-[10px] font-bold uppercase tracking-wider text-blue-300/90">Admin</div>

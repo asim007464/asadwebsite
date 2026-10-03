@@ -15,6 +15,17 @@ export function extForAdminImageMime(mime: string): string | null {
   return null;
 }
 
+/** Browsers on Windows sometimes omit `file.type` — infer from extension. */
+export function resolveAdminImageMime(file: File): string | null {
+  if (ADMIN_IMAGE_MIME.has(file.type)) return file.type;
+  const name = file.name.toLowerCase();
+  if (name.endsWith(".jpg") || name.endsWith(".jpeg")) return "image/jpeg";
+  if (name.endsWith(".png")) return "image/png";
+  if (name.endsWith(".webp")) return "image/webp";
+  if (name.endsWith(".gif")) return "image/gif";
+  return null;
+}
+
 export function adminMediaUploadErrorMessage(message: string): string {
   if (message.includes("Bucket not found")) {
     return "Storage bucket missing. Run the Supabase migration for admin-media (see supabase/migrations).";
@@ -30,13 +41,14 @@ export async function uploadAdminMediaImage(
   pathPrefix: string,
   file: File,
 ): Promise<{ publicUrl: string } | { error: string }> {
-  if (!ADMIN_IMAGE_MIME.has(file.type)) {
+  const mime = resolveAdminImageMime(file);
+  if (!mime) {
     return { error: "Image must be JPEG, PNG, WebP, or GIF." };
   }
   if (file.size > ADMIN_IMAGE_MAX_BYTES) {
     return { error: "Image is too large (max 5 MB)." };
   }
-  const ext = extForAdminImageMime(file.type);
+  const ext = extForAdminImageMime(mime);
   if (!ext) {
     return { error: "Unsupported image type." };
   }
@@ -49,7 +61,7 @@ export async function uploadAdminMediaImage(
   const objectPath = `${safePrefix}/${Date.now()}-${token}.${ext}`;
   const buf = Buffer.from(await file.arrayBuffer());
   const { error: upErr } = await supabase.storage.from(ADMIN_MEDIA_BUCKET).upload(objectPath, buf, {
-    contentType: file.type,
+    contentType: mime,
     upsert: false,
   });
   if (upErr) {

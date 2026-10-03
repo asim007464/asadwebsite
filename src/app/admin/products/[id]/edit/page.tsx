@@ -6,6 +6,7 @@ import {
   updateProduct,
   updateProductVariant,
 } from "@/app/admin/actions";
+import { AdminCategoryMultiSelect } from "@/components/admin/AdminCategoryMultiSelect";
 import { AdminProductGallery } from "@/components/admin/AdminProductGallery";
 import { AdminStockQtyField } from "@/components/admin/AdminStockQtyField";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
@@ -24,6 +25,8 @@ function errMsg(code: string) {
   if (code === "gallery-too-many") return `You can upload at most 12 images at a time.`;
   if (code === "cover-not-found") return "That image could not be found; refresh and try again.";
   if (code === "brand") return "Could not save that brand. Try a shorter name or try again.";
+  if (code === "rating") return "Rating must be a number from 0 to 5 (e.g. 4.3).";
+  if (code === "rating-count") return "Rating count must be a whole number ≥ 0.";
   return code.length < 220 ? code : "Something went wrong.";
 }
 
@@ -55,10 +58,16 @@ export default async function AdminEditProductPage({
 
   const supabase = createSupabaseAdminClient();
 
-  const [{ data: product }, { data: categories }, { data: variants }, { data: galleryRows }] = await Promise.all([
+  const [
+    { data: product },
+    { data: categories },
+    { data: variants },
+    { data: galleryRows },
+    { data: productCatRows },
+  ] = await Promise.all([
     supabase
       .from("products")
-      .select("id,name,slug,catchy_headline,description,category_id,brand_id,is_active")
+      .select("id,name,slug,catchy_headline,description,category_id,brand_id,is_active,rating_avg,rating_count")
       .eq("id", id)
       .maybeSingle(),
     supabase.from("categories").select("id,name").order("name"),
@@ -70,6 +79,11 @@ export default async function AdminEditProductPage({
     supabase
       .from("product_images")
       .select("id,url,alt,sort_order")
+      .eq("product_id", id)
+      .order("sort_order", { ascending: true }),
+    supabase
+      .from("product_categories")
+      .select("category_id,sort_order")
       .eq("product_id", id)
       .order("sort_order", { ascending: true }),
   ]);
@@ -85,9 +99,22 @@ export default async function AdminEditProductPage({
     category_id: string | null;
     brand_id: string | null;
     is_active: boolean;
+    rating_avg: number | string | null;
+    rating_count: number | null;
   };
+  const ratingAvgDefault = Number(p.rating_avg ?? 0);
+  const ratingCountDefault = Number(p.rating_count ?? 0);
 
   const cats = ((categories ?? []) as { id: string; name: string }[]) ?? [];
+  const linkedCategoryIds = ((productCatRows ?? []) as { category_id: string }[])
+    .map((r) => r.category_id)
+    .filter(Boolean);
+  const selectedCategoryIds =
+    linkedCategoryIds.length > 0
+      ? linkedCategoryIds
+      : p.category_id
+        ? [p.category_id]
+        : [];
   const varRows = ((variants ?? []) as VariantRow[]) ?? [];
   const variantIds = varRows.map((v) => v.id);
 
@@ -174,16 +201,8 @@ export default async function AdminEditProductPage({
               <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">Description</label>
               <textarea name="description" rows={4} defaultValue={p.description} className={`${input} min-h-[6rem] resize-y py-3`} />
             </div>
-            <div>
-              <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">Category</label>
-              <select name="category_id" defaultValue={p.category_id ?? ""} className={input}>
-                <option value="">— None —</option>
-                {cats.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name}
-                  </option>
-                ))}
-              </select>
+            <div className="sm:col-span-2">
+              <AdminCategoryMultiSelect categories={cats} selectedIds={selectedCategoryIds} />
             </div>
             <div>
               <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">Brand (optional)</label>
@@ -200,6 +219,33 @@ export default async function AdminEditProductPage({
                 <input type="checkbox" name="is_active" defaultChecked={p.is_active} className="h-4 w-4 rounded border-slate-300" />
                 visible on storefront (active)
               </label>
+            </div>
+            <div>
+              <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">Rating (0–5)</label>
+              <input
+                name="rating_avg"
+                type="number"
+                min={0}
+                max={5}
+                step={0.1}
+                defaultValue={Number.isFinite(ratingAvgDefault) ? ratingAvgDefault : 0}
+                placeholder="4.3"
+                className={input}
+              />
+              <p className="mt-1 text-[11px] text-slate-500">Stars under the product name. Set 0 to hide.</p>
+            </div>
+            <div>
+              <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">Rating count</label>
+              <input
+                name="rating_count"
+                type="number"
+                min={0}
+                step={1}
+                defaultValue={Number.isFinite(ratingCountDefault) ? ratingCountDefault : 0}
+                placeholder="1673"
+                className={input}
+              />
+              <p className="mt-1 text-[11px] text-slate-500">Shown in parentheses next to the stars.</p>
             </div>
             <div className="sm:col-span-2">
               <button

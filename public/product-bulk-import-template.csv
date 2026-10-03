@@ -1,0 +1,2 @@
+name,slug,price_pkr,stock_qty,compare_at_price_pkr,description,catchy_headline,category,brand,sku,is_active,image_url,spec_lists_json
+"Sample ceiling fan 56 inch",sample-ceiling-fan,17800,10,19500,"Brief sales description","Stay cool all summer",Fans,Philips,,true,https://example.com/fan.jpg,"[{""heading"":""Specs"",""points"":[""220V"",""Remote included""]}]"

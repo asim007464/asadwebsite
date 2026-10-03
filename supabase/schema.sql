@@ -31,6 +31,8 @@ create table if not exists public.products (
   is_active boolean not null default true,
   is_featured boolean not null default false,
   featured_sort_order integer not null default 0,
+  rating_avg numeric(2,1) not null default 0 check (rating_avg >= 0 and rating_avg <= 5),
+  rating_count integer not null default 0 check (rating_count >= 0),
   created_at timestamptz not null default now()
 );
 
@@ -38,6 +40,17 @@ create index if not exists products_category_id_idx on public.products(category_
 create index if not exists products_brand_id_idx on public.products(brand_id);
 create index if not exists products_is_active_idx on public.products(is_active);
 -- Featured index is created after ALTER adds columns (below).
+
+-- Many-to-many categories (products.category_id remains the primary/first category).
+create table if not exists public.product_categories (
+  product_id uuid not null references public.products(id) on delete cascade,
+  category_id uuid not null references public.categories(id) on delete cascade,
+  sort_order integer not null default 0,
+  created_at timestamptz not null default now(),
+  primary key (product_id, category_id)
+);
+create index if not exists product_categories_category_id_idx on public.product_categories(category_id);
+create index if not exists product_categories_product_id_idx on public.product_categories(product_id);
 
 -- Variant options are stored in JSONB to support wiring specs:
 -- e.g. {"gauge":"7/29","cores":"2","length_m":"90","color":"Red","material":"Copper"}
@@ -99,6 +112,8 @@ create table if not exists public.home_reviews_banner (
   paragraph text not null default '',
   button_label text not null default '',
   button_href text not null default '/products',
+  image_opacity integer not null default 100 check (image_opacity >= 0 and image_opacity <= 100),
+  overlay_opacity integer not null default 70 check (overlay_opacity >= 0 and overlay_opacity <= 100),
   is_active boolean not null default false,
   updated_at timestamptz not null default now()
 );
@@ -273,6 +288,7 @@ create index if not exists order_items_order_id_idx on public.order_items(order_
 alter table public.categories enable row level security;
 alter table public.brands enable row level security;
 alter table public.products enable row level security;
+alter table public.product_categories enable row level security;
 alter table public.product_variants enable row level security;
 alter table public.product_images enable row level security;
 alter table public.inventory enable row level security;
@@ -292,6 +308,9 @@ begin
   if not exists (select 1 from pg_policies where schemaname='public' and tablename='products' and policyname='Public read products') then
     create policy "Public read products" on public.products for select using (is_active = true);
   end if;
+  if not exists (select 1 from pg_policies where schemaname='public' and tablename='product_categories' and policyname='Public read product categories') then
+    create policy "Public read product categories" on public.product_categories for select using (true);
+  end if;
   if not exists (select 1 from pg_policies where schemaname='public' and tablename='product_variants' and policyname='Public read variants') then
     create policy "Public read variants" on public.product_variants for select using (is_active = true);
   end if;
@@ -310,6 +329,15 @@ end$$;
 alter table public.products add column if not exists meta_keywords text not null default '';
 alter table public.products add column if not exists meta_description text not null default '';
 alter table public.products add column if not exists catchy_headline text not null default '';
+alter table public.products add column if not exists rating_avg numeric(2,1) not null default 0;
+alter table public.products add column if not exists rating_count integer not null default 0;
+
+alter table public.home_reviews_banner
+  add column if not exists image_opacity integer not null default 100
+    check (image_opacity >= 0 and image_opacity <= 100);
+alter table public.home_reviews_banner
+  add column if not exists overlay_opacity integer not null default 70
+    check (overlay_opacity >= 0 and overlay_opacity <= 100);
 
 alter table public.categories add column if not exists thumbnail_url text not null default '';
 alter table public.categories add column if not exists hero_icon_hint text not null default '';

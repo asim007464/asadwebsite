@@ -5,6 +5,11 @@ function cn(...parts: Array<string | false | null | undefined>) {
   return parts.filter(Boolean).join(" ");
 }
 
+function clampPct(n: number, fallback: number) {
+  if (!Number.isFinite(n)) return fallback;
+  return Math.min(100, Math.max(0, n));
+}
+
 export function ReviewsBannerSection({
   banner,
   layout = "fullBleed",
@@ -22,6 +27,8 @@ export function ReviewsBannerSection({
   const paragraph = banner.paragraph.trim();
   const label = banner.button_label.trim();
   const href = banner.button_href.trim() || "/products";
+  const imageOpacity = clampPct(Number(banner.image_opacity), 100) / 100;
+  const overlayOpacity = clampPct(Number(banner.overlay_opacity), 70) / 100;
 
   const showBtn = label.length > 0 && href.length > 0;
 
@@ -32,37 +39,48 @@ export function ReviewsBannerSection({
       aria-labelledby={heading ? headingId : undefined}
       aria-label={heading ? undefined : "Promotional banner"}
       className={cn(
-        "relative isolate overflow-hidden rounded-2xl shadow-lg ring-1 ring-slate-200/70 sm:rounded-3xl sm:min-h-[240px] md:min-h-[280px] lg:min-h-[300px]",
-        layout === "fullBleed" && "mt-8 w-full sm:mt-12",
+        "relative isolate min-h-[18.5rem] overflow-hidden rounded-2xl bg-slate-900 shadow-lg ring-1 ring-slate-200/70 sm:min-h-[320px] sm:rounded-3xl md:min-h-[360px] lg:min-h-[380px]",
+        layout === "fullBleed" && "left-1/2 mt-10 w-[min(100dvw,100%)] max-w-none -translate-x-1/2 sm:mt-12",
         layout === "contained" && "w-full",
         className,
       )}
     >
-      {/* Background image */}
+      {/* Background image — opacity controlled in Admin → Promo banners */}
       <div
         aria-hidden
-        className="absolute inset-0 scale-105 bg-center bg-cover"
-        style={{ backgroundImage: `url(${JSON.stringify(bg).slice(1, -1)})` }}
+        className="absolute inset-0 scale-105 bg-center bg-cover bg-no-repeat"
+        style={{
+          backgroundImage: `url(${JSON.stringify(bg).slice(1, -1)})`,
+          opacity: imageOpacity,
+        }}
       />
-      {/* Readability overlays */}
-      <div className="pointer-events-none absolute inset-0 bg-slate-950/55 backdrop-blur-[1px]" aria-hidden />
+      {/* Dark overlays — strength controlled by overlay_opacity */}
       <div
-        className="pointer-events-none absolute inset-0 bg-gradient-to-r from-blue-950/92 via-blue-950/82 to-slate-950/55"
+        className="pointer-events-none absolute inset-0 bg-slate-950 backdrop-blur-[1px]"
+        style={{ opacity: overlayOpacity * 0.55 }}
         aria-hidden
       />
       <div
-        className="pointer-events-none absolute inset-0 bg-gradient-to-t from-slate-950/72 via-transparent to-slate-950/35"
+        className="pointer-events-none absolute inset-0 bg-gradient-to-r from-blue-950 via-blue-950/90 to-slate-950/70"
+        style={{ opacity: overlayOpacity * 0.85 }}
+        aria-hidden
+      />
+      <div
+        className="pointer-events-none absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-slate-950/40"
+        style={{ opacity: overlayOpacity * 0.75 }}
         aria-hidden
       />
 
-      <div className="relative z-10 mx-auto flex max-w-7xl flex-col gap-6 px-5 py-10 sm:px-8 md:flex-row md:items-center md:justify-between md:py-14 lg:px-10">
-        <div className="max-w-2xl space-y-3 text-white">
+      <div className="relative z-10 mx-auto flex min-h-[18.5rem] max-w-7xl flex-col justify-center gap-5 px-4 py-14 sm:min-h-[320px] sm:gap-6 sm:px-8 sm:py-16 md:min-h-[360px] md:flex-row md:items-center md:justify-between md:py-20 lg:min-h-[380px] lg:px-10">
+        <div className="max-w-2xl space-y-2.5 text-white sm:space-y-3">
           {heading ? (
-            <h2 id={headingId} className="text-2xl font-bold tracking-tight sm:text-3xl lg:text-[1.875rem]">
+            <h2 id={headingId} className="text-xl font-bold tracking-tight sm:text-3xl lg:text-[1.875rem]">
               {heading}
             </h2>
           ) : null}
-          {paragraph ? <p className="text-sm leading-relaxed text-blue-50/92 sm:text-[15px] md:max-w-xl">{paragraph}</p> : null}
+          {paragraph ? (
+            <p className="text-[13px] leading-relaxed text-blue-50/92 sm:text-[15px] md:max-w-xl">{paragraph}</p>
+          ) : null}
         </div>
 
         <div className="shrink-0 md:text-right">
