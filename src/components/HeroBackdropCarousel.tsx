@@ -115,7 +115,7 @@ export function HeroCarouselImagePanel({
           <img
             src={s.url}
             alt={s.alt || "Hero slide"}
-            className="h-full w-full object-cover"
+            className="h-full w-full object-cover object-center"
             loading={i === 0 ? "eager" : "lazy"}
             decoding="async"
             fetchPriority={i === 0 ? "high" : "low"}
@@ -136,7 +136,7 @@ export function HeroCarouselArrows() {
         type="button"
         aria-label="Previous banner slide"
         onClick={ctx.prev}
-        className="absolute left-2 top-1/2 z-20 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-white/40 bg-white/90 text-lg font-semibold text-slate-800 shadow-md backdrop-blur-sm transition hover:bg-white sm:left-5 sm:h-11 sm:w-11"
+        className="absolute left-2 top-1/2 z-20 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-white/40 bg-white/90 text-lg font-semibold text-slate-800 shadow-md backdrop-blur-sm transition hover:bg-white sm:left-5 sm:h-11 sm:w-11"
       >
         ‹
       </button>
@@ -144,7 +144,7 @@ export function HeroCarouselArrows() {
         type="button"
         aria-label="Next banner slide"
         onClick={ctx.next}
-        className="absolute right-2 top-1/2 z-20 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-white/40 bg-white/90 text-lg font-semibold text-slate-800 shadow-md backdrop-blur-sm transition hover:bg-white sm:right-5 sm:h-11 sm:w-11"
+        className="absolute right-2 top-1/2 z-20 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-white/40 bg-white/90 text-lg font-semibold text-slate-800 shadow-md backdrop-blur-sm transition hover:bg-white sm:right-5 sm:h-11 sm:w-11"
       >
         ›
       </button>

@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import type { Product, ProductVariant } from "@/lib/store-types";
+import { ProductStarRating } from "@/components/ProductStarRating";
 import { ProductImageGallery } from "./gallery";
 import { ProductPurchasePanel } from "./purchase-panel";
 
@@ -46,11 +47,14 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
 
   const { data: product } = await supabase
     .from("products")
-    .select("id,name,slug,catchy_headline,description,category_id,brand_id,is_active")
+    .select("id,name,slug,catchy_headline,description,category_id,brand_id,is_active,rating_avg,rating_count")
     .eq("slug", slug)
     .maybeSingle();
 
   if (!product || !(product as { is_active?: boolean }).is_active) return notFound();
+
+  const ratingAvg = Number((product as { rating_avg?: number | string | null }).rating_avg ?? 0);
+  const ratingCount = Number((product as { rating_count?: number | null }).rating_count ?? 0);
 
   const [{ data: variants }, { data: images }] = await Promise.all([
     supabase
@@ -112,6 +116,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
             <h1 className="text-xl font-semibold tracking-tight text-slate-900 capitalize sm:text-[1.75rem] sm:leading-tight">
               {product.name}
             </h1>
+            <ProductStarRating ratingAvg={ratingAvg} ratingCount={ratingCount} className="mt-2" />
             {introText ? (
               <p
                 className={

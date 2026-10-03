@@ -8,7 +8,7 @@ import { cartSubtotal, readCart } from "@/lib/cart";
 import { formatPKR } from "@/lib/money";
 import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
 import { clientUserHasAdminPanelAccess } from "@/lib/admin-panel-client";
-import { SITE_SHOP_NAME, SITE_SHORT_TAGLINE } from "@/lib/site-brand";
+import { SITE_BRAND_LINE1, SITE_BRAND_LINE2, SITE_SHOP_NAME, SITE_SHORT_TAGLINE } from "@/lib/site-brand";
 
 type Category = { id: string; name: string; slug: string };
 type ProductSuggest = { id: string; name: string; slug: string; image_url: string | null };
@@ -336,15 +336,15 @@ export function SiteHeader() {
   const isAdminActive = pathname.startsWith("/admin");
 
   return (
-    <header className="fixed inset-x-0 top-0 z-30 w-full border-b border-slate-200 bg-white shadow-[0_4px_24px_-8px_rgba(15,23,42,0.12)] backdrop-blur-xl backdrop-saturate-150">
-      <div ref={searchWrapRef} className="mx-auto w-full max-w-6xl">
-      <div className="flex min-h-[3.25rem] w-full items-center justify-between gap-2 px-3 py-1.5 sm:gap-3 sm:px-4 sm:py-2 md:min-h-[3.75rem] lg:px-6 lg:py-2.5">
+    <header className="fixed inset-x-0 top-0 z-50 w-full border-b border-slate-200 bg-white shadow-[0_4px_24px_-8px_rgba(15,23,42,0.12)]">
+      <div ref={searchWrapRef} className="relative z-[60] mx-auto w-full max-w-6xl bg-white">
+      <div className="flex min-h-[3.5rem] w-full items-center justify-between gap-2 px-3 py-1.5 sm:gap-3 sm:px-4 sm:py-2 md:min-h-[4rem] md:py-2.5 lg:px-6">
         <Link
           href="/"
-          className="group flex min-w-0 shrink items-center gap-2 rounded-2xl py-0.5 font-semibold tracking-tight text-slate-900 transition-opacity hover:opacity-90 sm:gap-3"
+          className="group flex min-w-0 flex-1 items-center gap-2 rounded-2xl py-0.5 font-semibold tracking-tight text-slate-900 transition-opacity hover:opacity-90 sm:gap-3 lg:max-w-md lg:flex-none lg:shrink-0"
         >
           {!logoError ? (
-            <span className="relative flex h-11 w-11 shrink-0 items-center justify-center sm:h-14 sm:w-14 md:h-16 md:w-16">
+            <span className="relative flex h-12 w-12 shrink-0 items-center justify-center sm:h-14 sm:w-14 md:h-[4.25rem] md:w-[4.25rem]">
               <Image
                 src="/website-logo.jpeg"
                 alt={`${SITE_SHOP_NAME} logo`}
@@ -356,12 +356,21 @@ export function SiteHeader() {
               />
             </span>
           ) : (
-            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-blue-600 text-xs font-bold text-white sm:h-14 sm:w-14 sm:text-sm md:h-16 md:w-16 md:text-base">
+            <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-blue-600 text-sm font-bold text-white sm:h-14 sm:w-14 md:h-[4.25rem] md:w-[4.25rem] md:text-base">
               AM
             </span>
           )}
-          <span className="hidden min-w-0 flex-col sm:flex">
-            <span className="truncate text-[13px] font-bold leading-snug text-slate-900 sm:text-[15px] md:text-lg md:leading-tight">
+          {/* Mobile / tablet wordmark — fills space between logo and cart */}
+          <span className="flex min-w-0 flex-1 flex-col justify-center lg:hidden">
+            <span className="block truncate text-[12px] font-bold uppercase leading-tight tracking-wide text-blue-700 sm:text-[13px]">
+              {SITE_BRAND_LINE1}
+            </span>
+            <span className="mt-0.5 block truncate text-[9px] font-semibold uppercase leading-tight tracking-[0.12em] text-blue-600/90 sm:text-[10px]">
+              {SITE_BRAND_LINE2}
+            </span>
+          </span>
+          <span className="hidden min-w-0 flex-col lg:flex">
+            <span className="text-[13px] font-bold leading-snug text-slate-900 sm:text-[15px] md:text-lg md:leading-tight">
               {SITE_SHOP_NAME}
             </span>
             <span className="mt-0.5 hidden truncate text-[11px] font-medium leading-snug text-slate-500 md:block">
@@ -698,7 +707,7 @@ export function SiteHeader() {
         <>
           <button
             type="button"
-            className="fixed inset-0 z-40 bg-slate-900/45 backdrop-blur-[2px] lg:hidden"
+            className="fixed inset-x-0 bottom-0 top-[var(--site-header-height)] z-40 bg-slate-900/45 backdrop-blur-[2px] lg:hidden"
             aria-label="Close menu"
             onClick={closeMobile}
           />
@@ -733,6 +742,33 @@ export function SiteHeader() {
               >
                 About
               </Link>
+              <button
+                type="button"
+                className="flex w-full items-center justify-between rounded-2xl px-4 py-3.5 text-left text-[15px] font-semibold text-slate-800 hover:bg-slate-50"
+                aria-expanded={mobileCatOpen}
+                onClick={() => setMobileCatOpen((v) => !v)}
+              >
+                Categories
+                <ChevronDown className={cn("h-5 w-5 text-slate-400 transition-transform", mobileCatOpen && "rotate-180")} />
+              </button>
+              {mobileCatOpen ? (
+                <div className="ml-3 space-y-0.5 border-l-2 border-blue-200 pl-4">
+                  {categories.length === 0 ? (
+                    <div className="py-2 text-sm text-slate-600">No categories yet.</div>
+                  ) : (
+                    categories.map((c) => (
+                      <Link
+                        key={c.id}
+                        href={`/products?category=${encodeURIComponent(c.slug)}`}
+                        className="block rounded-xl px-3 py-2.5 text-sm font-semibold text-blue-900 hover:bg-blue-50"
+                        onClick={closeMobile}
+                      >
+                        {c.name}
+                      </Link>
+                    ))
+                  )}
+                </div>
+              ) : null}
               <Link
                 href="/contact"
                 className={cn(
@@ -827,33 +863,6 @@ export function SiteHeader() {
                   </div>
                 )}
               </div>
-              <button
-                type="button"
-                className="flex w-full items-center justify-between rounded-2xl px-4 py-3.5 text-left text-[15px] font-semibold text-slate-800 hover:bg-slate-50"
-                aria-expanded={mobileCatOpen}
-                onClick={() => setMobileCatOpen((v) => !v)}
-              >
-                Categories
-                <ChevronDown className={cn("h-5 w-5 text-slate-400 transition-transform", mobileCatOpen && "rotate-180")} />
-              </button>
-              {mobileCatOpen ? (
-                <div className="ml-3 space-y-0.5 border-l-2 border-blue-200 pl-4">
-                  {categories.length === 0 ? (
-                    <div className="py-2 text-sm text-slate-600">No categories yet.</div>
-                  ) : (
-                    categories.map((c) => (
-                      <Link
-                        key={c.id}
-                        href={`/products?category=${encodeURIComponent(c.slug)}`}
-                        className="block rounded-xl px-3 py-2.5 text-sm font-semibold text-blue-900 hover:bg-blue-50"
-                        onClick={closeMobile}
-                      >
-                        {c.name}
-                      </Link>
-                    ))
-                  )}
-                </div>
-              ) : null}
               <Link
                 href="/cart"
                 className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-blue-600 px-4 py-4 text-[15px] font-bold text-white shadow-lg shadow-blue-600/25"

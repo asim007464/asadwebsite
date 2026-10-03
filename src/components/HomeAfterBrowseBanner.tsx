@@ -10,7 +10,7 @@ export function HomeAfterBrowseBanner({ banner }: { banner: HomeAfterBrowseBanne
 
   const imageBlock = (
     <span
-      className="block aspect-[2.2/1] w-full bg-cover bg-center transition duration-300 ease-smooth-out motion-reduce:transition-none sm:aspect-[2.8/1] md:aspect-[3.2/1] lg:aspect-[3.5/1] group-hover:scale-[1.02] motion-reduce:group-hover:scale-100"
+      className="block h-[14rem] w-full bg-cover bg-center bg-no-repeat transition duration-300 ease-smooth-out motion-reduce:transition-none min-[400px]:h-[15.5rem] sm:h-auto sm:aspect-[2.6/1] md:aspect-[3.1/1] lg:aspect-[3.5/1] group-hover:scale-[1.02] motion-reduce:group-hover:scale-100"
       style={{ backgroundImage: `url(${JSON.stringify(imageUrl).slice(1, -1)})` }}
       role="img"
       aria-label={alt}

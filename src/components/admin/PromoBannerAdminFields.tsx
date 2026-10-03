@@ -1,3 +1,4 @@
+import { PromoBannerOpacitySliders } from "@/components/admin/PromoBannerOpacitySliders";
 import { ADMIN_IMAGE_FILE_INPUT_CLASS, ADMIN_IMAGE_UPLOAD_HINT } from "@/lib/admin-media-upload";
 import type { HomeReviewsBannerRow } from "@/lib/store-types";
 
@@ -22,6 +23,11 @@ export function PromoBannerAdminFields({ row }: { row: HomeReviewsBannerRow }) {
         />
         <p className="mt-1 text-[11px] text-slate-500">{ADMIN_IMAGE_UPLOAD_HINT}</p>
       </div>
+
+      <PromoBannerOpacitySliders
+        imageOpacity={row.image_opacity ?? 100}
+        overlayOpacity={row.overlay_opacity ?? 70}
+      />
 
       <div>
         <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">Heading</label>

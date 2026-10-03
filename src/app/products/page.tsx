@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
-import type { Category, ProductListing } from "@/lib/store-types";
+import type { Category } from "@/lib/store-types";
 import { PRICE_FILTER_MAX_PKR } from "@/lib/money";
 import { ProductGridCard } from "@/components/ProductGridCard";
 import { ProductsCatalogToolbar } from "@/components/ProductsCatalogToolbar";
@@ -33,9 +33,10 @@ export default async function ProductsPage({
 
   const PAGE_SIZE = 12;
   const pageRaw = typeof sp.page === "string" ? Number.parseInt(sp.page, 10) : NaN;
-  const page = Number.isFinite(pageRaw) && pageRaw > 0 ? pageRaw : 1;
-  const rangeFrom = (page - 1) * PAGE_SIZE;
-  const rangeTo = rangeFrom + PAGE_SIZE - 1;
+  /** How many batches to show (cumulative “See more”). */
+  const batches = Number.isFinite(pageRaw) && pageRaw > 0 ? pageRaw : 1;
+  const rangeFrom = 0;
+  const rangeTo = batches * PAGE_SIZE - 1;
 
   const supabase = createSupabaseAdminClient();
   const [{ data: categories }, listingsPack] = await Promise.all([
@@ -72,7 +73,18 @@ export default async function ProductsPage({
         return applySort(applyPrice(started())).range(rangeFrom, rangeTo);
       }
 
-      let scoped = started().eq("category_id", cat.id);
+      // Include products linked via product_categories OR legacy primary category_id
+      const { data: linked } = await supabase
+        .from("product_categories")
+        .select("product_id")
+        .eq("category_id", cat.id);
+      const linkedIds = ((linked ?? []) as { product_id: string }[]).map((r) => r.product_id);
+      const { data: primary } = await supabase.from("products").select("id").eq("category_id", cat.id);
+      const primaryIds = ((primary ?? []) as { id: string }[]).map((r) => r.id);
+      const productIds = [...new Set([...linkedIds, ...primaryIds])];
+
+      let scoped =
+        productIds.length > 0 ? started().in("id", productIds) : started().eq("category_id", cat.id);
       scoped = applyPrice(scoped);
       if (q) scoped = scoped.or(`name.ilike.%${q}%,description.ilike.%${q}%`);
       return applySort(scoped).range(rangeFrom, rangeTo);
@@ -82,12 +94,11 @@ export default async function ProductsPage({
   const listings = listingsPack.error ? [] : (listingsPack.data ?? []);
   const totalCount = listingsPack.error ? 0 : (listingsPack.count ?? listings.length);
   const listingsError = listingsPack.error;
-  const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
   const hasLiveProducts = listings.length > 0;
-  const showingFrom = totalCount === 0 ? 0 : rangeFrom + 1;
-  const showingTo = Math.min(rangeTo + 1, totalCount);
+  const hasMore = hasLiveProducts && listings.length < totalCount;
+  const showingTo = listings.length;
 
-  function pageHref(next: number) {
+  function seeMoreHref() {
     const u = new URLSearchParams();
     if (category) u.set("category", category);
     if (q) u.set("q", q);
@@ -95,7 +106,7 @@ export default async function ProductsPage({
     if (typeof max === "number") u.set("max", String(max));
     if (sort && sort !== "name") u.set("sort", sort);
     if (featured) u.set("featured", "1");
-    u.set("page", String(Math.max(1, Math.min(next, totalPages))));
+    u.set("page", String(batches + 1));
     return `/products?${u.toString()}`;
   }
 
@@ -122,7 +133,7 @@ export default async function ProductsPage({
               <>
                 {" "}
                 <span className="text-slate-500">
-                  · {showingFrom}–{showingTo} of {totalCount} products
+                  · Showing {showingTo} of {totalCount} products
                 </span>
               </>
             ) : null}
@@ -202,32 +213,15 @@ export default async function ProductsPage({
         </div>
       </div>
 
-      {hasLiveProducts && totalPages > 1 ? (
-        <nav className="mt-8 flex flex-col items-center gap-4 sm:flex-row sm:justify-center" aria-label="Catalog pagination">
-          <div className="flex flex-wrap items-center justify-center gap-2">
-            <Link
-              href={pageHref(page - 1)}
-              aria-disabled={page <= 1}
-              className={`inline-flex min-w-[8rem] items-center justify-center rounded-full border px-5 py-2.5 text-sm font-semibold ${
-                page <= 1 ? "pointer-events-none border-slate-100 text-slate-300" : "border-slate-200 text-slate-800 hover:bg-slate-50"
-              }`}
-            >
-              Previous
-            </Link>
-            <Link
-              href={pageHref(page + 1)}
-              aria-disabled={page >= totalPages}
-              className={`inline-flex min-w-[8rem] items-center justify-center rounded-full border px-5 py-2.5 text-sm font-semibold ${
-                page >= totalPages ? "pointer-events-none border-slate-100 text-slate-300" : "border-slate-200 text-slate-800 hover:bg-slate-50"
-              }`}
-            >
-              Next
-            </Link>
-          </div>
-          <p className="text-sm text-slate-600">
-            Page <span className="font-semibold text-slate-900">{page}</span> / {totalPages}
-          </p>
-        </nav>
+      {hasMore ? (
+        <div className="mt-8 flex justify-center">
+          <Link
+            href={seeMoreHref()}
+            className="inline-flex min-w-[10rem] items-center justify-center rounded-full bg-blue-600 px-8 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700"
+          >
+            See more
+          </Link>
+        </div>
       ) : null}
     </main>
   );

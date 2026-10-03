@@ -58,8 +58,16 @@ export default async function AdminBrowseShowcasePage({
   const already = new Set(rows.map((r) => r.product_id));
   const selectedCategoryId = showcase.category_id ?? "";
 
+  const { data: showcaseCatLinks } = selectedCategoryId
+    ? await supabase.from("product_categories").select("product_id").eq("category_id", selectedCategoryId)
+    : { data: [] as { product_id: string }[] };
+  const multiCatIds = new Set(((showcaseCatLinks ?? []) as { product_id: string }[]).map((r) => r.product_id));
+
   const productsInCategory = selectedCategoryId
-    ? allProducts.filter((p) => p.category_id === selectedCategoryId && !already.has(p.id))
+    ? allProducts.filter(
+        (p) =>
+          !already.has(p.id) && (p.category_id === selectedCategoryId || multiCatIds.has(p.id)),
+      )
     : [];
 
   return (

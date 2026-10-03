@@ -53,7 +53,7 @@ const SORT_OPTIONS: { value: string; label: string }[] = [
 ];
 
 const chipBase =
-  "shrink-0 rounded-full border px-3.5 py-2 text-sm font-semibold shadow-sm outline-none ring-offset-2 transition duration-200 ease-out focus-visible:ring-2 focus-visible:ring-blue-500/40";
+  "shrink-0 rounded-full border px-2.5 py-1 text-[11px] font-semibold shadow-sm outline-none ring-offset-2 transition duration-200 ease-out focus-visible:ring-2 focus-visible:ring-blue-500/40 sm:px-3.5 sm:py-2 sm:text-sm";
 
 const chipInactive =
   "border-slate-200/90 bg-white text-slate-700 hover:border-blue-200/80 hover:bg-gradient-to-b hover:from-blue-50/90 hover:to-white hover:text-blue-900 hover:shadow-md active:scale-[0.98]";
@@ -61,21 +61,31 @@ const chipInactive =
 const chipActive =
   "border-blue-600 bg-gradient-to-b from-blue-600 to-blue-700 text-white shadow-[0_4px_12px_-2px_rgba(37,99,235,0.4),inset_0_1px_0_0_rgba(255,255,255,0.12)] hover:from-blue-700 hover:to-blue-800";
 
+const MOBILE_PRICE_LABELS: Record<string, string> = {
+  any: "Any",
+  under5k: "< ₨5k",
+  "5-15k": "₨5–15k",
+  "15-35k": "₨15–35k",
+  "35k-plus": "₨35k+",
+};
+
 export function ProductsCatalogToolbar(props: ToolbarProps) {
   const { category, q, min, max, sort, featured } = props;
 
   const base = { category, q, min, max, featured };
 
   return (
-    <div className="mt-5 rounded-2xl border border-slate-200/85 bg-gradient-to-br from-slate-50/90 via-white to-white p-5 shadow-[0_4px_28px_-8px_rgba(15,23,42,0.12),0_2px_8px_-4px_rgba(15,23,42,0.06)] ring-1 ring-slate-900/[0.04]">
-      <div className="flex flex-col gap-5 md:flex-row md:items-stretch md:justify-between md:gap-8">
+    <div className="mt-4 rounded-xl border border-slate-200/85 bg-gradient-to-br from-slate-50/90 via-white to-white p-3 shadow-[0_4px_28px_-8px_rgba(15,23,42,0.12),0_2px_8px_-4px_rgba(15,23,42,0.06)] ring-1 ring-slate-900/[0.04] sm:mt-5 sm:rounded-2xl sm:p-5">
+      <div className="flex flex-col gap-3 sm:gap-5 md:flex-row md:items-stretch md:justify-between md:gap-8">
         <div className="min-w-0 flex-1">
-          <div className="flex items-baseline gap-2">
-            <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-400">Price bands</span>
-            <span className="text-xs text-slate-400">·</span>
-            <span className="text-xs font-medium text-slate-500">Quick picks</span>
+          <div className="flex items-baseline gap-1.5 sm:gap-2">
+            <span className="text-[9px] font-semibold uppercase tracking-[0.14em] text-slate-400 sm:text-[10px] sm:tracking-[0.16em]">
+              Price bands
+            </span>
+            <span className="hidden text-xs text-slate-400 sm:inline">·</span>
+            <span className="hidden text-xs font-medium text-slate-500 sm:inline">Quick picks</span>
           </div>
-          <div className="mt-3 flex gap-2 overflow-x-auto pb-1.5 pt-0.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          <div className="-mx-0.5 mt-2 flex gap-1.5 overflow-x-auto px-0.5 pb-1 pt-0.5 [-ms-overflow-style:none] [scrollbar-width:none] sm:mt-3 sm:gap-2 sm:pb-1.5 [&::-webkit-scrollbar]:hidden">
             {PRICE_BANDS.map((band) => {
               const active = bandIsActive(band, min, max);
               const href = buildProductsListingHref({
@@ -87,23 +97,28 @@ export function ProductsCatalogToolbar(props: ToolbarProps) {
                 max: band.max,
                 page: 1,
               });
+              const short = MOBILE_PRICE_LABELS[band.id] ?? band.label;
               return (
                 <Link
                   key={band.id}
                   href={href}
                   className={`${chipBase} ${active ? chipActive : chipInactive}`}
+                  title={band.label}
                 >
-                  {band.label}
+                  <span className="sm:hidden">{short}</span>
+                  <span className="hidden sm:inline">{band.label}</span>
                 </Link>
               );
             })}
           </div>
         </div>
 
-        <div className="flex w-full shrink-0 flex-col items-stretch border-t border-slate-200/80 pt-5 md:w-auto md:border-l md:border-t-0 md:pl-8 md:pt-0">
-          <div className="flex flex-col items-end md:min-w-[14rem]">
-            <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-400">Sort order</span>
-            <div className="mt-3 flex flex-wrap justify-end gap-2 rounded-2xl border border-slate-200/60 bg-slate-50/40 p-2 ring-1 ring-slate-900/[0.03]">
+        <div className="flex w-full shrink-0 flex-col items-stretch border-t border-slate-200/80 pt-3 sm:pt-5 md:w-auto md:border-l md:border-t-0 md:pl-8 md:pt-0">
+          <div className="flex flex-col items-stretch sm:items-end md:min-w-[14rem]">
+            <span className="text-[9px] font-semibold uppercase tracking-[0.14em] text-slate-400 sm:text-[10px] sm:tracking-[0.16em]">
+              Sort order
+            </span>
+            <div className="mt-2 flex flex-wrap gap-1.5 rounded-xl border border-slate-200/60 bg-slate-50/40 p-1.5 ring-1 ring-slate-900/[0.03] sm:mt-3 sm:justify-end sm:gap-2 sm:rounded-2xl sm:p-2">
               {SORT_OPTIONS.map((opt) => {
                 const active = opt.value === "name" ? sort === "name" : sort === opt.value;
                 const href = buildProductsListingHref({

@@ -17,6 +17,7 @@ export default async function AdminAboutContentPage({
 }) {
   const sp = await searchParams;
   const error = typeof sp.error === "string" ? sp.error : undefined;
+  const saved = sp.saved === "1";
   const storefront = await getStorefrontPayload();
   const chipsDefault = (storefront.aboutChips ?? []).join("\n");
 
@@ -42,6 +43,11 @@ export default async function AdminAboutContentPage({
         {error ? (
           <div className="mt-5 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-800">
             Could not save ({error.replace(/-/g, " ")}).
+          </div>
+        ) : null}
+        {saved ? (
+          <div className="mt-5 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-900">
+            Saved — photo previews above show the stored images.
           </div>
         ) : null}
 

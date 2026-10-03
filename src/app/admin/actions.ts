@@ -304,6 +304,58 @@ function parseNonNegInt(raw: string, fallback: number): number {
   return n;
 }
 
+/** Admin-set storefront rating (0–5 stars + review count). Empty → 0. */
+function parseProductRatingFromForm(formData: FormData): { rating_avg: number; rating_count: number } | { err: string } {
+  const avgRaw = String(formData.get("rating_avg") ?? "").trim();
+  const countRaw = String(formData.get("rating_count") ?? "").trim();
+  const rating_avg = avgRaw.length === 0 ? 0 : Number.parseFloat(avgRaw);
+  const rating_count = countRaw.length === 0 ? 0 : Number.parseInt(countRaw, 10);
+  if (!Number.isFinite(rating_avg) || rating_avg < 0 || rating_avg > 5) {
+    return { err: "rating" };
+  }
+  if (!Number.isFinite(rating_count) || rating_count < 0) {
+    return { err: "rating-count" };
+  }
+  return {
+    rating_avg: Math.round(rating_avg * 10) / 10,
+    rating_count: Math.floor(rating_count),
+  };
+}
+
+/** Multi-select checkboxes `category_ids` (+ optional legacy single `category_id`). */
+function parseCategoryIdsFromForm(formData: FormData): string[] {
+  const fromMulti = formData
+    .getAll("category_ids")
+    .map((v) => String(v ?? "").trim())
+    .filter(Boolean);
+  const legacy = String(formData.get("category_id") ?? "").trim();
+  const ids = fromMulti.length ? fromMulti : legacy ? [legacy] : [];
+  return [...new Set(ids)];
+}
+
+async function syncProductCategories(
+  supabase: ReturnType<typeof createSupabaseAdminClient>,
+  productId: string,
+  categoryIds: string[],
+): Promise<string | null> {
+  const primary = categoryIds[0] ?? null;
+  await supabase.from("product_categories").delete().eq("product_id", productId);
+  if (categoryIds.length) {
+    const { error } = await supabase.from("product_categories").insert(
+      categoryIds.map((category_id, sort_order) => ({
+        product_id: productId,
+        category_id,
+        sort_order,
+      })),
+    );
+    if (error && !error.message.toLowerCase().includes("does not exist")) {
+      // Table missing until migration runs — keep products.category_id only.
+      console.warn("product_categories sync:", error.message);
+    }
+  }
+  return primary;
+}
+
 const MAX_GALLERY_FILES_PER_SUBMIT = 12;
 
 async function renumberProductImageSortOrders(
@@ -450,8 +502,8 @@ export async function createProduct(formData: FormData) {
 
   const catchy_headline = String(formData.get("catchy_headline") ?? "").trim();
   const description = String(formData.get("description") ?? "").trim();
-  const categoryRaw = String(formData.get("category_id") ?? "").trim();
-  const category_id = categoryRaw || null;
+  const categoryIds = parseCategoryIdsFromForm(formData);
+  const category_id = categoryIds[0] ?? null;
   const is_active = formData.get("is_active") === "on";
 
   const skuManual = String(formData.get("sku") ?? "").trim();
@@ -470,6 +522,9 @@ export async function createProduct(formData: FormData) {
   if (!Number.isFinite(priceRaw) || priceRaw < 0)
     redirect("/admin/products/new?error=price");
   if (!compareOk) redirect("/admin/products/new?error=compare");
+
+  const rating = parseProductRatingFromForm(formData);
+  if ("err" in rating) redirect(`/admin/products/new?error=${rating.err}`);
 
   const imageRaw = String(formData.get("primary_image_url") ?? "");
   const galleryFiles = formData
@@ -494,7 +549,17 @@ export async function createProduct(formData: FormData) {
 
   const { data: inserted, error: pErr } = await supabase
     .from("products")
-    .insert({ name, slug, catchy_headline, description, category_id, brand_id, is_active })
+    .insert({
+      name,
+      slug,
+      catchy_headline,
+      description,
+      category_id,
+      brand_id,
+      is_active,
+      rating_avg: rating.rating_avg,
+      rating_count: rating.rating_count,
+    })
     .select("id")
     .single();
 
@@ -505,6 +570,7 @@ export async function createProduct(formData: FormData) {
   }
 
   const productId = inserted.id;
+  await syncProductCategories(supabase, productId, categoryIds);
 
   const { data: vRow, error: vErr } = await supabase
     .from("product_variants")
@@ -779,6 +845,204 @@ export async function bulkCreateProducts(rows: import("@/lib/admin-bulk-products
   return { created, errors };
 }
 
+export async function bulkImportProducts(formData: FormData) {
+  await assertAdminAuthenticated();
+
+  const file = formData.get("spreadsheet_file");
+  if (!(file instanceof File) || file.size === 0) {
+    redirect("/admin/products/bulk?error=no-file");
+  }
+  if (file.size > 2 * 1024 * 1024) {
+    redirect("/admin/products/bulk?error=file-too-large");
+  }
+
+  const lowerName = file.name.toLowerCase();
+  const extOk = lowerName.endsWith(".csv") || lowerName.endsWith(".tsv");
+  if (!extOk) {
+    redirect("/admin/products/bulk?error=bad-format");
+  }
+
+  const { parseProductBulkSpreadsheet, defaultVariantSkuFromSlug, slugifyCatalogSlug } = await import(
+    "@/lib/product-bulk-import"
+  );
+  const {
+    parseSpecListsJson,
+    specListsToOptions,
+    variantTitleFromSpecLists,
+  } = await import("@/lib/product-spec-lists");
+
+  const text = await file.text();
+  const parsed = parseProductBulkSpreadsheet(text, file.name);
+  if (parsed.errors.length && parsed.rows.length === 0) {
+    const msg = parsed.errors
+      .slice(0, 5)
+      .map((e) => (e.row ? `Row ${e.row}: ${e.message}` : e.message))
+      .join(" · ");
+    redirect(`/admin/products/bulk?error=${encodeURIComponent(msg)}`);
+  }
+
+  const supabase = createSupabaseAdminClient();
+  const [{ data: categories }, { data: existingProducts }] = await Promise.all([
+    supabase.from("categories").select("id,name,slug"),
+    supabase.from("products").select("slug"),
+  ]);
+
+  const categoryBySlug = new Map<string, string>();
+  const categoryByName = new Map<string, string>();
+  for (const c of (categories ?? []) as { id: string; name: string; slug: string }[]) {
+    categoryBySlug.set(c.slug.toLowerCase(), c.id);
+    categoryByName.set(c.name.trim().toLowerCase(), c.id);
+    categoryByName.set(slugifyCatalogSlug(c.name, c.slug).toLowerCase(), c.id);
+  }
+
+  const existingSlugs = new Set(
+    ((existingProducts ?? []) as { slug: string }[]).map((p) => p.slug.toLowerCase()),
+  );
+  const batchSlugs = new Set<string>();
+
+  let imported = 0;
+  const rowErrors = [...parsed.errors];
+
+  for (const row of parsed.rows) {
+    const slugKey = row.slug.toLowerCase();
+    if (existingSlugs.has(slugKey)) {
+      rowErrors.push({ row: row.rowNumber, message: `Slug "${row.slug}" already exists in catalog.` });
+      continue;
+    }
+    if (batchSlugs.has(slugKey)) {
+      rowErrors.push({ row: row.rowNumber, message: `Duplicate slug "${row.slug}" in this file.` });
+      continue;
+    }
+
+    const categoryIds: string[] = [];
+    if (row.category.trim()) {
+      const parts = row.category.split(/[|;]/).map((s) => s.trim()).filter(Boolean);
+      let missing = "";
+      for (const part of parts) {
+        const catKey = part.toLowerCase();
+        const resolved =
+          categoryBySlug.get(slugifyCatalogSlug(part, part)) ??
+          categoryByName.get(catKey) ??
+          categoryBySlug.get(catKey) ??
+          null;
+        if (!resolved) {
+          missing = part;
+          break;
+        }
+        if (!categoryIds.includes(resolved)) categoryIds.push(resolved);
+      }
+      if (missing) {
+        rowErrors.push({
+          row: row.rowNumber,
+          message: `Category "${missing}" not found — create it in Admin → Categories first.`,
+        });
+        continue;
+      }
+    }
+    const category_id = categoryIds[0] ?? null;
+
+    let brand_id: string | null = null;
+    if (row.brand.trim()) {
+      brand_id = await resolveOrCreateBrandId(supabase, row.brand);
+      if (!brand_id) {
+        rowErrors.push({ row: row.rowNumber, message: `Could not save brand "${row.brand}".` });
+        continue;
+      }
+    }
+
+    const sku = row.sku.trim().length >= 2 ? row.sku.trim() : defaultVariantSkuFromSlug(row.slug);
+    const specLists = parseSpecListsJson(row.specListsJson);
+    const variantTitle =
+      row.variantTitle.trim() || variantTitleFromSpecLists(specLists, row.name);
+
+    const { data: inserted, error: pErr } = await supabase
+      .from("products")
+      .insert({
+        name: row.name,
+        slug: row.slug,
+        catchy_headline: row.catchyHeadline,
+        description: row.description,
+        category_id,
+        brand_id,
+        is_active: row.isActive,
+      })
+      .select("id")
+      .single();
+
+    if (pErr || !inserted?.id) {
+      rowErrors.push({
+        row: row.rowNumber,
+        message: pErr?.message ?? "Could not create product.",
+      });
+      continue;
+    }
+
+    const productId = inserted.id;
+    await syncProductCategories(supabase, productId, categoryIds);
+
+    const { data: vRow, error: vErr } = await supabase
+      .from("product_variants")
+      .insert({
+        product_id: productId,
+        sku,
+        title: variantTitle,
+        options: specListsToOptions(specLists),
+        price_pkr: row.pricePkr,
+        compare_at_price_pkr: row.compareAtPricePkr,
+        is_active: true,
+      })
+      .select("id")
+      .single();
+
+    if (vErr || !vRow?.id) {
+      await supabase.from("products").delete().eq("id", productId);
+      rowErrors.push({
+        row: row.rowNumber,
+        message: vErr?.message ?? "Could not create variant.",
+      });
+      continue;
+    }
+
+    const { error: invErr } = await supabase.from("inventory").insert({
+      variant_id: vRow.id,
+      qty_available: row.stockQty,
+    });
+    if (invErr) {
+      await supabase.from("products").delete().eq("id", productId);
+      rowErrors.push({ row: row.rowNumber, message: invErr.message });
+      continue;
+    }
+
+    const validImageUrls = row.imageUrls
+      .map((u) => normalizeHttpsOrSlashImage(u))
+      .filter((u): u is string => Boolean(u));
+    for (let i = 0; i < validImageUrls.length; i++) {
+      await supabase.from("product_images").insert({
+        product_id: productId,
+        url: validImageUrls[i],
+        alt: row.name.slice(0, 200),
+        sort_order: i,
+      });
+    }
+
+    batchSlugs.add(slugKey);
+    existingSlugs.add(slugKey);
+    imported++;
+  }
+
+  const failed = rowErrors.length;
+  const detail = rowErrors
+    .slice(0, 8)
+    .map((e) => (e.row ? `Row ${e.row}: ${e.message}` : e.message))
+    .join(" | ");
+
+  const params = new URLSearchParams();
+  params.set("imported", String(imported));
+  if (failed) params.set("failed", String(failed));
+  if (detail) params.set("detail", detail.slice(0, 900));
+  redirect(`/admin/products/bulk?${params.toString()}`);
+}
+
 export async function updateProduct(formData: FormData) {
   await assertAdminAuthenticated();
   const id = String(formData.get("id") ?? "").trim();
@@ -792,9 +1056,11 @@ export async function updateProduct(formData: FormData) {
 
   const catchy_headline = String(formData.get("catchy_headline") ?? "").trim();
   const description = String(formData.get("description") ?? "").trim();
-  const categoryRaw = String(formData.get("category_id") ?? "").trim();
-  const category_id = categoryRaw || null;
+  const categoryIds = parseCategoryIdsFromForm(formData);
+  const category_id = categoryIds[0] ?? null;
   const is_active = formData.get("is_active") === "on";
+  const rating = parseProductRatingFromForm(formData);
+  if ("err" in rating) redirect(`/admin/products/${id}/edit?error=${rating.err}`);
 
   const supabase = createSupabaseAdminClient();
 
@@ -807,13 +1073,25 @@ export async function updateProduct(formData: FormData) {
 
   const { error } = await supabase
     .from("products")
-    .update({ name, slug, catchy_headline, description, category_id, brand_id, is_active })
+    .update({
+      name,
+      slug,
+      catchy_headline,
+      description,
+      category_id,
+      brand_id,
+      is_active,
+      rating_avg: rating.rating_avg,
+      rating_count: rating.rating_count,
+    })
     .eq("id", id);
 
   if (error)
     redirect(
       `/admin/products/${id}/edit?error=${encodeURIComponent(error.message)}`,
     );
+
+  await syncProductCategories(supabase, id, categoryIds);
 
   redirect(`/admin/products/${id}/edit?notice=saved`);
 }
@@ -1008,15 +1286,14 @@ export async function updateOrderStatus(formData: FormData) {
 }
 
 function normalizeHeroImageUrl(raw: string) {
-  const u = raw.trim();
-  if (!/^https:\/\//i.test(u)) return null;
-  return u;
+  return normalizeHttpsOrSlashImage(raw);
 }
 
 async function heroSlideImageFromForm(
   supabase: ReturnType<typeof createSupabaseAdminClient>,
   formData: FormData,
   pathPrefix: string,
+  existingUrl = "",
 ): Promise<{ ok: string } | { err: string }> {
   const file = formData.get("image_file");
   if (file instanceof File && file.size > 0) {
@@ -1024,9 +1301,15 @@ async function heroSlideImageFromForm(
     if ("error" in up) return { err: up.error };
     return { ok: up.publicUrl };
   }
-  const url = normalizeHeroImageUrl(String(formData.get("url") ?? ""));
-  if (!url) return { err: "invalid-url" };
-  return { ok: url };
+  const raw = String(formData.get("url") ?? "").trim();
+  if (raw) {
+    const url = normalizeHeroImageUrl(raw);
+    if (url === null) return { err: "invalid-url" };
+    if (!url) return { err: "invalid-url" };
+    return { ok: url };
+  }
+  if (existingUrl.trim()) return { ok: existingUrl.trim() };
+  return { err: "invalid-url" };
 }
 
 export async function createHeroSlide(formData: FormData) {
@@ -1071,7 +1354,9 @@ export async function updateHeroSlide(formData: FormData) {
   if (!id) redirect("/admin/hero?error=invalid-url");
 
   const supabase = createSupabaseAdminClient();
-  const img = await heroSlideImageFromForm(supabase, formData, `hero/${id}`);
+  const { data: existingRow } = await supabase.from("hero_slides").select("url").eq("id", id).maybeSingle();
+  const existingUrl = String(existingRow?.url ?? "");
+  const img = await heroSlideImageFromForm(supabase, formData, `hero/${id}`, existingUrl);
   if ("err" in img) {
     redirect(
       `/admin/hero?error=${img.err === "invalid-url" ? "invalid-url" : encodeURIComponent(img.err)}`,
@@ -1148,6 +1433,13 @@ export async function updateHomeReviewsBanner(formData: FormData) {
     redirect("/admin/reviews-banner?error=invalid-button-href");
 
   const is_active = formData.get("is_active") === "on";
+  const clampPct = (raw: string, fallback: number) => {
+    const n = Number.parseInt(raw, 10);
+    if (!Number.isFinite(n)) return fallback;
+    return Math.min(100, Math.max(0, Math.round(n)));
+  };
+  const image_opacity = clampPct(String(formData.get("image_opacity") ?? "100"), 100);
+  const overlay_opacity = clampPct(String(formData.get("overlay_opacity") ?? "70"), 70);
 
   const { error } = await supabase.from("home_reviews_banner").upsert(
     {
@@ -1157,6 +1449,8 @@ export async function updateHomeReviewsBanner(formData: FormData) {
       paragraph,
       button_label,
       button_href,
+      image_opacity,
+      overlay_opacity,
       is_active,
       updated_at: new Date().toISOString(),
     },
@@ -1423,7 +1717,7 @@ async function saveStorefrontMerged(
     .from("storefront_settings")
     .upsert({ id: 1, data: merged as never, updated_at: new Date().toISOString() }, { onConflict: "id" });
   if (error) redirect(`${redirectTo}?error=${encodeURIComponent(error.message)}`);
-  redirect(redirectTo);
+  redirect(`${redirectTo}?saved=1`);
 }
 
 function parseTestimonialsFromForm(formData: FormData, pick: (k: string) => string) {

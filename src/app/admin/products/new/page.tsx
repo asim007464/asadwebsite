@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { createProduct } from "@/app/admin/actions";
+import { AdminCategoryMultiSelect } from "@/components/admin/AdminCategoryMultiSelect";
 import { ADMIN_IMAGE_FILE_INPUT_CLASS, ADMIN_IMAGE_UPLOAD_HINT } from "@/lib/admin-media-upload";
 import { AdminSpecListsField } from "@/components/admin/AdminSpecListsField";
 import { AdminStockQtyField } from "@/components/admin/AdminStockQtyField";
@@ -15,6 +16,8 @@ function errMsg(code: string) {
   if (code === "image") return "Image URL must be empty, https://, or a path starting with /.";
   if (code === "gallery-too-many") return "You can upload at most 12 images at once.";
   if (code === "brand") return "Could not save that brand. Try a shorter name or try again.";
+  if (code === "rating") return "Rating must be a number from 0 to 5 (e.g. 4.3).";
+  if (code === "rating-count") return "Rating count must be a whole number ≥ 0.";
   return code.length < 180 ? code : "Something went wrong.";
 }
 
@@ -47,9 +50,14 @@ export default async function AdminNewProductPage({
               You can add more variants and tweak images after saving. At least one variant with price and stock is required.
             </p>
           </div>
-          <Link href="/admin/products" className="text-sm font-semibold text-blue-700 hover:text-blue-800">
-            ← All products
-          </Link>
+          <div className="flex flex-col gap-2 sm:items-end">
+            <Link href="/admin/products" className="text-sm font-semibold text-blue-700 hover:text-blue-800">
+              ← All products
+            </Link>
+            <Link href="/admin/products/bulk" className="text-sm font-semibold text-slate-600 hover:text-slate-900">
+              Bulk add from sheet →
+            </Link>
+          </div>
         </div>
 
         {error ? (
@@ -83,16 +91,8 @@ export default async function AdminNewProductPage({
               className={`${input} min-h-[6rem] resize-y py-3`}
             />
           </div>
-          <div>
-            <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">Category</label>
-            <select name="category_id" className={input}>
-              <option value="">— None —</option>
-              {cats.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.name}
-                </option>
-              ))}
-            </select>
+          <div className="sm:col-span-2">
+            <AdminCategoryMultiSelect categories={cats} />
           </div>
           <div>
             <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">Brand (optional)</label>
@@ -108,6 +108,33 @@ export default async function AdminNewProductPage({
               <input type="checkbox" name="is_active" defaultChecked className="h-4 w-4 rounded border-slate-300" />
               Visible on storefront (active)
             </label>
+          </div>
+          <div>
+            <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">Rating (0–5)</label>
+            <input
+              name="rating_avg"
+              type="number"
+              min={0}
+              max={5}
+              step={0.1}
+              defaultValue={0}
+              placeholder="4.3"
+              className={input}
+            />
+            <p className="mt-1 text-[11px] text-slate-500">Shown as stars under the product name. Leave 0 to hide.</p>
+          </div>
+          <div>
+            <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">Rating count</label>
+            <input
+              name="rating_count"
+              type="number"
+              min={0}
+              step={1}
+              defaultValue={0}
+              placeholder="1673"
+              className={input}
+            />
+            <p className="mt-1 text-[11px] text-slate-500">Number shown in parentheses, e.g. (1,673).</p>
           </div>
 
           <div className="sm:col-span-2 border-t border-slate-100 pt-6">

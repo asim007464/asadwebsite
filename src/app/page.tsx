@@ -71,7 +71,7 @@ async function HomeServer() {
     supabase
       .from("home_reviews_banner")
       .select(
-        "id,background_image_url,heading,paragraph,button_label,button_href,is_active",
+        "id,background_image_url,heading,paragraph,button_label,button_href,image_opacity,overlay_opacity,is_active",
       )
       .in("id", [
         HOME_PROMO_BANNER_AFTER_HERO_ID,
@@ -151,12 +151,12 @@ async function HomeServer() {
 
   return (
     <>
-      {/* Image-only hero carousel (slides: /admin/hero). */}
-      <section className="relative h-[38vh] min-h-[14rem] w-full border-b border-slate-200 sm:h-[48vh] sm:min-h-[16rem] lg:h-[55vh]">
+      {/* Image-only hero carousel (slides: /admin/hero). Taller on phones so slides read clearly. */}
+      <section className="relative h-[52vh] min-h-[20rem] w-full max-h-[32rem] border-b border-slate-200 sm:h-[50vh] sm:min-h-[22rem] sm:max-h-none md:h-[55vh] lg:h-[60vh] lg:min-h-[24rem]">
         <HeroCarouselProvider slides={heroBackdropSlides}>
-          <HeroCarouselImagePanel variant="banner" className="h-full" />
+          <HeroCarouselImagePanel variant="banner" className="h-full w-full" />
           <HeroCarouselArrows />
-          <div className="pointer-events-none absolute inset-x-0 bottom-4 z-10 flex justify-center sm:bottom-6">
+          <div className="pointer-events-none absolute inset-x-0 bottom-3 z-10 flex justify-center sm:bottom-6">
             <div className="pointer-events-auto">
               <HeroCarouselDots tone="onImage" />
             </div>

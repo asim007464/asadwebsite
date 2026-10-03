@@ -3,34 +3,43 @@
 import Image, { type ImageProps } from "next/image";
 import { startTransition, useCallback, useState } from "react";
 
-type SafeRemoteImageProps = Omit<ImageProps, "onError" | "src"> & {
+type SafeRemoteImageProps = Omit<ImageProps, "onError" | "onLoad" | "src"> & {
   src: string | null | undefined;
 };
 
 /**
  * Uses next/image when allowed; if loading fails (unknown host, optimizer error), falls back to <img>.
+ * Shows a pulse skeleton while the image loads (fill layouts).
  */
 export function SafeRemoteImage({ src, alt, className, ...rest }: SafeRemoteImageProps) {
   const [fallback, setFallback] = useState(false);
+  const [loaded, setLoaded] = useState(false);
+  const isFill = "fill" in rest && Boolean(rest.fill);
 
   const handleError = useCallback(() => {
     if (typeof window === "undefined") return;
-    startTransition(() => setFallback(true));
+    startTransition(() => {
+      setFallback(true);
+      setLoaded(true);
+    });
+  }, []);
+
+  const handleLoad = useCallback(() => {
+    startTransition(() => setLoaded(true));
   }, []);
 
   if (!src) return null;
 
   if (fallback) {
-    const imgClass =
-      "fill" in rest && rest.fill
-        ? `absolute inset-0 h-full w-full ${className?.includes("object-") ? "" : "object-cover"} ${className ?? ""}`
-        : className;
+    const imgClass = isFill
+      ? `absolute inset-0 h-full w-full ${className?.includes("object-") ? "" : "object-cover"} ${className ?? ""}`
+      : className;
     return (
       <img
         src={src}
         alt={alt}
-        width={"fill" in rest && rest.fill ? undefined : rest.width}
-        height={"fill" in rest && rest.fill ? undefined : rest.height}
+        width={isFill ? undefined : rest.width}
+        height={isFill ? undefined : rest.height}
         className={imgClass}
         loading={rest.priority ? "eager" : "lazy"}
         decoding="async"
@@ -38,5 +47,23 @@ export function SafeRemoteImage({ src, alt, className, ...rest }: SafeRemoteImag
     );
   }
 
-  return <Image src={src} alt={alt} className={className} onError={handleError} {...rest} unoptimized />;
+  return (
+    <>
+      {isFill && !loaded ? (
+        <div
+          aria-hidden
+          className="absolute inset-0 z-[5] animate-pulse bg-slate-200/80 motion-reduce:animate-none"
+        />
+      ) : null}
+      <Image
+        src={src}
+        alt={alt}
+        className={`${className ?? ""} ${isFill && !loaded ? "opacity-0" : "opacity-100"} transition-opacity duration-300`}
+        onError={handleError}
+        onLoad={handleLoad}
+        {...rest}
+        unoptimized
+      />
+    </>
+  );
 }

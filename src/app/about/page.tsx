@@ -1,5 +1,5 @@
 import Link from "next/link";
-import Image from "next/image";
+import { SafeRemoteImage } from "@/components/SafeRemoteImage";
 import { SITE_SHOP_NAME } from "@/lib/site-brand";
 import { getStorefrontPayload } from "@/lib/storefront";
 
@@ -67,7 +67,7 @@ export default async function AboutPage() {
           <div className="relative mx-auto w-full max-w-xl pb-10 lg:mx-0 lg:max-w-none">
             <div className="relative overflow-hidden rounded-3xl border border-slate-200 bg-slate-100 shadow-inner">
               <div className="relative aspect-[16/11]">
-                <Image
+                <SafeRemoteImage
                   src={ABOUT_STORE_IMAGE}
                   alt={`${SITE_SHOP_NAME} — storefront`}
                   fill
@@ -81,7 +81,7 @@ export default async function AboutPage() {
 
             <div className="absolute -bottom-6 left-2 w-[58%] overflow-hidden rounded-2xl border border-slate-200 bg-slate-100 shadow-xl sm:-bottom-8 sm:-left-4 sm:w-[58%] sm:rounded-3xl">
               <div className="relative aspect-[16/11]">
-                <Image
+                <SafeRemoteImage
                   src={ABOUT_SECOND_IMAGE}
                   alt={`${SITE_SHOP_NAME} — in-store display`}
                   fill

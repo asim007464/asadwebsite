@@ -65,14 +65,9 @@ export function ProductGridCard({
           </p>
         </Link>
         <div className="mt-auto pt-2">
-          <div className="mb-2 flex items-end justify-between gap-2">
-            <p className="text-sm font-bold tabular-nums tracking-tight text-slate-900 sm:text-base">
-              {formatPKR(product.min_price_pkr)}
-            </p>
-            <span className="mb-0.5 hidden text-[10px] font-medium uppercase tracking-wider text-emerald-700 sm:inline">
-              COD
-            </span>
-          </div>
+          <p className="mb-2 text-sm font-bold tabular-nums tracking-tight text-slate-900 sm:text-base">
+            {formatPKR(product.min_price_pkr)}
+          </p>
           <AddToCartButton variant={cartVariant} className={gridAddToCartClass} label="Add to cart" withIcon />
         </div>
       </div>
