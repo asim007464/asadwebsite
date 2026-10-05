@@ -69,6 +69,8 @@ export type HomeReviewsBannerRow = {
   image_opacity: number;
   /** Dark overlay strength 0–100 (admin). */
   overlay_opacity: number;
+  /** Banner strip height in px (admin). */
+  height_px: number;
   is_active: boolean;
 };
 
@@ -92,6 +94,8 @@ export type HomeAfterBrowseBannerRow = {
   image_url: string;
   link_href: string;
   alt_text: string;
+  /** Banner image height in px (admin). */
+  height_px: number;
   is_active: boolean;
 };
 

@@ -1440,6 +1440,10 @@ export async function updateHomeReviewsBanner(formData: FormData) {
   };
   const image_opacity = clampPct(String(formData.get("image_opacity") ?? "100"), 100);
   const overlay_opacity = clampPct(String(formData.get("overlay_opacity") ?? "70"), 70);
+  const heightRaw = Number.parseInt(String(formData.get("height_px") ?? "340"), 10);
+  const height_px = Number.isFinite(heightRaw)
+    ? Math.min(720, Math.max(140, Math.round(heightRaw)))
+    : 340;
 
   const { error } = await supabase.from("home_reviews_banner").upsert(
     {
@@ -1451,6 +1455,7 @@ export async function updateHomeReviewsBanner(formData: FormData) {
       button_href,
       image_opacity,
       overlay_opacity,
+      height_px,
       is_active,
       updated_at: new Date().toISOString(),
     },
@@ -1503,12 +1508,18 @@ export async function updateHomeAfterBrowseBanner(formData: FormData) {
     redirect("/admin/after-browse-banner?error=invalid-image-url");
   }
 
+  const heightRaw = Number.parseInt(String(formData.get("height_px") ?? "240"), 10);
+  const height_px = Number.isFinite(heightRaw)
+    ? Math.min(640, Math.max(120, Math.round(heightRaw)))
+    : 240;
+
   const { error } = await supabase.from("home_after_browse_banner").upsert(
     {
       id: 1,
       image_url,
       link_href,
       alt_text,
+      height_px,
       is_active,
       updated_at: new Date().toISOString(),
     },
@@ -1517,6 +1528,81 @@ export async function updateHomeAfterBrowseBanner(formData: FormData) {
 
   if (error) redirect(`/admin/after-browse-banner?error=${encodeURIComponent(error.message)}`);
   redirect("/admin/after-browse-banner");
+}
+
+/** Hero carousel show/hide + height (stored in storefront_settings). */
+export async function updateHeroCarouselLayout(formData: FormData) {
+  await assertAdminAuthenticated();
+  const redirectTo = String(formData.get("redirect_to") ?? "/admin/hero").trim() || "/admin/hero";
+  const heroEnabled = formData.get("hero_enabled") === "on";
+  const heightRaw = Number.parseInt(String(formData.get("hero_height_px") ?? "420"), 10);
+  const heroHeightPx = Number.isFinite(heightRaw)
+    ? Math.min(720, Math.max(200, Math.round(heightRaw)))
+    : 420;
+
+  const supabase = createSupabaseAdminClient();
+  const base = await loadStorefrontBase(supabase);
+  await saveStorefrontMerged(
+    supabase,
+    { ...base, heroEnabled, heroHeightPx },
+    redirectTo,
+  );
+}
+
+/** Quick save from Admin → Home banners hub (visibility + heights). */
+export async function updateHomeBannersHub(formData: FormData) {
+  await assertAdminAuthenticated();
+  const supabase = createSupabaseAdminClient();
+  const now = new Date().toISOString();
+
+  const heroEnabled = formData.get("hero_enabled") === "on";
+  const heroHeightRaw = Number.parseInt(String(formData.get("hero_height_px") ?? "420"), 10);
+  const heroHeightPx = Number.isFinite(heroHeightRaw)
+    ? Math.min(720, Math.max(200, Math.round(heroHeightRaw)))
+    : 420;
+  const base = await loadStorefrontBase(supabase);
+  const { error: heroErr } = await supabase.from("storefront_settings").upsert(
+    {
+      id: 1,
+      data: { ...base, heroEnabled, heroHeightPx, updated_marker: Date.now() } as never,
+      updated_at: now,
+    },
+    { onConflict: "id" },
+  );
+  if (heroErr) redirect(`/admin/home-banners?error=${encodeURIComponent(heroErr.message)}`);
+
+  for (const bannerId of [1, 2] as const) {
+    const is_active = formData.get(`promo_${bannerId}_active`) === "on";
+    const hRaw = Number.parseInt(String(formData.get(`promo_${bannerId}_height_px`) ?? "340"), 10);
+    const height_px = Number.isFinite(hRaw) ? Math.min(720, Math.max(140, Math.round(hRaw))) : 340;
+    const { error } = await supabase
+      .from("home_reviews_banner")
+      .update({ is_active, height_px, updated_at: now })
+      .eq("id", bannerId);
+    if (error) redirect(`/admin/home-banners?error=${encodeURIComponent(error.message)}`);
+  }
+
+  {
+    const is_active = formData.get("after_browse_active") === "on";
+    const hRaw = Number.parseInt(String(formData.get("after_browse_height_px") ?? "240"), 10);
+    const height_px = Number.isFinite(hRaw) ? Math.min(640, Math.max(120, Math.round(hRaw))) : 240;
+    const { error } = await supabase
+      .from("home_after_browse_banner")
+      .update({ is_active, height_px, updated_at: now })
+      .eq("id", 1);
+    if (error) redirect(`/admin/home-banners?error=${encodeURIComponent(error.message)}`);
+  }
+
+  {
+    const is_active = formData.get("browse_showcase_active") === "on";
+    const { error } = await supabase
+      .from("home_browse_showcase")
+      .update({ is_active, updated_at: now })
+      .eq("id", 1);
+    if (error) redirect(`/admin/home-banners?error=${encodeURIComponent(error.message)}`);
+  }
+
+  redirect("/admin/home-banners?saved=1");
 }
 
 const BROWSE_SHOWCASE_ADMIN = "/admin/browse-showcase";

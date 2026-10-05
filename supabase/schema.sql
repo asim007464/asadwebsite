@@ -114,6 +114,7 @@ create table if not exists public.home_reviews_banner (
   button_href text not null default '/products',
   image_opacity integer not null default 100 check (image_opacity >= 0 and image_opacity <= 100),
   overlay_opacity integer not null default 70 check (overlay_opacity >= 0 and overlay_opacity <= 100),
+  height_px integer not null default 340 check (height_px >= 140 and height_px <= 720),
   is_active boolean not null default false,
   updated_at timestamptz not null default now()
 );
@@ -197,6 +198,7 @@ create table if not exists public.home_after_browse_banner (
   image_url text not null default '',
   link_href text not null default '',
   alt_text text not null default '',
+  height_px integer not null default 240 check (height_px >= 120 and height_px <= 640),
   is_active boolean not null default false,
   updated_at timestamptz not null default now()
 );
@@ -338,6 +340,12 @@ alter table public.home_reviews_banner
 alter table public.home_reviews_banner
   add column if not exists overlay_opacity integer not null default 70
     check (overlay_opacity >= 0 and overlay_opacity <= 100);
+alter table public.home_reviews_banner
+  add column if not exists height_px integer not null default 340
+    check (height_px >= 140 and height_px <= 720);
+alter table public.home_after_browse_banner
+  add column if not exists height_px integer not null default 240
+    check (height_px >= 120 and height_px <= 640);
 
 alter table public.categories add column if not exists thumbnail_url text not null default '';
 alter table public.categories add column if not exists hero_icon_hint text not null default '';

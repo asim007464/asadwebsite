@@ -69,6 +69,7 @@ export function AdminChrome({ owner, shopName, children }: { owner: boolean; sho
               <NavItem href="/admin/home-sections" label="Homepage strips" variant="sidebar" />
               <div className="my-2 border-t border-white/10" />
               <p className="px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-500">Site</p>
+              <NavItem href="/admin/home-banners" label="Home banners" variant="sidebar" />
               <NavItem href="/admin/hero" label="Hero slides" variant="sidebar" />
               <NavItem href="/admin/reviews-banner" label="Promo banners" variant="sidebar" />
               <NavItem href="/admin/browse-showcase" label="Browse grid" variant="sidebar" />
@@ -119,6 +120,7 @@ export function AdminChrome({ owner, shopName, children }: { owner: boolean; sho
                   <NavItem href="/admin/categories" label="Categories" variant="pill" />
                   <NavItem href="/admin/products" label="Products" variant="pill" />
                   <NavItem href="/admin/featured" label="Featured" variant="pill" />
+                  <NavItem href="/admin/home-banners" label="Banners" variant="pill" />
                   <NavItem href="/admin/hero" label="Hero" variant="pill" />
                   <NavItem href="/admin/site" label="Site" variant="pill" />
                   <NavItem href="/admin/home-sections" label="Strips" variant="pill" />

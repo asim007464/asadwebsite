@@ -1,3 +1,4 @@
+import { BannerHeightField } from "@/components/admin/BannerHeightField";
 import { PromoBannerOpacitySliders } from "@/components/admin/PromoBannerOpacitySliders";
 import { ADMIN_IMAGE_FILE_INPUT_CLASS, ADMIN_IMAGE_UPLOAD_HINT } from "@/lib/admin-media-upload";
 import type { HomeReviewsBannerRow } from "@/lib/store-types";
@@ -6,6 +7,22 @@ export function PromoBannerAdminFields({ row }: { row: HomeReviewsBannerRow }) {
   return (
     <>
       <input type="hidden" name="banner_id" value={String(row.id)} />
+
+      <label className="flex cursor-pointer items-center gap-3 rounded-2xl border border-emerald-200 bg-emerald-50/70 px-4 py-3.5 text-sm font-semibold text-slate-900">
+        <input
+          type="checkbox"
+          name="is_active"
+          defaultChecked={row.is_active}
+          className="h-5 w-5 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
+        />
+        <span>
+          Show this banner on the homepage
+          <span className="mt-0.5 block text-xs font-medium text-slate-600">Uncheck to hide it from shoppers.</span>
+        </span>
+      </label>
+
+      <BannerHeightField defaultValue={row.height_px ?? 340} min={140} max={720} />
+
       <div>
         <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">Background image URL</label>
         <input
@@ -71,10 +88,6 @@ export function PromoBannerAdminFields({ row }: { row: HomeReviewsBannerRow }) {
         </div>
       </div>
 
-      <label className="flex cursor-pointer items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-800">
-        <input type="checkbox" name="is_active" defaultChecked={row.is_active} className="h-4 w-4 rounded border-slate-300" />
-        Show on storefront (inactive hides this banner even if fields are filled)
-      </label>
     </>
   );
 }

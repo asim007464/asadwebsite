@@ -28,6 +28,11 @@ import { getHomeBrowseShowcasePayload } from "@/lib/home-browse-showcase";
 import { getHomeSectionListings } from "@/lib/home-section-products";
 import { getStorefrontPayload } from "@/lib/storefront";
 import {
+  clampBannerHeightPx,
+  DEFAULT_AFTER_BROWSE_HEIGHT_PX,
+  DEFAULT_HERO_HEIGHT_PX,
+} from "@/lib/banner-height";
+import {
   HOME_PROMO_BANNER_AFTER_HERO_ID,
   HOME_PROMO_BANNER_BEFORE_REVIEWS_ID,
   isHomePromoBannerVisible,
@@ -71,7 +76,7 @@ async function HomeServer() {
     supabase
       .from("home_reviews_banner")
       .select(
-        "id,background_image_url,heading,paragraph,button_label,button_href,image_opacity,overlay_opacity,is_active",
+        "id,background_image_url,heading,paragraph,button_label,button_href,image_opacity,overlay_opacity,height_px,is_active",
       )
       .in("id", [
         HOME_PROMO_BANNER_AFTER_HERO_ID,
@@ -80,7 +85,7 @@ async function HomeServer() {
     getHomeBrowseShowcasePayload(),
     supabase
       .from("home_after_browse_banner")
-      .select("id,image_url,link_href,alt_text,is_active")
+      .select("id,image_url,link_href,alt_text,height_px,is_active")
       .eq("id", 1)
       .maybeSingle(),
     getStorefrontPayload(),
@@ -120,10 +125,21 @@ async function HomeServer() {
     browseShowcaseCategory != null &&
     browseShowcaseProducts.length > 0;
 
-  const afterBrowseBanner =
+  const afterBrowseRaw =
     !afterBrowseBannerRes.error && afterBrowseBannerRes.data
       ? (afterBrowseBannerRes.data as HomeAfterBrowseBannerRow)
       : null;
+  const afterBrowseBanner = afterBrowseRaw
+    ? {
+        ...afterBrowseRaw,
+        height_px: clampBannerHeightPx(
+          afterBrowseRaw.height_px,
+          DEFAULT_AFTER_BROWSE_HEIGHT_PX,
+          120,
+          640,
+        ),
+      }
+    : null;
   const afterBrowseImg = afterBrowseBanner?.image_url?.trim() ?? "";
   const showAfterBrowseBanner =
     Boolean(afterBrowseBanner?.is_active) &&
@@ -144,6 +160,8 @@ async function HomeServer() {
           url: s.url,
           alt: s.alt,
         }));
+  const showHeroCarousel = storefront.heroEnabled !== false;
+  const heroHeightPx = clampBannerHeightPx(storefront.heroHeightPx, DEFAULT_HERO_HEIGHT_PX, 200, 720);
 
   const demoComfortPower = DEMO_PRODUCTS.slice(0, 3);
   const demoKitchenCooling = DEMO_PRODUCTS.slice(3, 6);
@@ -151,18 +169,23 @@ async function HomeServer() {
 
   return (
     <>
-      {/* Image-only hero carousel (slides: /admin/hero). Taller on phones so slides read clearly. */}
-      <section className="relative h-[52vh] min-h-[20rem] w-full max-h-[32rem] border-b border-slate-200 sm:h-[50vh] sm:min-h-[22rem] sm:max-h-none md:h-[55vh] lg:h-[60vh] lg:min-h-[24rem]">
-        <HeroCarouselProvider slides={heroBackdropSlides}>
-          <HeroCarouselImagePanel variant="banner" className="h-full w-full" />
-          <HeroCarouselArrows />
-          <div className="pointer-events-none absolute inset-x-0 bottom-3 z-10 flex justify-center sm:bottom-6">
-            <div className="pointer-events-auto">
-              <HeroCarouselDots tone="onImage" />
+      {/* Image-only hero carousel — show/hide + height: Admin → Home banners / Hero slides */}
+      {showHeroCarousel ? (
+        <section
+          className="relative w-full border-b border-slate-200"
+          style={{ height: heroHeightPx }}
+        >
+          <HeroCarouselProvider slides={heroBackdropSlides}>
+            <HeroCarouselImagePanel variant="banner" className="h-full w-full" />
+            <HeroCarouselArrows />
+            <div className="pointer-events-none absolute inset-x-0 bottom-3 z-10 flex justify-center sm:bottom-6">
+              <div className="pointer-events-auto">
+                <HeroCarouselDots tone="onImage" />
+              </div>
             </div>
-          </div>
-        </HeroCarouselProvider>
-      </section>
+          </HeroCarouselProvider>
+        </section>
+      ) : null}
 
       {showPromoAfterHero && promoAfterHero ? (
         <div className="mx-auto w-full max-w-7xl px-4 pt-8 sm:px-6 lg:px-8">
