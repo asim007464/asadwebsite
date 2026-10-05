@@ -31,6 +31,7 @@ import {
   clampBannerHeightPx,
   DEFAULT_AFTER_BROWSE_HEIGHT_PX,
   DEFAULT_HERO_HEIGHT_PX,
+  hideOnMobileClass,
 } from "@/lib/banner-height";
 import {
   HOME_PROMO_BANNER_AFTER_HERO_ID,
@@ -76,7 +77,7 @@ async function HomeServer() {
     supabase
       .from("home_reviews_banner")
       .select(
-        "id,background_image_url,heading,paragraph,button_label,button_href,image_opacity,overlay_opacity,height_px,is_active",
+        "id,background_image_url,heading,paragraph,button_label,button_href,image_opacity,overlay_opacity,height_px,visible_on_mobile,is_active",
       )
       .in("id", [
         HOME_PROMO_BANNER_AFTER_HERO_ID,
@@ -85,7 +86,7 @@ async function HomeServer() {
     getHomeBrowseShowcasePayload(),
     supabase
       .from("home_after_browse_banner")
-      .select("id,image_url,link_href,alt_text,height_px,is_active")
+      .select("id,image_url,link_href,alt_text,height_px,visible_on_mobile,is_active")
       .eq("id", 1)
       .maybeSingle(),
     getStorefrontPayload(),
@@ -138,6 +139,7 @@ async function HomeServer() {
           120,
           640,
         ),
+        visible_on_mobile: afterBrowseRaw.visible_on_mobile !== false,
       }
     : null;
   const afterBrowseImg = afterBrowseBanner?.image_url?.trim() ?? "";
@@ -162,6 +164,7 @@ async function HomeServer() {
         }));
   const showHeroCarousel = storefront.heroEnabled !== false;
   const heroHeightPx = clampBannerHeightPx(storefront.heroHeightPx, DEFAULT_HERO_HEIGHT_PX, 200, 720);
+  const heroMobileClass = hideOnMobileClass(storefront.heroVisibleOnMobile !== false);
 
   const demoComfortPower = DEMO_PRODUCTS.slice(0, 3);
   const demoKitchenCooling = DEMO_PRODUCTS.slice(3, 6);
@@ -172,7 +175,7 @@ async function HomeServer() {
       {/* Image-only hero carousel — show/hide + height: Admin → Home banners / Hero slides */}
       {showHeroCarousel ? (
         <section
-          className="relative w-full border-b border-slate-200"
+          className={`relative w-full border-b border-slate-200 ${heroMobileClass}`}
           style={{ height: heroHeightPx }}
         >
           <HeroCarouselProvider slides={heroBackdropSlides}>
@@ -188,7 +191,9 @@ async function HomeServer() {
       ) : null}
 
       {showPromoAfterHero && promoAfterHero ? (
-        <div className="mx-auto w-full max-w-7xl px-4 pt-8 sm:px-6 lg:px-8">
+        <div
+          className={`mx-auto w-full max-w-7xl px-4 pt-8 sm:px-6 lg:px-8 ${hideOnMobileClass(promoAfterHero.visible_on_mobile)}`}
+        >
           <ReviewsBannerSection
             banner={promoAfterHero}
             layout="contained"
@@ -200,7 +205,11 @@ async function HomeServer() {
       <main
         className={`mx-auto w-full max-w-7xl px-3 pb-10 sm:px-4 sm:pb-12 ${showPromoAfterHero ? "pt-6 sm:pt-8" : "pt-7 sm:pt-10"}`}
       >
-        <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:rounded-3xl sm:p-6 lg:p-8">
+        <section
+          className={`rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:rounded-3xl sm:p-6 lg:p-8 ${
+            useBrowseShowcase ? hideOnMobileClass(browseShowcase?.visible_on_mobile) : ""
+          }`}
+        >
           {useBrowseShowcase && browseShowcaseCategory ? (
             <HomeBrowseShowcaseGrid
               category={browseShowcaseCategory}
@@ -232,7 +241,9 @@ async function HomeServer() {
         </section>
 
         {showAfterBrowseBanner && afterBrowseBanner ? (
-          <HomeAfterBrowseBanner banner={afterBrowseBanner} />
+          <div className={hideOnMobileClass(afterBrowseBanner.visible_on_mobile)}>
+            <HomeAfterBrowseBanner banner={afterBrowseBanner} />
+          </div>
         ) : null}
 
         <section className="mt-12">
@@ -377,7 +388,9 @@ async function HomeServer() {
             banner={promoBeforeReviews}
             layout="fullBleed"
             headingId="home-promo-banner-2-heading"
-            className={showPromoAfterHero ? "mt-8 sm:mt-10" : "mt-12"}
+            className={`${hideOnMobileClass(promoBeforeReviews.visible_on_mobile)} ${
+              showPromoAfterHero ? "mt-8 sm:mt-10" : "mt-12"
+            }`}
           />
         ) : null}
 

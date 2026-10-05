@@ -21,6 +21,21 @@ export function PromoBannerAdminFields({ row }: { row: HomeReviewsBannerRow }) {
         </span>
       </label>
 
+      <label className="flex cursor-pointer items-center gap-3 rounded-2xl border border-sky-200 bg-sky-50/70 px-4 py-3.5 text-sm font-semibold text-slate-900">
+        <input
+          type="checkbox"
+          name="visible_on_mobile"
+          defaultChecked={row.visible_on_mobile !== false}
+          className="h-5 w-5 rounded border-slate-300 text-sky-600 focus:ring-sky-500"
+        />
+        <span>
+          Visible on mobile
+          <span className="mt-0.5 block text-xs font-medium text-slate-600">
+            Uncheck to hide on phones (still shows on desktop/tablet).
+          </span>
+        </span>
+      </label>
+
       <BannerHeightField defaultValue={row.height_px ?? 340} min={140} max={720} />
 
       <div>

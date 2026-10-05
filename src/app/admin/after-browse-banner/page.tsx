@@ -14,6 +14,7 @@ const EMPTY_ROW: HomeAfterBrowseBannerRow = {
   link_href: "",
   alt_text: "",
   height_px: DEFAULT_AFTER_BROWSE_HEIGHT_PX,
+  visible_on_mobile: true,
   is_active: false,
 };
 
@@ -50,6 +51,7 @@ export default async function AdminAfterBrowseBannerPage({
             120,
             640,
           ),
+          visible_on_mobile: (data as HomeAfterBrowseBannerRow).visible_on_mobile !== false,
           is_active: Boolean((data as HomeAfterBrowseBannerRow).is_active),
         } satisfies HomeAfterBrowseBannerRow);
 
@@ -173,6 +175,21 @@ export default async function AdminAfterBrowseBannerPage({
             <span>
               Show this banner on the homepage
               <span className="mt-0.5 block text-xs font-medium text-slate-600">Needs an image. Uncheck to hide.</span>
+            </span>
+          </label>
+
+          <label className="flex cursor-pointer items-center gap-3 rounded-2xl border border-sky-200 bg-sky-50/70 px-4 py-3.5 text-sm font-semibold text-slate-900">
+            <input
+              type="checkbox"
+              name="visible_on_mobile"
+              defaultChecked={row.visible_on_mobile !== false}
+              className="h-5 w-5 rounded border-slate-300 text-sky-600 focus:ring-sky-500"
+            />
+            <span>
+              Visible on mobile
+              <span className="mt-0.5 block text-xs font-medium text-slate-600">
+                Uncheck to hide on phones (still shows on desktop/tablet).
+              </span>
             </span>
           </label>
 

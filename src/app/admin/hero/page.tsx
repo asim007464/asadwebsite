@@ -32,6 +32,7 @@ export default async function AdminHeroSlidesPage({
 
   const slides = (rows as HeroSlideRow[] | null) ?? [];
   const heroEnabled = storefront.heroEnabled !== false;
+  const heroVisibleOnMobile = storefront.heroVisibleOnMobile !== false;
   const heroHeightPx = clampBannerHeightPx(storefront.heroHeightPx, DEFAULT_HERO_HEIGHT_PX, 200, 720);
 
   return (
@@ -76,6 +77,20 @@ export default async function AdminHeroSlidesPage({
             <span>
               Show hero carousel on homepage
               <span className="mt-0.5 block text-xs font-medium text-slate-600">Uncheck to hide the whole top banner.</span>
+            </span>
+          </label>
+          <label className="flex cursor-pointer items-center gap-3 rounded-2xl border border-sky-200 bg-sky-50/70 px-4 py-3.5 text-sm font-semibold text-slate-900">
+            <input
+              type="checkbox"
+              name="hero_visible_on_mobile"
+              defaultChecked={heroVisibleOnMobile}
+              className="h-5 w-5 rounded border-slate-300 text-sky-600 focus:ring-sky-500"
+            />
+            <span>
+              Visible on mobile
+              <span className="mt-0.5 block text-xs font-medium text-slate-600">
+                Uncheck to hide on phones (still shows on desktop/tablet).
+              </span>
             </span>
           </label>
           <BannerHeightField

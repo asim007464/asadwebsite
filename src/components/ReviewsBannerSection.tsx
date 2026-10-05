@@ -74,41 +74,43 @@ export function ReviewsBannerSection({
       />
 
       <div
-        className="relative z-10 mx-auto flex max-w-7xl flex-col justify-center gap-5 px-4 py-10 sm:gap-6 sm:px-8 sm:py-12 md:flex-row md:items-center md:justify-between md:py-14 lg:px-10"
+        className="relative z-10 mx-auto flex max-w-7xl flex-col justify-end px-4 pb-4 pt-8 sm:justify-center sm:gap-6 sm:px-8 sm:py-12 md:min-h-0 md:flex-row md:items-center md:justify-between md:py-14 lg:px-10"
         style={{ minHeight: heightPx }}
       >
-        <div className="max-w-2xl space-y-2.5 text-white sm:space-y-3">
-          {heading ? (
-            <h2 id={headingId} className="text-xl font-bold tracking-tight sm:text-3xl lg:text-[1.875rem]">
-              {heading}
-            </h2>
-          ) : null}
-          {paragraph ? (
-            <p className="text-[13px] leading-relaxed text-blue-50/92 sm:text-[15px] md:max-w-xl">{paragraph}</p>
-          ) : null}
-        </div>
+        {(heading || paragraph) ? (
+          <div className="mb-14 max-w-2xl space-y-2.5 text-white sm:mb-0 sm:space-y-3">
+            {heading ? (
+              <h2 id={headingId} className="text-xl font-bold tracking-tight sm:text-3xl lg:text-[1.875rem]">
+                {heading}
+              </h2>
+            ) : null}
+            {paragraph ? (
+              <p className="text-[13px] leading-relaxed text-blue-50/92 sm:text-[15px] md:max-w-xl">{paragraph}</p>
+            ) : null}
+          </div>
+        ) : null}
 
-        <div className="shrink-0 md:text-right">
-          {showBtn ? (
-            isExternal ? (
+        {showBtn ? (
+          <div className="absolute bottom-3 right-3 z-10 sm:static sm:shrink-0 md:text-right">
+            {isExternal ? (
               <a
                 href={href}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex h-12 min-w-[10.5rem] items-center justify-center rounded-full bg-white px-8 text-sm font-bold text-blue-900 shadow-md shadow-blue-950/35 transition hover:bg-blue-50"
+                className="inline-flex h-10 min-w-[8.5rem] items-center justify-center rounded-full bg-white px-5 text-xs font-bold text-blue-900 shadow-md shadow-blue-950/35 transition hover:bg-blue-50 sm:h-12 sm:min-w-[10.5rem] sm:px-8 sm:text-sm"
               >
                 {label}
               </a>
             ) : (
               <Link
                 href={href}
-                className="inline-flex h-12 min-w-[10.5rem] items-center justify-center rounded-full bg-white px-8 text-sm font-bold text-blue-900 shadow-md shadow-blue-950/35 transition hover:bg-blue-50"
+                className="inline-flex h-10 min-w-[8.5rem] items-center justify-center rounded-full bg-white px-5 text-xs font-bold text-blue-900 shadow-md shadow-blue-950/35 transition hover:bg-blue-50 sm:h-12 sm:min-w-[10.5rem] sm:px-8 sm:text-sm"
               >
                 {label}
               </Link>
-            )
-          ) : null}
-        </div>
+            )}
+          </div>
+        ) : null}
       </div>
     </section>
   );

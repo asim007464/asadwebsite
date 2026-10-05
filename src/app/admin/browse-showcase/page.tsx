@@ -17,6 +17,7 @@ const EMPTY_SHOWCASE: HomeBrowseShowcaseRow = {
   category_id: null,
   section_title: "",
   is_active: false,
+  visible_on_mobile: true,
 };
 
 export default async function AdminBrowseShowcasePage({
@@ -31,7 +32,7 @@ export default async function AdminBrowseShowcasePage({
 
   const [{ data: showcaseData, error: loadError }, { data: categories }, { data: curated }, { data: products }] =
     await Promise.all([
-      supabase.from("home_browse_showcase").select("id,category_id,section_title,is_active").eq("id", 1).maybeSingle(),
+      supabase.from("home_browse_showcase").select("id,category_id,section_title,is_active,visible_on_mobile").eq("id", 1).maybeSingle(),
       supabase.from("categories").select("id,name,slug").order("name"),
       supabase.from("home_browse_showcase_products").select("id,product_id,sort_order").order("sort_order"),
       supabase.from("products").select("id,name,slug,category_id,is_active").order("name"),
@@ -45,6 +46,7 @@ export default async function AdminBrowseShowcasePage({
           category_id: (showcaseData as HomeBrowseShowcaseRow).category_id,
           section_title: String((showcaseData as HomeBrowseShowcaseRow).section_title ?? ""),
           is_active: Boolean((showcaseData as HomeBrowseShowcaseRow).is_active),
+          visible_on_mobile: (showcaseData as HomeBrowseShowcaseRow).visible_on_mobile !== false,
         } satisfies HomeBrowseShowcaseRow);
 
   const categoryList = (categories as { id: string; name: string; slug: string }[] | null) ?? [];
@@ -152,6 +154,21 @@ export default async function AdminBrowseShowcasePage({
               className="h-5 w-5 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
             />
             Use curated product grid on homepage (needs category + at least one product below)
+          </label>
+
+          <label className="flex cursor-pointer items-center gap-3 rounded-2xl border border-sky-200 bg-sky-50/70 px-4 py-3 text-sm font-semibold text-slate-900 md:col-span-2">
+            <input
+              type="checkbox"
+              name="visible_on_mobile"
+              defaultChecked={showcase.visible_on_mobile !== false}
+              className="h-5 w-5 rounded border-slate-300 text-sky-600 focus:ring-sky-500"
+            />
+            <span>
+              Visible on mobile
+              <span className="mt-0.5 block text-xs font-medium text-slate-600">
+                Uncheck to hide this grid on phones (still shows on desktop/tablet).
+              </span>
+            </span>
           </label>
 
           <div className="md:col-span-2">

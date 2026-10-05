@@ -10,7 +10,7 @@ export async function getHomeBrowseShowcasePayload(): Promise<{
   const supabase = createSupabaseAdminClient();
 
   const [showcaseRes, curatedRes] = await Promise.all([
-    supabase.from("home_browse_showcase").select("id,category_id,section_title,is_active").eq("id", 1).maybeSingle(),
+    supabase.from("home_browse_showcase").select("id,category_id,section_title,is_active,visible_on_mobile").eq("id", 1).maybeSingle(),
     supabase.from("home_browse_showcase_products").select("product_id,sort_order").order("sort_order"),
   ]);
 
@@ -22,6 +22,7 @@ export async function getHomeBrowseShowcasePayload(): Promise<{
           category_id: (showcaseRes.data as HomeBrowseShowcaseRow).category_id,
           section_title: String((showcaseRes.data as HomeBrowseShowcaseRow).section_title ?? ""),
           is_active: Boolean((showcaseRes.data as HomeBrowseShowcaseRow).is_active),
+          visible_on_mobile: (showcaseRes.data as HomeBrowseShowcaseRow).visible_on_mobile !== false,
         } satisfies HomeBrowseShowcaseRow);
 
   if (!showcase?.is_active || !showcase.category_id) {

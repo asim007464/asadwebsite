@@ -22,6 +22,7 @@ function emptyRow(id: number): HomeReviewsBannerRow {
     image_opacity: 100,
     overlay_opacity: 70,
     height_px: 340,
+    visible_on_mobile: true,
     is_active: false,
   };
 }
@@ -65,7 +66,7 @@ export default async function AdminReviewsBannerPage({
   const supabase = createSupabaseAdminClient();
   const { data, error: loadError } = await supabase
     .from("home_reviews_banner")
-    .select("id,background_image_url,heading,paragraph,button_label,button_href,image_opacity,overlay_opacity,height_px,is_active")
+    .select("id,background_image_url,heading,paragraph,button_label,button_href,image_opacity,overlay_opacity,height_px,visible_on_mobile,is_active")
     .in("id", [HOME_PROMO_BANNER_AFTER_HERO_ID, HOME_PROMO_BANNER_BEFORE_REVIEWS_ID]);
 
   const byId = new Map<number, HomeReviewsBannerRow>();
