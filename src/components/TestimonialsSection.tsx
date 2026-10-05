@@ -1,7 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { DEMO_TESTIMONIALS, type Testimonial } from "@/lib/testimonials";
+import { useSlider } from "@/lib/use-slider";
 
 function QuoteGlyph({ className = "" }: { className?: string }) {
   return (
@@ -63,22 +64,10 @@ export function TestimonialsSection({ intro, testimonials }: { intro?: string; t
   }, []);
 
   const pageCount = Math.max(1, Math.ceil(items.length / perPage));
-  const [page, setPage] = useState(0);
-
-  useEffect(() => {
-    setPage((p) => Math.min(p, pageCount - 1));
-  }, [pageCount]);
+  const { index: page, go, swipe } = useSlider(pageCount, { loop: true });
 
   const sliceStart = page * perPage;
   const visible = useMemo(() => items.slice(sliceStart, sliceStart + perPage), [items, sliceStart, perPage]);
-
-  const goPrev = useCallback(() => {
-    setPage((p) => (p - 1 + pageCount) % pageCount);
-  }, [pageCount]);
-
-  const goNext = useCallback(() => {
-    setPage((p) => (p + 1) % pageCount);
-  }, [pageCount]);
 
   return (
     <div className="relative" aria-labelledby="testimonials-heading">
@@ -111,74 +100,38 @@ export function TestimonialsSection({ intro, testimonials }: { intro?: string; t
         </div>
       </div>
 
-      <div className="relative mt-12 md:px-14">
-        <div className="mb-5 flex justify-center gap-3 md:hidden">
-          <button
-            type="button"
-            onClick={goPrev}
-            aria-label="Previous reviews"
-            className="inline-flex h-11 min-w-[5.5rem] items-center justify-center rounded-full border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 shadow-sm hover:border-blue-200 hover:bg-blue-50 hover:text-blue-800"
-          >
-            ‹ Prev
-          </button>
-          <button
-            type="button"
-            onClick={goNext}
-            aria-label="Next reviews"
-            className="inline-flex h-11 min-w-[5.5rem] items-center justify-center rounded-full border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 shadow-sm hover:border-blue-200 hover:bg-blue-50 hover:text-blue-800"
-          >
-            Next ›
-          </button>
-        </div>
-
-        <button
-          type="button"
-          onClick={goPrev}
-          aria-label="Previous reviews"
-          className="absolute left-0 top-[42%] z-10 hidden h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-700 shadow-md transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500 md:flex"
-        >
-          <span className="text-lg leading-none" aria-hidden>
-            ‹
-          </span>
-        </button>
-        <button
-          type="button"
-          onClick={goNext}
-          aria-label="Next reviews"
-          className="absolute right-0 top-[42%] z-10 hidden h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-700 shadow-md transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500 md:flex"
-        >
-          <span className="text-lg leading-none" aria-hidden>
-            ›
-          </span>
-        </button>
-
+      <div className="relative mt-12">
         <div
-          className="grid gap-5 md:grid-cols-2 md:gap-6"
+          className="touch-pan-y select-none"
+          style={{ touchAction: "pan-y" }}
+          {...swipe}
           aria-live="polite"
-          aria-label={`Customer reviews, page ${page + 1} of ${pageCount}`}
+          aria-label={`Customer reviews, page ${page + 1} of ${pageCount}. Swipe to change.`}
         >
-          {visible.map((t, i) => (
-            <article
-              key={`${sliceStart + i}-${t.initials}`}
-              className="flex flex-col rounded-2xl border border-slate-200 bg-white p-6 shadow-sm"
-            >
-              <QuoteGlyph className="h-8 w-10 text-blue-600/80" />
-              <blockquote className="mt-4 flex-1 text-[15px] leading-relaxed text-slate-800 sm:text-base">{t.quote}</blockquote>
-              <footer className="mt-6 flex flex-wrap items-center gap-3 border-t border-slate-200 pt-5">
-                <div
-                  className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-blue-50 text-xs font-bold text-blue-800 ring-2 ring-blue-100"
-                  aria-hidden
-                >
-                  {t.initials}
-                </div>
-                <div className="min-w-0 flex-1">
-                  <div className="font-semibold text-slate-900">{t.name}</div>
-                  <div className="text-xs text-slate-500">{t.meta}</div>
-                </div>
-                <StarRow className="shrink-0" />
-              </footer>
-            </article>
-          ))}
+          <div className="grid gap-5 md:grid-cols-2 md:gap-6">
+            {visible.map((t, i) => (
+              <article
+                key={`${sliceStart + i}-${t.initials}`}
+                className="flex flex-col rounded-2xl border border-slate-200 bg-white p-6 shadow-sm"
+              >
+                <QuoteGlyph className="h-8 w-10 text-blue-600/80" />
+                <blockquote className="mt-4 flex-1 text-[15px] leading-relaxed text-slate-800 sm:text-base">{t.quote}</blockquote>
+                <footer className="mt-6 flex flex-wrap items-center gap-3 border-t border-slate-200 pt-5">
+                  <div
+                    className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-blue-50 text-xs font-bold text-blue-800 ring-2 ring-blue-100"
+                    aria-hidden
+                  >
+                    {t.initials}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="font-semibold text-slate-900">{t.name}</div>
+                    <div className="text-xs text-slate-500">{t.meta}</div>
+                  </div>
+                  <StarRow className="shrink-0" />
+                </footer>
+              </article>
+            ))}
+          </div>
         </div>
 
         {pageCount > 1 ? (
@@ -190,7 +143,7 @@ export function TestimonialsSection({ intro, testimonials }: { intro?: string; t
                 role="tab"
                 aria-selected={i === page}
                 aria-label={`Go to review page ${i + 1}`}
-                onClick={() => setPage(i)}
+                onClick={() => go(i)}
                 className={`h-2 rounded-full transition-[width,background-color] duration-300 ${
                   i === page ? "w-8 bg-blue-600" : "w-2 bg-slate-300 hover:bg-slate-400"
                 }`}

@@ -327,6 +327,7 @@ export function SiteHeader() {
 
   const linkActive = "bg-white text-blue-800 shadow-sm ring-1 ring-slate-200/90";
 
+  const isHomeActive = pathname === "/";
   const isProductsActive = pathname === "/products" || pathname.startsWith("/product/");
   const isAboutActive = pathname === "/about";
   const isContactActive = pathname === "/contact";
@@ -722,6 +723,16 @@ export function SiteHeader() {
               <div className="mt-1 text-lg font-bold text-slate-900">Navigate</div>
             </div>
             <div className="space-y-1 p-3">
+              <Link
+                href="/"
+                className={cn(
+                  "block rounded-2xl px-4 py-3.5 text-[15px] font-semibold transition",
+                  isHomeActive ? "bg-blue-50 text-blue-900 ring-1 ring-blue-100" : "text-slate-800 hover:bg-slate-50",
+                )}
+                onClick={closeMobile}
+              >
+                Home
+              </Link>
               <Link
                 href="/products"
                 className={cn(

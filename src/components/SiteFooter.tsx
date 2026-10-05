@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { SITE_SHOP_NAME, SITE_SHORT_TAGLINE } from "@/lib/site-brand";
+import { SITE_SHOP_NAME } from "@/lib/site-brand";
 import { resolveStoreLocation } from "@/lib/store-location";
 import { getStorefrontPayload } from "@/lib/storefront";
 
@@ -21,22 +21,29 @@ const shopLinks = [
 ] as const;
 
 const companyLinks = [
-  { href: "/about", label: "About us" },
-  { href: "/contact#locations", label: "Locations" },
   { href: "/contact", label: "Contact" },
   { href: "/admin", label: "Admin" },
 ] as const;
+
+function isRemovedSocial(platform: string | undefined, label: string) {
+  const key = `${platform ?? ""} ${label}`.toLowerCase();
+  return (
+    key.includes("youtube") ||
+    key.includes("twitter") ||
+    key.includes("pinterest") ||
+    /\bx\b/.test(key)
+  );
+}
 
 function pickSocialIcon(platform: string | undefined, label: string) {
   const key = `${platform ?? ""} ${label}`.toLowerCase();
   if (key.includes("facebook")) return FacebookIcon;
   if (key.includes("linkedin")) return LinkedInIcon;
   if (key.includes("instagram")) return InstagramIcon;
-  if (key.includes("youtube")) return YouTubeIcon;
-  if (key.includes("pinterest")) return PinterestIcon;
-  if (key.includes("twitter") || /\bx\b/.test(key)) return XIcon;
+  if (key.includes("tiktok")) return TikTokIcon;
   return LinkedInIcon;
 }
+
 function FootHeading({ children }: { children: ReactNode }) {
   return (
     <h2 className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.18em] text-blue-400">
@@ -90,36 +97,13 @@ function InstagramIcon() {
   );
 }
 
-function XIcon() {
+function TikTokIcon() {
   return (
     <IconBase>
       <path
-        d="M18.6 3H21l-6.7 7.6L22 21h-6.4l-5-6.2L5 21H2.6l7.2-8.2L2 3h6.6l4.5 5.7L18.6 3Zm-1.1 16h1.3L7.9 4.9H6.5L17.5 19Z"
+        d="M14.5 4c.4 2.2 1.8 3.8 3.9 4.1v2.4c-1.3-.05-2.5-.45-3.5-1.15v5.85a5.1 5.1 0 1 1-5.1-5.1c.28 0 .55.03.81.08v2.55a2.55 2.55 0 1 0 1.79 2.44V4h2.1Z"
         fill="currentColor"
       />
-    </IconBase>
-  );
-}
-
-function PinterestIcon() {
-  return (
-    <IconBase>
-      <path
-        d="M12.1 3C7 3 4 6.4 4 10.6c0 2.6 1.4 5.8 3.7 6.8.3.1.5 0 .6-.3l.3-1.2c.1-.3.1-.4-.2-.7-.7-.8-1.3-2.2-1.3-3.6 0-3.5 2.7-6.9 7.2-6.9 3.9 0 6.7 2.7 6.7 6.4 0 4.3-2.2 7.3-5.1 7.3-1.6 0-2.8-1.3-2.4-3l1-4.1c.3-1.1-.2-2.1-1.3-2.1-1 0-1.8 1-2.1 2.4-.2.7-.3 1.5-.1 2.2l-.9 3.8-.5 2c-.2.9-.1 2.3 0 3.2.1.2.2.3.4.1.6-.7 1.4-2 1.7-3l.5-1.9c.4.7 1.6 1.2 2.9 1.2 3.8 0 6.6-3.5 6.6-8.1C22 6.6 18.4 3 12.1 3Z"
-        fill="currentColor"
-      />
-    </IconBase>
-  );
-}
-
-function YouTubeIcon() {
-  return (
-    <IconBase>
-      <path
-        d="M21.6 7.2a3 3 0 0 0-2.1-2.1C17.6 4.6 12 4.6 12 4.6s-5.6 0-7.5.5A3 3 0 0 0 2.4 7.2 31 31 0 0 0 2 12s.1 3.2.4 4.8a3 3 0 0 0 2.1 2.1c1.9.5 7.5.5 7.5.5s5.6 0 7.5-.5a3 3 0 0 0 2.1-2.1c.3-1.6.4-4.8.4-4.8s0-3.2-.4-4.8Z"
-        fill="currentColor"
-      />
-      <path d="M10.2 15V9.3l5.2 2.9-5.2 2.8Z" fill="#0B1220" opacity="0.95" />
     </IconBase>
   );
 }
@@ -127,7 +111,27 @@ function YouTubeIcon() {
 export async function SiteFooter() {
   const storefront = await getStorefrontPayload();
   const store = resolveStoreLocation(storefront);
-  const socialLinksResolved = storefront.socialLinks.filter((x) => x.url?.trim()?.length && x.label?.trim()?.length);
+  const socialLinksResolved = storefront.socialLinks
+    .filter((x) => x.url?.trim()?.length && x.label?.trim()?.length)
+    .filter((x) => !isRemovedSocial(x.platform, x.label));
+
+  const hasTikTok = socialLinksResolved.some((x) =>
+    `${x.platform ?? ""} ${x.label}`.toLowerCase().includes("tiktok"),
+  );
+  const socialForFooter = hasTikTok
+    ? socialLinksResolved
+    : (() => {
+        const next = [...socialLinksResolved];
+        const igIdx = next.findIndex((x) => `${x.platform ?? ""} ${x.label}`.toLowerCase().includes("instagram"));
+        const tiktok = {
+          label: "TikTok",
+          url: "https://www.tiktok.com/",
+          platform: "tiktok",
+        };
+        if (igIdx >= 0) next.splice(igIdx + 1, 0, tiktok);
+        else next.push(tiktok);
+        return next;
+      })();
 
   return (
     <footer className="relative mt-auto overflow-hidden bg-black text-slate-400">
@@ -163,28 +167,15 @@ export async function SiteFooter() {
               </span>
               <span className="min-w-0 pt-0 sm:pt-0.5">
                 <span className="block text-lg font-bold tracking-tight text-white md:text-xl">{SITE_SHOP_NAME}</span>
-                <span className="mt-1.5 block text-sm font-medium leading-snug text-blue-300/90">{SITE_SHORT_TAGLINE}</span>
               </span>
             </Link>
             <p className="mt-6 max-w-sm text-sm leading-relaxed text-slate-400 lg:mx-0">
               Trusted electrical and appliance sourcing — fans, lighting, kitchen and grooming tools, plus wiring and accessories. Clear specs on every SKU and COD backed by phone confirmation.
             </p>
-            <div className="mt-6 flex flex-wrap justify-center gap-2 lg:justify-start">
-              <span className="rounded-full bg-blue-600 px-3.5 py-1.5 text-xs font-bold text-white shadow-lg shadow-blue-600/25">
-                COD Pakistan
-              </span>
-              <span className="rounded-full border border-slate-700 bg-black px-3.5 py-1.5 text-xs font-semibold text-slate-200">
-                Nationwide dispatch
-              </span>
-              <span className="rounded-full border border-slate-700 bg-black px-3.5 py-1.5 text-xs font-semibold text-slate-200">
-                Specs per variant
-              </span>
-            </div>
 
             <div className="mt-8 flex w-full flex-col items-center lg:items-start">
-              <FootHeading>Social</FootHeading>
-              <div className="mt-4 flex flex-wrap justify-center gap-2 lg:justify-start">
-                {socialLinksResolved.map((s) => {
+              <div className="flex flex-wrap justify-center gap-2 lg:justify-start">
+                {socialForFooter.map((s) => {
                   const Icon = pickSocialIcon(s.platform, s.label);
                   return (
                     <a
@@ -200,7 +191,6 @@ export async function SiteFooter() {
                   );
                 })}
               </div>
-              <p className="mt-3 text-xs text-slate-500">Links editable in Admin → Site & payments (social).</p>
             </div>
           </div>
 
@@ -248,10 +238,7 @@ export async function SiteFooter() {
               <div>
                 <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Locations</p>
                 <p className="mt-2 text-sm font-semibold text-slate-100">{store.name}</p>
-                <p className="mt-1 text-xs tabular-nums text-slate-500">
-                  {store.lat}, {store.lng}
-                </p>
-                <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                <div className="mt-3">
                   <a
                     href={store.googleMapsPlaceUrl}
                     target="_blank"
@@ -260,64 +247,18 @@ export async function SiteFooter() {
                   >
                     Open in Maps
                   </a>
-                  <a
-                    href={store.googleMapsPlaceUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex h-10 items-center justify-center rounded-xl bg-blue-600 text-center text-xs font-semibold text-white transition hover:bg-blue-700"
-                  >
-                    Directions ↗
-                  </a>
                 </div>
                 <Link
                   href="/contact#locations"
                   className="mt-2 flex h-9 w-full items-center justify-center rounded-xl border border-slate-800 text-xs font-semibold text-slate-300 transition hover:border-slate-600 hover:text-white"
                 >
-                  Store photos & map
+                  Store photos
                 </Link>
               </div>
 
               <div className="my-5 h-px bg-slate-900" />
 
               <dl className="space-y-4 text-sm">
-                <div>
-                  <dt className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Hours · PKT</dt>
-                  <dd className="mt-1 font-semibold text-slate-100">{storefront.supportDeskHours}</dd>
-                </div>
-                <div>
-                  <dt className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Sales</dt>
-                  <dd className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1">
-                    <a className="font-semibold text-blue-400 hover:text-blue-300" href="tel:+923357446353">
-                      0335‑744‑6353
-                    </a>
-                    <span className="text-slate-600">·</span>
-                    <a
-                      className="font-semibold text-emerald-400 hover:text-emerald-300"
-                      href="https://wa.me/923357446353"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      WhatsApp
-                    </a>
-                  </dd>
-                </div>
-                <div>
-                  <dt className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Dispatch</dt>
-                  <dd className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1">
-                    <a className="font-semibold text-blue-400 hover:text-blue-300" href="tel:+923267153153">
-                      0326‑715‑3153
-                    </a>
-                    <span className="text-slate-600">·</span>
-                    <a
-                      className="font-semibold text-emerald-400 hover:text-emerald-300"
-                      href="https://wa.me/923267153153"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      WhatsApp
-                    </a>
-                  </dd>
-                </div>
                 <div>
                   <dt className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Email</dt>
                   <dd className="mt-1">
