@@ -8,3 +8,8 @@ export function clampBannerHeightPx(raw: unknown, fallback: number, min = 120, m
 export const DEFAULT_HERO_HEIGHT_PX = 420;
 export const DEFAULT_PROMO_BANNER_HEIGHT_PX = 340;
 export const DEFAULT_AFTER_BROWSE_HEIGHT_PX = 240;
+
+/** Hide on phones when admin turns off mobile visibility (`md` and up still show). */
+export function hideOnMobileClass(visibleOnMobile: boolean | null | undefined) {
+  return visibleOnMobile === false ? "hidden md:block" : "";
+}

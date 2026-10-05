@@ -28,6 +28,7 @@ export function parseHomePromoBannerRow(data: unknown, id: number): HomeReviewsB
     image_opacity: clampPct(row.image_opacity, 100),
     overlay_opacity: clampPct(row.overlay_opacity, 70),
     height_px: clampBannerHeightPx(row.height_px, DEFAULT_PROMO_BANNER_HEIGHT_PX, 140, 720),
+    visible_on_mobile: row.visible_on_mobile !== false,
     is_active: Boolean(row.is_active),
   };
 }

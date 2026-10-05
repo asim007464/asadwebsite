@@ -23,10 +23,12 @@ function ActiveToggle({
   name,
   defaultChecked,
   label,
+  hint = "Uncheck to hide on the homepage.",
 }: {
   name: string;
   defaultChecked: boolean;
   label: string;
+  hint?: string;
 }) {
   return (
     <label className="flex cursor-pointer items-center gap-3 rounded-2xl border border-emerald-200 bg-emerald-50/70 px-4 py-3 text-sm font-semibold text-slate-900">
@@ -38,7 +40,32 @@ function ActiveToggle({
       />
       <span>
         {label}
-        <span className="mt-0.5 block text-xs font-medium text-slate-600">Uncheck to hide on the homepage.</span>
+        <span className="mt-0.5 block text-xs font-medium text-slate-600">{hint}</span>
+      </span>
+    </label>
+  );
+}
+
+function MobileToggle({
+  name,
+  defaultChecked,
+}: {
+  name: string;
+  defaultChecked: boolean;
+}) {
+  return (
+    <label className="flex cursor-pointer items-center gap-3 rounded-2xl border border-sky-200 bg-sky-50/70 px-4 py-3 text-sm font-semibold text-slate-900">
+      <input
+        type="checkbox"
+        name={name}
+        defaultChecked={defaultChecked}
+        className="h-5 w-5 rounded border-slate-300 text-sky-600 focus:ring-sky-500"
+      />
+      <span>
+        Visible on mobile
+        <span className="mt-0.5 block text-xs font-medium text-slate-600">
+          Uncheck to hide this banner on phones (still shows on desktop/tablet).
+        </span>
       </span>
     </label>
   );
@@ -85,10 +112,10 @@ export default async function AdminHomeBannersPage({
     getStorefrontPayload(),
     supabase
       .from("home_reviews_banner")
-      .select("id,background_image_url,heading,paragraph,button_label,button_href,image_opacity,overlay_opacity,height_px,is_active")
+      .select("id,background_image_url,heading,paragraph,button_label,button_href,image_opacity,overlay_opacity,height_px,visible_on_mobile,is_active")
       .in("id", [1, 2]),
-    supabase.from("home_after_browse_banner").select("id,image_url,link_href,alt_text,height_px,is_active").eq("id", 1).maybeSingle(),
-    supabase.from("home_browse_showcase").select("id,category_id,section_title,is_active").eq("id", 1).maybeSingle(),
+    supabase.from("home_after_browse_banner").select("id,image_url,link_href,alt_text,height_px,visible_on_mobile,is_active").eq("id", 1).maybeSingle(),
+    supabase.from("home_browse_showcase").select("id,category_id,section_title,is_active,visible_on_mobile").eq("id", 1).maybeSingle(),
   ]);
 
   const promo1 = parseHomePromoBannerRow(
@@ -112,6 +139,7 @@ export default async function AdminHomeBannersPage({
           120,
           640,
         ),
+        visible_on_mobile: (afterRes.data as HomeAfterBrowseBannerRow).visible_on_mobile !== false,
         is_active: Boolean((afterRes.data as HomeAfterBrowseBannerRow).is_active),
       } satisfies HomeAfterBrowseBannerRow)
     : {
@@ -120,6 +148,7 @@ export default async function AdminHomeBannersPage({
         link_href: "",
         alt_text: "",
         height_px: DEFAULT_AFTER_BROWSE_HEIGHT_PX,
+        visible_on_mobile: true,
         is_active: false,
       };
 
@@ -129,10 +158,12 @@ export default async function AdminHomeBannersPage({
         category_id: (showcaseRes.data as HomeBrowseShowcaseRow).category_id,
         section_title: String((showcaseRes.data as HomeBrowseShowcaseRow).section_title ?? ""),
         is_active: Boolean((showcaseRes.data as HomeBrowseShowcaseRow).is_active),
+        visible_on_mobile: (showcaseRes.data as HomeBrowseShowcaseRow).visible_on_mobile !== false,
       } satisfies HomeBrowseShowcaseRow)
-    : { id: 1, category_id: null, section_title: "", is_active: false };
+    : { id: 1, category_id: null, section_title: "", is_active: false, visible_on_mobile: true };
 
   const heroEnabled = storefront.heroEnabled !== false;
+  const heroVisibleOnMobile = storefront.heroVisibleOnMobile !== false;
   const heroHeightPx = clampBannerHeightPx(storefront.heroHeightPx, DEFAULT_HERO_HEIGHT_PX, 200, 720);
 
   return (
@@ -178,6 +209,7 @@ export default async function AdminHomeBannersPage({
             editHref="/admin/hero"
           >
             <ActiveToggle name="hero_enabled" defaultChecked={heroEnabled} label="Show hero carousel" />
+            <MobileToggle name="hero_visible_on_mobile" defaultChecked={heroVisibleOnMobile} />
             <BannerHeightField
               name="hero_height_px"
               defaultValue={heroHeightPx}
@@ -197,6 +229,10 @@ export default async function AdminHomeBannersPage({
               defaultChecked={promo1.is_active}
               label="Show promo banner 1"
             />
+            <MobileToggle
+              name={`promo_${HOME_PROMO_BANNER_AFTER_HERO_ID}_visible_on_mobile`}
+              defaultChecked={promo1.visible_on_mobile !== false}
+            />
             <BannerHeightField
               name={`promo_${HOME_PROMO_BANNER_AFTER_HERO_ID}_height_px`}
               defaultValue={promo1.height_px ?? DEFAULT_PROMO_BANNER_HEIGHT_PX}
@@ -215,6 +251,10 @@ export default async function AdminHomeBannersPage({
               defaultChecked={showcase.is_active}
               label="Show browse categories grid"
             />
+            <MobileToggle
+              name="browse_showcase_visible_on_mobile"
+              defaultChecked={showcase.visible_on_mobile !== false}
+            />
           </BannerCard>
 
           <BannerCard
@@ -226,6 +266,10 @@ export default async function AdminHomeBannersPage({
               name="after_browse_active"
               defaultChecked={afterBrowse.is_active}
               label="Show after-browse banner"
+            />
+            <MobileToggle
+              name="after_browse_visible_on_mobile"
+              defaultChecked={afterBrowse.visible_on_mobile !== false}
             />
             <BannerHeightField
               name="after_browse_height_px"
@@ -244,6 +288,10 @@ export default async function AdminHomeBannersPage({
               name={`promo_${HOME_PROMO_BANNER_BEFORE_REVIEWS_ID}_active`}
               defaultChecked={promo2.is_active}
               label="Show promo banner 2"
+            />
+            <MobileToggle
+              name={`promo_${HOME_PROMO_BANNER_BEFORE_REVIEWS_ID}_visible_on_mobile`}
+              defaultChecked={promo2.visible_on_mobile !== false}
             />
             <BannerHeightField
               name={`promo_${HOME_PROMO_BANNER_BEFORE_REVIEWS_ID}_height_px`}

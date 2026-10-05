@@ -1433,6 +1433,7 @@ export async function updateHomeReviewsBanner(formData: FormData) {
     redirect("/admin/reviews-banner?error=invalid-button-href");
 
   const is_active = formData.get("is_active") === "on";
+  const visible_on_mobile = formData.get("visible_on_mobile") === "on";
   const clampPct = (raw: string, fallback: number) => {
     const n = Number.parseInt(raw, 10);
     if (!Number.isFinite(n)) return fallback;
@@ -1456,6 +1457,7 @@ export async function updateHomeReviewsBanner(formData: FormData) {
       image_opacity,
       overlay_opacity,
       height_px,
+      visible_on_mobile,
       is_active,
       updated_at: new Date().toISOString(),
     },
@@ -1475,6 +1477,7 @@ export async function updateHomeAfterBrowseBanner(formData: FormData) {
   const productSlug = String(formData.get("product_slug") ?? "").trim();
   const linkHrefRaw = String(formData.get("link_href") ?? "").trim();
   const is_active = formData.get("is_active") === "on";
+  const visible_on_mobile = formData.get("visible_on_mobile") === "on";
 
   const supabase = createSupabaseAdminClient();
 
@@ -1520,6 +1523,7 @@ export async function updateHomeAfterBrowseBanner(formData: FormData) {
       link_href,
       alt_text,
       height_px,
+      visible_on_mobile,
       is_active,
       updated_at: new Date().toISOString(),
     },
@@ -1535,6 +1539,7 @@ export async function updateHeroCarouselLayout(formData: FormData) {
   await assertAdminAuthenticated();
   const redirectTo = String(formData.get("redirect_to") ?? "/admin/hero").trim() || "/admin/hero";
   const heroEnabled = formData.get("hero_enabled") === "on";
+  const heroVisibleOnMobile = formData.get("hero_visible_on_mobile") === "on";
   const heightRaw = Number.parseInt(String(formData.get("hero_height_px") ?? "420"), 10);
   const heroHeightPx = Number.isFinite(heightRaw)
     ? Math.min(720, Math.max(200, Math.round(heightRaw)))
@@ -1544,7 +1549,7 @@ export async function updateHeroCarouselLayout(formData: FormData) {
   const base = await loadStorefrontBase(supabase);
   await saveStorefrontMerged(
     supabase,
-    { ...base, heroEnabled, heroHeightPx },
+    { ...base, heroEnabled, heroHeightPx, heroVisibleOnMobile },
     redirectTo,
   );
 }
@@ -1556,6 +1561,7 @@ export async function updateHomeBannersHub(formData: FormData) {
   const now = new Date().toISOString();
 
   const heroEnabled = formData.get("hero_enabled") === "on";
+  const heroVisibleOnMobile = formData.get("hero_visible_on_mobile") === "on";
   const heroHeightRaw = Number.parseInt(String(formData.get("hero_height_px") ?? "420"), 10);
   const heroHeightPx = Number.isFinite(heroHeightRaw)
     ? Math.min(720, Math.max(200, Math.round(heroHeightRaw)))
@@ -1564,7 +1570,7 @@ export async function updateHomeBannersHub(formData: FormData) {
   const { error: heroErr } = await supabase.from("storefront_settings").upsert(
     {
       id: 1,
-      data: { ...base, heroEnabled, heroHeightPx, updated_marker: Date.now() } as never,
+      data: { ...base, heroEnabled, heroHeightPx, heroVisibleOnMobile, updated_marker: Date.now() } as never,
       updated_at: now,
     },
     { onConflict: "id" },
@@ -1573,31 +1579,34 @@ export async function updateHomeBannersHub(formData: FormData) {
 
   for (const bannerId of [1, 2] as const) {
     const is_active = formData.get(`promo_${bannerId}_active`) === "on";
+    const visible_on_mobile = formData.get(`promo_${bannerId}_visible_on_mobile`) === "on";
     const hRaw = Number.parseInt(String(formData.get(`promo_${bannerId}_height_px`) ?? "340"), 10);
     const height_px = Number.isFinite(hRaw) ? Math.min(720, Math.max(140, Math.round(hRaw))) : 340;
     const { error } = await supabase
       .from("home_reviews_banner")
-      .update({ is_active, height_px, updated_at: now })
+      .update({ is_active, visible_on_mobile, height_px, updated_at: now })
       .eq("id", bannerId);
     if (error) redirect(`/admin/home-banners?error=${encodeURIComponent(error.message)}`);
   }
 
   {
     const is_active = formData.get("after_browse_active") === "on";
+    const visible_on_mobile = formData.get("after_browse_visible_on_mobile") === "on";
     const hRaw = Number.parseInt(String(formData.get("after_browse_height_px") ?? "240"), 10);
     const height_px = Number.isFinite(hRaw) ? Math.min(640, Math.max(120, Math.round(hRaw))) : 240;
     const { error } = await supabase
       .from("home_after_browse_banner")
-      .update({ is_active, height_px, updated_at: now })
+      .update({ is_active, visible_on_mobile, height_px, updated_at: now })
       .eq("id", 1);
     if (error) redirect(`/admin/home-banners?error=${encodeURIComponent(error.message)}`);
   }
 
   {
     const is_active = formData.get("browse_showcase_active") === "on";
+    const visible_on_mobile = formData.get("browse_showcase_visible_on_mobile") === "on";
     const { error } = await supabase
       .from("home_browse_showcase")
-      .update({ is_active, updated_at: now })
+      .update({ is_active, visible_on_mobile, updated_at: now })
       .eq("id", 1);
     if (error) redirect(`/admin/home-banners?error=${encodeURIComponent(error.message)}`);
   }
@@ -1612,6 +1621,7 @@ export async function updateHomeBrowseShowcase(formData: FormData) {
   const category_id = String(formData.get("category_id") ?? "").trim() || null;
   const section_title = String(formData.get("section_title") ?? "").trim();
   const is_active = formData.get("is_active") === "on";
+  const visible_on_mobile = formData.get("visible_on_mobile") === "on";
 
   if (is_active && !category_id) redirect(`${BROWSE_SHOWCASE_ADMIN}?error=pick-category`);
 
@@ -1644,6 +1654,7 @@ export async function updateHomeBrowseShowcase(formData: FormData) {
       category_id,
       section_title,
       is_active,
+      visible_on_mobile,
       updated_at: new Date().toISOString(),
     },
     { onConflict: "id" },

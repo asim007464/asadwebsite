@@ -71,6 +71,8 @@ export type HomeReviewsBannerRow = {
   overlay_opacity: number;
   /** Banner strip height in px (admin). */
   height_px: number;
+  /** When false, banner is hidden on phone screens only. */
+  visible_on_mobile: boolean;
   is_active: boolean;
 };
 
@@ -80,6 +82,8 @@ export type HomeBrowseShowcaseRow = {
   category_id: string | null;
   section_title: string;
   is_active: boolean;
+  /** When false, browse grid is hidden on phone screens only. */
+  visible_on_mobile: boolean;
 };
 
 export type HomeBrowseShowcaseProductRow = {
@@ -96,6 +100,8 @@ export type HomeAfterBrowseBannerRow = {
   alt_text: string;
   /** Banner image height in px (admin). */
   height_px: number;
+  /** When false, banner is hidden on phone screens only. */
+  visible_on_mobile: boolean;
   is_active: boolean;
 };
 
