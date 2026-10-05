@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { updateHomeAfterBrowseBanner } from "@/app/admin/actions";
+import { BannerHeightField } from "@/components/admin/BannerHeightField";
 import { ADMIN_IMAGE_FILE_INPUT_CLASS, ADMIN_IMAGE_UPLOAD_HINT } from "@/lib/admin-media-upload";
+import { clampBannerHeightPx, DEFAULT_AFTER_BROWSE_HEIGHT_PX } from "@/lib/banner-height";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import type { HomeAfterBrowseBannerRow } from "@/lib/store-types";
 
@@ -11,6 +13,7 @@ const EMPTY_ROW: HomeAfterBrowseBannerRow = {
   image_url: "",
   link_href: "",
   alt_text: "",
+  height_px: DEFAULT_AFTER_BROWSE_HEIGHT_PX,
   is_active: false,
 };
 
@@ -41,6 +44,12 @@ export default async function AdminAfterBrowseBannerPage({
           image_url: String((data as HomeAfterBrowseBannerRow).image_url ?? ""),
           link_href: String((data as HomeAfterBrowseBannerRow).link_href ?? ""),
           alt_text: String((data as HomeAfterBrowseBannerRow).alt_text ?? ""),
+          height_px: clampBannerHeightPx(
+            (data as HomeAfterBrowseBannerRow).height_px,
+            DEFAULT_AFTER_BROWSE_HEIGHT_PX,
+            120,
+            640,
+          ),
           is_active: Boolean((data as HomeAfterBrowseBannerRow).is_active),
         } satisfies HomeAfterBrowseBannerRow);
 
@@ -154,10 +163,20 @@ export default async function AdminAfterBrowseBannerPage({
             />
           </div>
 
-          <label className="flex cursor-pointer items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-800">
-            <input type="checkbox" name="is_active" defaultChecked={row.is_active} className="h-4 w-4 rounded border-slate-300" />
-            Show on storefront (needs an image)
+          <label className="flex cursor-pointer items-center gap-3 rounded-2xl border border-emerald-200 bg-emerald-50/70 px-4 py-3.5 text-sm font-semibold text-slate-900">
+            <input
+              type="checkbox"
+              name="is_active"
+              defaultChecked={row.is_active}
+              className="h-5 w-5 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
+            />
+            <span>
+              Show this banner on the homepage
+              <span className="mt-0.5 block text-xs font-medium text-slate-600">Needs an image. Uncheck to hide.</span>
+            </span>
           </label>
+
+          <BannerHeightField defaultValue={row.height_px} min={120} max={640} />
 
           <button
             type="submit"

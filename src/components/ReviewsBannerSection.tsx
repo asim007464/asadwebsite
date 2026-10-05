@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { clampBannerHeightPx, DEFAULT_PROMO_BANNER_HEIGHT_PX } from "@/lib/banner-height";
 import type { HomeReviewsBannerRow } from "@/lib/store-types";
 
 function cn(...parts: Array<string | false | null | undefined>) {
@@ -29,6 +30,7 @@ export function ReviewsBannerSection({
   const href = banner.button_href.trim() || "/products";
   const imageOpacity = clampPct(Number(banner.image_opacity), 100) / 100;
   const overlayOpacity = clampPct(Number(banner.overlay_opacity), 70) / 100;
+  const heightPx = clampBannerHeightPx(banner.height_px, DEFAULT_PROMO_BANNER_HEIGHT_PX, 140, 720);
 
   const showBtn = label.length > 0 && href.length > 0;
 
@@ -39,13 +41,14 @@ export function ReviewsBannerSection({
       aria-labelledby={heading ? headingId : undefined}
       aria-label={heading ? undefined : "Promotional banner"}
       className={cn(
-        "relative isolate min-h-[18.5rem] overflow-hidden rounded-2xl bg-slate-900 shadow-lg ring-1 ring-slate-200/70 sm:min-h-[320px] sm:rounded-3xl md:min-h-[360px] lg:min-h-[380px]",
+        "relative isolate overflow-hidden rounded-2xl bg-slate-900 shadow-lg ring-1 ring-slate-200/70 sm:rounded-3xl",
         layout === "fullBleed" && "left-1/2 mt-10 w-[min(100dvw,100%)] max-w-none -translate-x-1/2 sm:mt-12",
         layout === "contained" && "w-full",
         className,
       )}
+      style={{ minHeight: heightPx }}
     >
-      {/* Background image — opacity controlled in Admin → Promo banners */}
+      {/* Background image — opacity / height controlled in Admin → Promo banners / Home banners */}
       <div
         aria-hidden
         className="absolute inset-0 scale-105 bg-center bg-cover bg-no-repeat"
@@ -54,7 +57,6 @@ export function ReviewsBannerSection({
           opacity: imageOpacity,
         }}
       />
-      {/* Dark overlays — strength controlled by overlay_opacity */}
       <div
         className="pointer-events-none absolute inset-0 bg-slate-950 backdrop-blur-[1px]"
         style={{ opacity: overlayOpacity * 0.55 }}
@@ -71,7 +73,10 @@ export function ReviewsBannerSection({
         aria-hidden
       />
 
-      <div className="relative z-10 mx-auto flex min-h-[18.5rem] max-w-7xl flex-col justify-center gap-5 px-4 py-14 sm:min-h-[320px] sm:gap-6 sm:px-8 sm:py-16 md:min-h-[360px] md:flex-row md:items-center md:justify-between md:py-20 lg:min-h-[380px] lg:px-10">
+      <div
+        className="relative z-10 mx-auto flex max-w-7xl flex-col justify-center gap-5 px-4 py-10 sm:gap-6 sm:px-8 sm:py-12 md:flex-row md:items-center md:justify-between md:py-14 lg:px-10"
+        style={{ minHeight: heightPx }}
+      >
         <div className="max-w-2xl space-y-2.5 text-white sm:space-y-3">
           {heading ? (
             <h2 id={headingId} className="text-xl font-bold tracking-tight sm:text-3xl lg:text-[1.875rem]">
@@ -90,14 +95,14 @@ export function ReviewsBannerSection({
                 href={href}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex h-11 w-full items-center justify-center rounded-full bg-white px-6 text-sm font-bold text-blue-900 shadow-md shadow-blue-950/35 transition hover:bg-blue-50 sm:h-12 sm:w-auto sm:min-w-[10.5rem] sm:px-8"
+                className="inline-flex h-12 min-w-[10.5rem] items-center justify-center rounded-full bg-white px-8 text-sm font-bold text-blue-900 shadow-md shadow-blue-950/35 transition hover:bg-blue-50"
               >
                 {label}
               </a>
             ) : (
               <Link
                 href={href}
-                className="inline-flex h-11 w-full items-center justify-center rounded-full bg-white px-6 text-sm font-bold text-blue-900 shadow-md shadow-blue-950/35 transition hover:bg-blue-50 sm:h-12 sm:w-auto sm:min-w-[10.5rem] sm:px-8"
+                className="inline-flex h-12 min-w-[10.5rem] items-center justify-center rounded-full bg-white px-8 text-sm font-bold text-blue-900 shadow-md shadow-blue-950/35 transition hover:bg-blue-50"
               >
                 {label}
               </Link>

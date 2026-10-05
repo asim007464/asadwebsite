@@ -54,6 +54,10 @@ export type StorefrontPayload = {
   storeLng?: number;
   googlePlaceFeatureRef?: string;
   googleMapsPlaceUrl?: string;
+  /** When false, homepage hero carousel is hidden. */
+  heroEnabled?: boolean;
+  /** Homepage hero carousel height in pixels. */
+  heroHeightPx?: number;
 };
 
 export const DEFAULT_STOREFRONT: StorefrontPayload & { socialLinks: SocialLinkRow[] } = {
@@ -112,6 +116,8 @@ export const DEFAULT_STOREFRONT: StorefrontPayload & { socialLinks: SocialLinkRo
   googlePlaceFeatureRef: "0x3922f15e62348bcf:0xd4712bb9e23c818e",
   googleMapsPlaceUrl:
     "https://www.google.com/maps/place/Al+Makkah+Electric+Traders/@31.0658769,72.9439501,17z/data=!3m1!4b1!4m6!3m5!1s0x3922f15e62348bcf:0xd4712bb9e23c818e!8m2!3d31.0658769!4d72.9439501!16s%2Fg%2F11ynf8lkz5",
+  heroEnabled: true,
+  heroHeightPx: 420,
 };
 
 export type ResolvedStorefront = typeof DEFAULT_STOREFRONT;

@@ -1,8 +1,16 @@
 import Link from "next/link";
 import { SafeRemoteImage } from "@/components/SafeRemoteImage";
-import { createHeroSlide, deleteHeroSlide, updateHeroSlide } from "@/app/admin/actions";
+import {
+  createHeroSlide,
+  deleteHeroSlide,
+  updateHeroCarouselLayout,
+  updateHeroSlide,
+} from "@/app/admin/actions";
+import { BannerHeightField } from "@/components/admin/BannerHeightField";
 import { ADMIN_IMAGE_FILE_INPUT_CLASS, ADMIN_IMAGE_UPLOAD_HINT } from "@/lib/admin-media-upload";
+import { clampBannerHeightPx, DEFAULT_HERO_HEIGHT_PX } from "@/lib/banner-height";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+import { getStorefrontPayload } from "@/lib/storefront";
 import type { HeroSlideRow } from "@/lib/store-types";
 
 export const dynamic = "force-dynamic";
@@ -14,11 +22,17 @@ export default async function AdminHeroSlidesPage({
 }) {
   const sp = await searchParams;
   const error = typeof sp.error === "string" ? sp.error : undefined;
+  const saved = sp.saved === "1";
 
   const supabase = createSupabaseAdminClient();
-  const { data: rows, error: loadError } = await supabase.from("hero_slides").select("id,url,alt,sort_order,is_active").order("sort_order");
+  const [{ data: rows, error: loadError }, storefront] = await Promise.all([
+    supabase.from("hero_slides").select("id,url,alt,sort_order,is_active").order("sort_order"),
+    getStorefrontPayload(),
+  ]);
 
   const slides = (rows as HeroSlideRow[] | null) ?? [];
+  const heroEnabled = storefront.heroEnabled !== false;
+  const heroHeightPx = clampBannerHeightPx(storefront.heroHeightPx, DEFAULT_HERO_HEIGHT_PX, 200, 720);
 
   return (
     <main className="py-6 lg:py-0">
@@ -31,10 +45,53 @@ export default async function AdminHeroSlidesPage({
               <span className="font-semibold">Active</span> are visible to shoppers. Use an <span className="font-semibold">https://</span> image URL or upload a file from your computer.
             </p>
           </div>
-          <Link href="/admin" className="text-sm font-semibold text-blue-700 hover:text-blue-800">
-            ← Dashboard
-          </Link>
+          <div className="flex flex-col items-start gap-2 sm:items-end">
+            <Link href="/admin/home-banners" className="text-sm font-semibold text-blue-700 hover:text-blue-800">
+              All home banners →
+            </Link>
+            <Link href="/admin" className="text-sm font-semibold text-slate-500 hover:text-slate-800">
+              ← Dashboard
+            </Link>
+          </div>
         </div>
+
+        {saved ? (
+          <div className="mt-5 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-900">
+            Hero layout saved.
+          </div>
+        ) : null}
+
+        <form
+          action={updateHeroCarouselLayout}
+          className="mt-6 space-y-4 rounded-3xl border border-slate-200 bg-slate-50/80 p-5"
+        >
+          <input type="hidden" name="redirect_to" value="/admin/hero" />
+          <label className="flex cursor-pointer items-center gap-3 rounded-2xl border border-emerald-200 bg-emerald-50/70 px-4 py-3.5 text-sm font-semibold text-slate-900">
+            <input
+              type="checkbox"
+              name="hero_enabled"
+              defaultChecked={heroEnabled}
+              className="h-5 w-5 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
+            />
+            <span>
+              Show hero carousel on homepage
+              <span className="mt-0.5 block text-xs font-medium text-slate-600">Uncheck to hide the whole top banner.</span>
+            </span>
+          </label>
+          <BannerHeightField
+            name="hero_height_px"
+            defaultValue={heroHeightPx}
+            min={200}
+            max={720}
+            label="Hero height"
+          />
+          <button
+            type="submit"
+            className="inline-flex h-11 items-center justify-center rounded-full bg-blue-600 px-6 text-sm font-semibold text-white hover:bg-blue-700"
+          >
+            Save hero layout
+          </button>
+        </form>
 
         {loadError ? (
           <div className="mt-5 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-950">

@@ -145,7 +145,12 @@ export default async function AdminBrowseShowcasePage({
           </div>
 
           <label className="flex cursor-pointer items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-800 md:col-span-2">
-            <input type="checkbox" name="is_active" defaultChecked={showcase.is_active} className="h-4 w-4 rounded border-slate-300" />
+            <input
+              type="checkbox"
+              name="is_active"
+              defaultChecked={showcase.is_active}
+              className="h-5 w-5 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
+            />
             Use curated product grid on homepage (needs category + at least one product below)
           </label>
 
