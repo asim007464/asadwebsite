@@ -250,11 +250,11 @@ async function HomeServer() {
           <div className="flex flex-wrap items-end justify-between gap-4">
             <div className="min-w-0">
               <h2 className="text-lg font-semibold tracking-tight text-slate-900">
-                Featured picks
+                {storefront.featuredSectionTitle?.trim() || "Featured picks"}
               </h2>
               <p className="mt-1 text-sm text-slate-600">
-                Hot-selling highlights chosen by admin — four across on
-                extra-wide screens; step through one SKU at a time.
+                {storefront.featuredSectionLead?.trim() ||
+                  "Hot-selling highlights chosen by admin — four across on extra-wide screens; step through one SKU at a time."}
               </p>
             </div>
             <Link
@@ -316,10 +316,11 @@ async function HomeServer() {
           <div className="flex flex-wrap items-end justify-between gap-4">
             <div className="min-w-0">
               <h2 className="text-lg font-semibold tracking-tight text-slate-900">
-                Gadget section
+                {storefront.gadgetsSectionTitle?.trim() || "Gadget section"}
               </h2>
               <p className="mt-1 text-sm text-slate-600">
-                More popular items — same layout as Featured picks.
+                {storefront.gadgetsSectionLead?.trim() ||
+                  "More popular items — same layout as Featured picks."}
               </p>
             </div>
             <Link
@@ -399,7 +400,10 @@ async function HomeServer() {
         >
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <TestimonialsSection
+              eyebrow={storefront.testimonialsEyebrow}
+              heading={storefront.testimonialsHeading}
               intro={storefront.testimonialsLead}
+              ratingNote={storefront.reviewsRatingNote}
               testimonials={
                 (storefront.testimonials ?? []).length > 0
                   ? storefront.testimonials

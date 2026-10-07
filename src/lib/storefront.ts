@@ -9,6 +9,10 @@ export type StorefrontTestimonial = {
   initials: string;
 };
 
+export type AboutValueCard = { title: string; body: string };
+export type AboutWorkStep = { step: string; title: string; body: string };
+export type AboutTeamMember = { name: string; role: string; note: string; initials: string };
+
 export type StorefrontPayload = {
   socialLinks?: SocialLinkRow[];
   testimonialsLead?: string;
@@ -33,9 +37,37 @@ export type StorefrontPayload = {
   supportCommitmentsIntro?: string;
   homeStatsTitle?: string;
   homeStatsLead?: string;
+  /** Homepage Featured picks carousel heading + paragraph. */
+  featuredSectionTitle?: string;
+  featuredSectionLead?: string;
+  /** Homepage Gadget section heading + paragraph. */
+  gadgetsSectionTitle?: string;
+  gadgetsSectionLead?: string;
+  /** Reviews block eyebrow / heading / rating-card note. */
+  testimonialsEyebrow?: string;
+  testimonialsHeading?: string;
+  reviewsRatingNote?: string;
   aboutPageTitle?: string;
   aboutPageLead?: string;
   aboutChips?: string[];
+  /** Small label above the about banner title. */
+  aboutEyebrow?: string;
+  aboutCtaPrimaryLabel?: string;
+  aboutCtaPrimaryHref?: string;
+  aboutCtaSecondaryLabel?: string;
+  aboutCtaSecondaryHref?: string;
+  /** Banner height in px (desktop). */
+  aboutBannerHeightPx?: number;
+  aboutValues?: AboutValueCard[];
+  aboutHowTitle?: string;
+  aboutHowLead?: string;
+  aboutHowBadge?: string;
+  aboutHowSteps?: AboutWorkStep[];
+  aboutTeamEyebrow?: string;
+  aboutTeamTitle?: string;
+  aboutTeamLead?: string;
+  aboutTeamCtaLabel?: string;
+  aboutTeam?: AboutTeamMember[];
   contactPageTitle?: string;
   contactPageLead?: string;
   contactEmail?: string;
@@ -93,25 +125,83 @@ export const DEFAULT_STOREFRONT: StorefrontPayload & { socialLinks: SocialLinkRo
   homeStatsTitle: "Trusted home appliances & electrical accessories — with transparent pricing.",
   homeStatsLead:
     "Cash on delivery, phone confirmation, and nationwide dispatch. These figures are placeholders — swap to real business stats anytime.",
+  featuredSectionTitle: "Featured picks",
+  featuredSectionLead:
+    "Hot-selling highlights chosen by admin — four across on extra-wide screens; step through one SKU at a time.",
+  gadgetsSectionTitle: "Gadget section",
+  gadgetsSectionLead: "More popular items — same layout as Featured picks.",
+  testimonialsEyebrow: "Reviews",
+  testimonialsHeading: "What customers say",
+  reviewsRatingNote: "Illustrative rating · swap for real Google / Trustpilot embed when ready.",
   aboutPageTitle: "Home appliances & electrical accessories for everyday Pakistan households",
   aboutPageLead:
     "Al Makkah Electric Traders is built for fans, LED lighting, heaters, coolers, kitchen helpers, grooming tools, and power accessories — organized by category with variant‑level specs and COD checkout. Every listing should spell out wattage, finishes, and what's in the box before you order.",
   aboutChips: ["Genuine brands", "COD with confirmation", "Nationwide dispatch", "Specs per variant"],
-  contactPageTitle: "We coordinate COD packs like procurement teammates",
-  contactPageLead:
-    "Reach out for live pricing, seasonal bundles, or to sanity-check SKUs before big buys. Share lists or photos via WhatsApp—nothing ships until both sides confirm the order.",
+  aboutEyebrow: "About Al Makkah Electric Traders",
+  aboutCtaPrimaryLabel: "Browse catalog",
+  aboutCtaPrimaryHref: "/products",
+  aboutCtaSecondaryLabel: "Contact sales",
+  aboutCtaSecondaryHref: "/contact",
+  aboutBannerHeightPx: 420,
+  aboutValues: [
+    {
+      title: "Genuine products",
+      body: "Brand-backed SKUs with documented specs—ideal when warranties or voltage compatibility matter.",
+    },
+    {
+      title: "COD-first",
+      body: "Cash on delivery with human confirmation before goods leave the warehouse.",
+    },
+    {
+      title: "Fast support",
+      body: "Guidance on watt limits, plug types, cooler pads, clipper guards, and accessory pairing.",
+    },
+  ],
+  aboutHowTitle: "How we work with shoppers",
+  aboutHowLead:
+    "Whether you are furnishing a new flat or restocking a shop shelf, the flow stays simple: shortlist online → confirm specs → receive picking confirmation → pay on delivery.",
+  aboutHowBadge: "Straightforward onboarding",
+  aboutHowSteps: [
+    {
+      step: "01",
+      title: "Share your shopping list",
+      body: "Tell us models, colours, wattages, or bundle counts—we mirror that structure in your cart summary.",
+    },
+    {
+      step: "02",
+      title: "Validate variants",
+      body: "Voltage, plug style, remote inclusion, and jug materials are double-checked before dispatch paperwork prints.",
+    },
+    {
+      step: "03",
+      title: "COD handoff",
+      body: "Courier-ready packs labeled clearly so drivers know when an item needs upright orientation or extra padding.",
+    },
+  ],
+  aboutTeamEyebrow: "Team",
+  aboutTeamTitle: "Meet our team",
+  aboutTeamLead:
+    "The people behind product sourcing, variant checks, and COD confirmation. Replace names/roles with your real staff anytime.",
+  aboutTeamCtaLabel: "Talk to us",
+  aboutTeam: [
+    { name: "Asad", role: "Owner & procurement", note: "Sourcing, pricing, vendor coordination.", initials: "AS" },
+    { name: "Hassan", role: "Sales & WhatsApp support", note: "Spec checks, COD confirmation.", initials: "HA" },
+    { name: "Amina", role: "Dispatch & packing", note: "Variant labeling, fragile handling.", initials: "AK" },
+    { name: "Bilal", role: "Catalog & listings", note: "Photos, attributes, SKU hygiene.", initials: "BM" },
+  ],
+  contactPageTitle: "Call, WhatsApp, or visit us",
+  contactPageLead: "Quotes, stock checks, and COD confirmation — we reply during desk hours.",
   contactEmail: "almakkahelectrictraders@gmail.com",
-  contactChannel1Label: "Sales desk · Lahore",
+  contactChannel1Label: "Sales desk",
   contactChannel1Display: "0335‑744‑6353",
   contactChannel1Tel: "+923357446353",
   contactChannel1Wa: "https://wa.me/923357446353",
-  contactChannel1Notes:
-    "Quickest channel for quotes, fan finishes, cooler availability, and wattage checks.",
-  contactChannel2Label: "Dispatch & COD confirmations",
+  contactChannel1Notes: "Quotes & stock checks",
+  contactChannel2Label: "Dispatch / COD",
   contactChannel2Display: "0326‑715‑3153",
   contactChannel2Tel: "+923267153153",
   contactChannel2Wa: "https://wa.me/923267153153",
-  contactChannel2Notes: "Share airway bills, reschedule courier drops, or update quantities mid-flight.",
+  contactChannel2Notes: "Orders & courier updates",
   storeLocationName: "Al Makkah Electric Traders",
   storeLat: 31.0658769,
   storeLng: 72.9439501,
@@ -143,6 +233,55 @@ function normalizeTestimonials(raw: unknown): StorefrontTestimonial[] {
   return out;
 }
 
+function normalizeAboutValues(raw: unknown): AboutValueCard[] {
+  if (!Array.isArray(raw)) return DEFAULT_STOREFRONT.aboutValues;
+  const out: AboutValueCard[] = [];
+  for (const v of raw) {
+    if (!v || typeof v !== "object") continue;
+    const o = v as Record<string, unknown>;
+    const title = String(o.title ?? "").trim();
+    const body = String(o.body ?? "").trim();
+    if (!title || !body) continue;
+    out.push({ title, body });
+    if (out.length >= 6) break;
+  }
+  return out.length ? out : DEFAULT_STOREFRONT.aboutValues;
+}
+
+function normalizeAboutHowSteps(raw: unknown): AboutWorkStep[] {
+  if (!Array.isArray(raw)) return DEFAULT_STOREFRONT.aboutHowSteps;
+  const out: AboutWorkStep[] = [];
+  for (const v of raw) {
+    if (!v || typeof v !== "object") continue;
+    const o = v as Record<string, unknown>;
+    const step = String(o.step ?? "").trim();
+    const title = String(o.title ?? "").trim();
+    const body = String(o.body ?? "").trim();
+    if (!step || !title || !body) continue;
+    out.push({ step, title, body });
+    if (out.length >= 6) break;
+  }
+  return out.length ? out : DEFAULT_STOREFRONT.aboutHowSteps;
+}
+
+function normalizeAboutTeam(raw: unknown): AboutTeamMember[] {
+  if (!Array.isArray(raw)) return DEFAULT_STOREFRONT.aboutTeam;
+  const out: AboutTeamMember[] = [];
+  for (const v of raw) {
+    if (!v || typeof v !== "object") continue;
+    const o = v as Record<string, unknown>;
+    const name = String(o.name ?? "").trim();
+    const role = String(o.role ?? "").trim();
+    const note = String(o.note ?? "").trim();
+    let initials = String(o.initials ?? "").trim();
+    if (!initials && name) initials = name.split(/\s/).map((x) => x[0]).join("").slice(0, 4).toUpperCase();
+    if (!name || !role || !note || !initials) continue;
+    out.push({ name, role, note, initials: initials.slice(0, 4) });
+    if (out.length >= 8) break;
+  }
+  return out.length ? out : DEFAULT_STOREFRONT.aboutTeam;
+}
+
 export async function getStorefrontPayload(): Promise<ResolvedStorefront> {
   try {
     const supabase = createSupabaseAdminClient();
@@ -157,12 +296,20 @@ export async function getStorefrontPayload(): Promise<ResolvedStorefront> {
     const aboutChips = Array.isArray(patch.aboutChips)
       ? patch.aboutChips.map((c) => String(c).trim()).filter(Boolean).slice(0, 12)
       : DEFAULT_STOREFRONT.aboutChips;
+    const aboutBannerHeightPx =
+      typeof patch.aboutBannerHeightPx === "number" && Number.isFinite(patch.aboutBannerHeightPx)
+        ? Math.min(720, Math.max(280, Math.round(patch.aboutBannerHeightPx)))
+        : DEFAULT_STOREFRONT.aboutBannerHeightPx;
     return {
       ...DEFAULT_STOREFRONT,
       ...patch,
       socialLinks: social,
       testimonials,
       aboutChips: aboutChips.length ? aboutChips : DEFAULT_STOREFRONT.aboutChips,
+      aboutBannerHeightPx,
+      aboutValues: normalizeAboutValues(patch.aboutValues),
+      aboutHowSteps: normalizeAboutHowSteps(patch.aboutHowSteps),
+      aboutTeam: normalizeAboutTeam(patch.aboutTeam),
     };
   } catch {
     return DEFAULT_STOREFRONT;

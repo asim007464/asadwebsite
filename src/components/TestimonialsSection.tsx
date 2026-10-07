@@ -51,8 +51,25 @@ function GoogleGlyph({ className = "" }: { className?: string }) {
   );
 }
 
-export function TestimonialsSection({ intro, testimonials }: { intro?: string; testimonials?: readonly Testimonial[] }) {
+export function TestimonialsSection({
+  eyebrow,
+  heading,
+  intro,
+  ratingNote,
+  testimonials,
+}: {
+  eyebrow?: string;
+  heading?: string;
+  intro?: string;
+  ratingNote?: string;
+  testimonials?: readonly Testimonial[];
+}) {
   const items = testimonials && testimonials.length > 0 ? testimonials : DEMO_TESTIMONIALS;
+  const eyebrowText = eyebrow?.trim() || "Reviews";
+  const headingText = heading?.trim() || "What customers say";
+  const ratingNoteText =
+    ratingNote?.trim() ||
+    "Illustrative rating · swap for real Google / Trustpilot embed when ready.";
   const [perPage, setPerPage] = useState(2);
 
   useEffect(() => {
@@ -73,9 +90,9 @@ export function TestimonialsSection({ intro, testimonials }: { intro?: string; t
     <div className="relative" aria-labelledby="testimonials-heading">
       <div className="flex flex-col gap-8 lg:flex-row lg:items-start lg:justify-between lg:gap-12">
         <div className="max-w-xl">
-          <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-blue-700">Reviews</p>
+          <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-blue-700">{eyebrowText}</p>
           <h2 id="testimonials-heading" className="mt-3 text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">
-            What customers say
+            {headingText}
           </h2>
           <p className="mt-3 text-sm leading-relaxed text-slate-600 sm:text-base">
             {intro?.trim()?.length
@@ -94,9 +111,7 @@ export function TestimonialsSection({ intro, testimonials }: { intro?: string; t
             <GoogleGlyph className="h-7 w-7 shrink-0" />
             <StarRow />
           </div>
-          <p className="text-xs font-medium text-slate-500 sm:max-w-[11rem]">
-            Illustrative rating · swap for real Google / Trustpilot embed when ready.
-          </p>
+          <p className="text-xs font-medium text-slate-500 sm:max-w-[11rem]">{ratingNoteText}</p>
         </div>
       </div>
 

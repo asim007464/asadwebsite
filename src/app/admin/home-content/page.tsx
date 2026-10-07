@@ -16,6 +16,7 @@ export default async function AdminHomeContentPage({
 }) {
   const sp = await searchParams;
   const error = typeof sp.error === "string" ? sp.error : undefined;
+  const saved = sp.saved === "1";
   const storefront = await getStorefrontPayload();
   const testimonialsDefault =
     storefront.testimonials && storefront.testimonials.length > 0
@@ -29,21 +30,20 @@ export default async function AdminHomeContentPage({
           <div>
             <h1 className="text-2xl font-semibold tracking-tight text-slate-900">Home page content</h1>
             <p className="mt-2 max-w-2xl text-sm text-slate-600">
-              Edit the trust/stats block and customer reviews section on the homepage. Hero images are managed under{" "}
-              <Link href="/admin/hero" className="font-semibold text-blue-700 hover:text-blue-800">
-                Hero slides
-              </Link>
-              ; promo strips under{" "}
-              <Link href="/admin/reviews-banner" className="font-semibold text-blue-700 hover:text-blue-800">
-                Promo banners
-              </Link>
-              .
+              Edit headings and paragraphs above Featured picks, Gadget section, trust/stats, and customer reviews on the
+              homepage.
             </p>
           </div>
           <Link href="/admin" className="text-sm font-semibold text-blue-700 hover:text-blue-800">
             ← Dashboard
           </Link>
         </div>
+
+        {saved ? (
+          <div className="mt-5 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-900">
+            Home content saved.
+          </div>
+        ) : null}
 
         {error ? (
           <div className="mt-5 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-800">
@@ -53,7 +53,57 @@ export default async function AdminHomeContentPage({
 
         <form action={updateHomePageContent} className="mt-8 space-y-8 border-t border-slate-100 pt-8">
           <section>
-            <h2 className="text-lg font-semibold text-slate-900">Trust & stats section</h2>
+            <h2 className="text-lg font-semibold text-slate-900">Featured picks section</h2>
+            <p className="mt-1 text-xs text-slate-500">Heading and paragraph above the Featured picks carousel.</p>
+            <div className="mt-4 grid gap-5">
+              <div>
+                <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">Heading</label>
+                <input
+                  name="featured_section_title"
+                  defaultValue={storefront.featuredSectionTitle}
+                  className={inputClass}
+                  placeholder="Featured picks"
+                />
+              </div>
+              <div>
+                <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">Paragraph</label>
+                <textarea
+                  name="featured_section_lead"
+                  rows={3}
+                  defaultValue={storefront.featuredSectionLead}
+                  className={textareaClass}
+                />
+              </div>
+            </div>
+          </section>
+
+          <section>
+            <h2 className="text-lg font-semibold text-slate-900">Gadget section</h2>
+            <p className="mt-1 text-xs text-slate-500">Heading and paragraph above the Gadget carousel.</p>
+            <div className="mt-4 grid gap-5">
+              <div>
+                <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">Heading</label>
+                <input
+                  name="gadgets_section_title"
+                  defaultValue={storefront.gadgetsSectionTitle}
+                  className={inputClass}
+                  placeholder="Gadget section"
+                />
+              </div>
+              <div>
+                <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">Paragraph</label>
+                <textarea
+                  name="gadgets_section_lead"
+                  rows={3}
+                  defaultValue={storefront.gadgetsSectionLead}
+                  className={textareaClass}
+                />
+              </div>
+            </div>
+          </section>
+
+          <section>
+            <h2 className="text-lg font-semibold text-slate-900">Trust &amp; stats section</h2>
             <div className="mt-4 grid gap-5">
               <div>
                 <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">Section heading</label>
@@ -69,12 +119,43 @@ export default async function AdminHomeContentPage({
           <section>
             <h2 className="text-lg font-semibold text-slate-900">Customer reviews</h2>
             <p className="mt-1 text-xs text-slate-500">
-              Intro appears above the review carousel. JSON is optional — leave blank to keep existing reviews.
+              Label, heading, intro, and the short note next to the Google rating card. Reviews JSON is optional — leave
+              blank to keep existing quotes.
             </p>
             <div className="mt-4 grid gap-5">
+              <div className="grid gap-5 sm:grid-cols-2">
+                <div>
+                  <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">Small label</label>
+                  <input
+                    name="testimonials_eyebrow"
+                    defaultValue={storefront.testimonialsEyebrow}
+                    className={inputClass}
+                    placeholder="Reviews"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">Main heading</label>
+                  <input
+                    name="testimonials_heading"
+                    defaultValue={storefront.testimonialsHeading}
+                    className={inputClass}
+                    placeholder="What customers say"
+                  />
+                </div>
+              </div>
               <div>
-                <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">Reviews intro</label>
+                <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">Intro paragraph</label>
                 <textarea name="testimonials_lead" rows={3} defaultValue={storefront.testimonialsLead} className={textareaClass} />
+              </div>
+              <div>
+                <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">Rating card note</label>
+                <textarea
+                  name="reviews_rating_note"
+                  rows={2}
+                  defaultValue={storefront.reviewsRatingNote}
+                  className={textareaClass}
+                  placeholder="Illustrative rating · swap for real Google / Trustpilot embed when ready."
+                />
               </div>
               <div>
                 <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">Reviews JSON (optional)</label>
@@ -91,7 +172,7 @@ export default async function AdminHomeContentPage({
 
           <button
             type="submit"
-            className="inline-flex h-12 items-center justify-center rounded-full bg-blue-600 px-8 text-sm font-semibold text-white shadow-sm hover:bg-blue-700"
+            className="inline-flex h-12 items-center justify-center rounded-full bg-blue-600 px-8 text-sm font-semibold text-white hover:bg-blue-700"
           >
             Save home content
           </button>
