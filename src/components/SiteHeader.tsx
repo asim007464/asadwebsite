@@ -363,10 +363,10 @@ export function SiteHeader() {
           )}
           {/* Mobile / tablet wordmark — fills space between logo and cart */}
           <span className="flex min-w-0 flex-1 flex-col justify-center lg:hidden">
-            <span className="block truncate text-[12px] font-bold uppercase leading-tight tracking-wide text-blue-700 sm:text-[13px]">
+            <span className="block truncate text-[12px] font-bold uppercase leading-tight tracking-wide text-slate-900 sm:text-[13px]">
               {SITE_BRAND_LINE1}
             </span>
-            <span className="mt-0.5 block truncate text-[9px] font-semibold uppercase leading-tight tracking-[0.12em] text-blue-600/90 sm:text-[10px]">
+            <span className="mt-0.5 block truncate text-[9px] font-semibold uppercase leading-tight tracking-[0.12em] text-slate-900 sm:text-[10px]">
               {SITE_BRAND_LINE2}
             </span>
           </span>

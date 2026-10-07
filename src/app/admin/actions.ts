@@ -1840,7 +1840,14 @@ export async function updateHomePageContent(formData: FormData) {
   const patch: Record<string, unknown> = {
     homeStatsTitle: pick("home_stats_title"),
     homeStatsLead: pick("home_stats_lead"),
+    featuredSectionTitle: pick("featured_section_title"),
+    featuredSectionLead: pick("featured_section_lead"),
+    gadgetsSectionTitle: pick("gadgets_section_title"),
+    gadgetsSectionLead: pick("gadgets_section_lead"),
+    testimonialsEyebrow: pick("testimonials_eyebrow"),
+    testimonialsHeading: pick("testimonials_heading"),
     testimonialsLead: pick("testimonials_lead"),
+    reviewsRatingNote: pick("reviews_rating_note"),
   };
   const testimonials = parseTestimonialsFromForm(formData, pick);
   if (testimonials) patch.testimonials = testimonials;
@@ -1878,15 +1885,63 @@ export async function updateAboutPageContent(formData: FormData) {
     .map((s) => s.trim())
     .filter(Boolean)
     .slice(0, 12);
+
+  const aboutValues = [0, 1, 2]
+    .map((i) => ({
+      title: pick(`about_value_${i}_title`),
+      body: pick(`about_value_${i}_body`),
+    }))
+    .filter((v) => v.title && v.body);
+
+  const aboutHowSteps = [0, 1, 2]
+    .map((i) => ({
+      step: pick(`about_how_${i}_step`),
+      title: pick(`about_how_${i}_title`),
+      body: pick(`about_how_${i}_body`),
+    }))
+    .filter((v) => v.step && v.title && v.body);
+
+  const aboutTeam = [0, 1, 2, 3]
+    .map((i) => {
+      const name = pick(`about_team_${i}_name`);
+      const role = pick(`about_team_${i}_role`);
+      const note = pick(`about_team_${i}_note`);
+      let initials = pick(`about_team_${i}_initials`);
+      if (!initials && name) initials = name.split(/\s/).map((x) => x[0]).join("").slice(0, 4).toUpperCase();
+      return { name, role, note, initials: initials.slice(0, 4) };
+    })
+    .filter((m) => m.name && m.role && m.note && m.initials);
+
+  const heightRaw = Number.parseInt(pick("about_banner_height_px") || "420", 10);
+  const aboutBannerHeightPx = Number.isFinite(heightRaw)
+    ? Math.min(720, Math.max(280, Math.round(heightRaw)))
+    : 420;
+
   await saveStorefrontMerged(
     supabase,
     {
       ...base,
+      aboutEyebrow: pick("about_eyebrow"),
       aboutPageTitle: pick("about_page_title"),
       aboutPageLead: pick("about_page_lead"),
       aboutChips: chips.length ? chips : base.aboutChips,
+      aboutCtaPrimaryLabel: pick("about_cta_primary_label"),
+      aboutCtaPrimaryHref: pick("about_cta_primary_href") || "/products",
+      aboutCtaSecondaryLabel: pick("about_cta_secondary_label"),
+      aboutCtaSecondaryHref: pick("about_cta_secondary_href") || "/contact",
+      aboutBannerHeightPx,
       aboutPrimaryImage,
       aboutSecondaryImage,
+      aboutValues: aboutValues.length ? aboutValues : base.aboutValues,
+      aboutHowTitle: pick("about_how_title"),
+      aboutHowLead: pick("about_how_lead"),
+      aboutHowBadge: pick("about_how_badge"),
+      aboutHowSteps: aboutHowSteps.length ? aboutHowSteps : base.aboutHowSteps,
+      aboutTeamEyebrow: pick("about_team_eyebrow"),
+      aboutTeamTitle: pick("about_team_title"),
+      aboutTeamLead: pick("about_team_lead"),
+      aboutTeamCtaLabel: pick("about_team_cta_label"),
+      aboutTeam: aboutTeam.length ? aboutTeam : base.aboutTeam,
     },
     "/admin/about-content",
   );

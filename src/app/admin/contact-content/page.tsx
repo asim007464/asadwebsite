@@ -29,7 +29,7 @@ export default async function AdminContactContentPage({
           <div>
             <h1 className="text-2xl font-semibold tracking-tight text-slate-900">Contact page content</h1>
             <p className="mt-2 max-w-2xl text-sm text-slate-600">
-              Phones, email, support hours, store location, map link, and photos for{" "}
+              Short intro, four contact cards (phones, email, hours), photos, and map for{" "}
               <Link href="/contact" className="font-semibold text-blue-700 hover:text-blue-800">
                 /contact
               </Link>
@@ -48,91 +48,116 @@ export default async function AdminContactContentPage({
         ) : null}
         {saved ? (
           <div className="mt-5 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-900">
-            Saved — photo previews above show the stored images.
+            Contact page saved.
           </div>
         ) : null}
 
-        <form action={updateContactPageContent} className="mt-8 space-y-8 border-t border-slate-100 pt-8">
-          <section className="grid gap-5">
+        <form action={updateContactPageContent} className="mt-8 space-y-10 border-t border-slate-100 pt-8">
+          <section className="space-y-5">
             <div>
-              <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">Page heading</label>
+              <h2 className="text-lg font-semibold text-slate-900">1. Top intro</h2>
+              <p className="mt-1 text-xs text-slate-500">Keep these short — they sit above the four cards.</p>
+            </div>
+            <div>
+              <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">Heading</label>
               <input name="contact_page_title" defaultValue={s.contactPageTitle} className={inputClass} />
             </div>
             <div>
-              <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">Intro paragraph</label>
-              <textarea name="contact_page_lead" rows={3} defaultValue={s.contactPageLead} className={textareaClass} />
-            </div>
-            <div>
-              <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">Email</label>
-              <input name="contact_email" type="email" defaultValue={s.contactEmail} className={inputClass} />
+              <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">Short paragraph</label>
+              <textarea name="contact_page_lead" rows={2} defaultValue={s.contactPageLead} className={textareaClass} />
             </div>
           </section>
 
-          <section>
-            <h2 className="text-lg font-semibold text-slate-900">WhatsApp / phone channels</h2>
-            <div className="mt-4 grid gap-6 lg:grid-cols-2">
+          <section className="space-y-4 border-t border-slate-100 pt-8">
+            <div>
+              <h2 className="text-lg font-semibold text-slate-900">2. Four contact cards</h2>
+              <p className="mt-1 text-xs text-slate-500">
+                Shown in a responsive row: Sales · Dispatch · Email · Hours.
+              </p>
+            </div>
+
+            <div className="grid gap-4 lg:grid-cols-2">
               {[1, 2].map((n) => (
-                <div key={n} className="rounded-2xl border border-slate-200 bg-slate-50/80 p-4">
-                  <div className="text-sm font-semibold text-slate-900">Channel {n}</div>
+                <div key={n} className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4">
+                  <div className="text-sm font-semibold text-slate-900">
+                    Card {n} — {n === 1 ? "Sales phone" : "Dispatch phone"}
+                  </div>
                   <div className="mt-3 grid gap-3">
-                    <input
-                      name={`contact_channel${n}_label`}
-                      defaultValue={n === 1 ? s.contactChannel1Label : s.contactChannel2Label}
-                      placeholder="Label"
-                      className={inputClass}
-                    />
-                    <input
-                      name={`contact_channel${n}_display`}
-                      defaultValue={n === 1 ? s.contactChannel1Display : s.contactChannel2Display}
-                      placeholder="Display number"
-                      className={inputClass}
-                    />
-                    <input
-                      name={`contact_channel${n}_tel`}
-                      defaultValue={n === 1 ? s.contactChannel1Tel : s.contactChannel2Tel}
-                      placeholder="tel: link (+923…)"
-                      className={monoInput}
-                    />
-                    <input
-                      name={`contact_channel${n}_wa`}
-                      defaultValue={n === 1 ? s.contactChannel1Wa : s.contactChannel2Wa}
-                      placeholder="WhatsApp URL"
-                      className={monoInput}
-                    />
-                    <textarea
-                      name={`contact_channel${n}_notes`}
-                      rows={2}
-                      defaultValue={n === 1 ? s.contactChannel1Notes : s.contactChannel2Notes}
-                      placeholder="Short notes"
-                      className={textareaClass}
-                    />
+                    <div>
+                      <label className="text-xs font-semibold text-slate-500">Label</label>
+                      <input
+                        name={`contact_channel${n}_label`}
+                        defaultValue={n === 1 ? s.contactChannel1Label : s.contactChannel2Label}
+                        className={inputClass}
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs font-semibold text-slate-500">Phone display</label>
+                      <input
+                        name={`contact_channel${n}_display`}
+                        defaultValue={n === 1 ? s.contactChannel1Display : s.contactChannel2Display}
+                        className={inputClass}
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs font-semibold text-slate-500">tel: link (+92…)</label>
+                      <input
+                        name={`contact_channel${n}_tel`}
+                        defaultValue={n === 1 ? s.contactChannel1Tel : s.contactChannel2Tel}
+                        className={monoInput}
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs font-semibold text-slate-500">WhatsApp URL</label>
+                      <input
+                        name={`contact_channel${n}_wa`}
+                        defaultValue={n === 1 ? s.contactChannel1Wa : s.contactChannel2Wa}
+                        className={monoInput}
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs font-semibold text-slate-500">Short note (one line)</label>
+                      <input
+                        name={`contact_channel${n}_notes`}
+                        defaultValue={n === 1 ? s.contactChannel1Notes : s.contactChannel2Notes}
+                        className={inputClass}
+                      />
+                    </div>
                   </div>
                 </div>
               ))}
             </div>
-          </section>
 
-          <section>
-            <h2 className="text-lg font-semibold text-slate-900">Support card & hours</h2>
-            <div className="mt-4 grid gap-5 sm:grid-cols-2">
-              <div>
-                <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">Desk hours</label>
-                <input name="support_desk_hours" defaultValue={s.supportDeskHours} className={inputClass} />
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4">
+                <div className="text-sm font-semibold text-slate-900">Card 3 — Email</div>
+                <div className="mt-3">
+                  <label className="text-xs font-semibold text-slate-500">Email address</label>
+                  <input name="contact_email" type="email" defaultValue={s.contactEmail} className={inputClass} />
+                </div>
               </div>
-              <div>
-                <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">Escalations line</label>
-                <input name="support_escalations" defaultValue={s.supportEscalations} className={inputClass} />
-              </div>
-              <div className="sm:col-span-2">
-                <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">Support intro</label>
-                <textarea name="support_commitments_intro" rows={3} defaultValue={s.supportCommitmentsIntro} className={textareaClass} />
+              <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4">
+                <div className="text-sm font-semibold text-slate-900">Card 4 — Desk hours</div>
+                <div className="mt-3">
+                  <label className="text-xs font-semibold text-slate-500">Hours text</label>
+                  <input name="support_desk_hours" defaultValue={s.supportDeskHours} className={inputClass} />
+                </div>
               </div>
             </div>
+
+            {/* Keep unused support fields so save does not wipe them */}
+            <input type="hidden" name="support_escalations" value={s.supportEscalations ?? ""} />
+            <input type="hidden" name="support_commitments_intro" value={s.supportCommitmentsIntro ?? ""} />
           </section>
 
-          <section>
-            <h2 className="text-lg font-semibold text-slate-900">Store location & map</h2>
-            <div className="mt-4 grid gap-5 sm:grid-cols-2">
+          <section className="space-y-4 border-t border-slate-100 pt-8">
+            <div>
+              <h2 className="text-lg font-semibold text-slate-900">3. Store location & map</h2>
+              <p className="mt-1 text-xs text-slate-500">
+                Name, coordinates, and Google Maps link control the pin under the photos.
+              </p>
+            </div>
+            <div className="grid gap-5 sm:grid-cols-2">
               <div className="sm:col-span-2">
                 <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">Location name</label>
                 <input name="store_location_name" defaultValue={s.storeLocationName} className={inputClass} />
@@ -150,15 +175,20 @@ export default async function AdminContactContentPage({
                 <input name="google_maps_place_url" defaultValue={s.googleMapsPlaceUrl} className={monoInput} />
               </div>
               <div className="sm:col-span-2">
-                <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">Place feature ref (advanced)</label>
+                <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  Place feature ref (optional, advanced)
+                </label>
                 <input name="google_place_feature_ref" defaultValue={s.googlePlaceFeatureRef} className={monoInput} />
               </div>
             </div>
           </section>
 
-          <section>
-            <h2 className="text-lg font-semibold text-slate-900">Photos</h2>
-            <div className="mt-4 grid gap-5 md:grid-cols-2">
+          <section className="space-y-4 border-t border-slate-100 pt-8">
+            <div>
+              <h2 className="text-lg font-semibold text-slate-900">4. Photos (above map)</h2>
+              <p className="mt-1 text-xs text-slate-500">Two images shown side-by-side above the Google Map.</p>
+            </div>
+            <div className="grid gap-5 md:grid-cols-2">
               <StorefrontImageUploadField
                 label="Storefront photo"
                 urlName="contact_primary_image"
