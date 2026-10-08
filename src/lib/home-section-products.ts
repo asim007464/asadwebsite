@@ -1,3 +1,4 @@
+import { unstable_noStore as noStore } from "next/cache";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { PRODUCT_LISTING_SELECT } from "@/lib/product-listing-columns";
 import type { ProductListing } from "@/lib/store-types";
@@ -12,6 +13,7 @@ export async function getHomeSectionListings(section: HomeSection, catalogFallba
   rows: ProductListing[];
   source: "curated" | "featured" | "catalog";
 }> {
+  noStore();
   const supabase = createSupabaseAdminClient();
 
   const curated = await supabase

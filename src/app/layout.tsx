@@ -7,6 +7,9 @@ import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SITE_SHOP_NAME, SITE_SHORT_TAGLINE } from "@/lib/site-brand";
 
+/** Footer / storefront settings must never be served from a stale build snapshot. */
+export const dynamic = "force-dynamic";
+
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],

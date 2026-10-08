@@ -1,3 +1,4 @@
+import { unstable_noStore as noStore } from "next/cache";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { PRODUCT_LISTING_SELECT } from "@/lib/product-listing-columns";
 import type { Category, HomeBrowseShowcaseRow, ProductListing } from "@/lib/store-types";
@@ -7,6 +8,7 @@ export async function getHomeBrowseShowcasePayload(): Promise<{
   category: Category | null;
   products: ProductListing[];
 }> {
+  noStore();
   const supabase = createSupabaseAdminClient();
 
   const [showcaseRes, curatedRes] = await Promise.all([

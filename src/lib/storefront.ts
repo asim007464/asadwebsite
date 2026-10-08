@@ -1,3 +1,4 @@
+import { unstable_noStore as noStore } from "next/cache";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
 export type SocialLinkRow = { label: string; url: string; platform?: string };
@@ -283,6 +284,8 @@ function normalizeAboutTeam(raw: unknown): AboutTeamMember[] {
 }
 
 export async function getStorefrontPayload(): Promise<ResolvedStorefront> {
+  // Always read live admin edits — never serve a build-time / cached snapshot.
+  noStore();
   try {
     const supabase = createSupabaseAdminClient();
     const { data, error } = await supabase.from("storefront_settings").select("data").eq("id", 1).maybeSingle();

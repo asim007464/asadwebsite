@@ -3,6 +3,8 @@ import { SafeRemoteImage } from "@/components/SafeRemoteImage";
 import { googleMapsEmbedSrc, resolveStoreLocation } from "@/lib/store-location";
 import { getStorefrontPayload } from "@/lib/storefront";
 
+export const dynamic = "force-dynamic";
+
 const CONTACT_FALLBACK_PRIMARY = "/20260401_153109.jpg.jpeg";
 const CONTACT_FALLBACK_SECOND = "/20260419_185049.jpg.jpeg";
 

@@ -1,6 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { revalidateCatalog, revalidatePublicStorefront } from "@/lib/revalidate-public";
 import {
   adminUserAllowed,
   assertAdminAuthenticated,
@@ -174,6 +175,7 @@ export async function createCategory(formData: FormData) {
     }
   }
 
+  revalidateCatalog();
   redirect("/admin/categories?notice=category-created");
 }
 
@@ -186,6 +188,7 @@ export async function deleteCategory(formData: FormData) {
   const { error } = await supabase.from("categories").delete().eq("id", id);
   if (error)
     redirect(`/admin/categories?error=${encodeURIComponent(error.message)}`);
+  revalidateCatalog();
   redirect("/admin/categories");
 }
 
@@ -295,6 +298,7 @@ export async function updateCategory(formData: FormData) {
   const { error } = await supabase.from("categories").update(patch).eq("id", id);
   if (error) redirect(`/admin/categories?error=${encodeURIComponent(error.message)}`);
 
+  revalidateCatalog();
   redirect("/admin/categories?notice=category-saved");
 }
 
@@ -429,6 +433,7 @@ export async function addProductGalleryImages(formData: FormData) {
       );
   }
 
+  revalidateCatalog();
   redirect(`/admin/products/${product_id}/edit?notice=saved-images`);
 }
 
@@ -468,6 +473,7 @@ export async function setProductCoverImage(formData: FormData) {
       );
   }
 
+  revalidateCatalog();
   redirect(`/admin/products/${product_id}/edit?notice=saved-images`);
 }
 
@@ -489,6 +495,7 @@ export async function deleteProductImage(formData: FormData) {
     );
 
   await renumberProductImageSortOrders(supabase, product_id);
+  revalidateCatalog();
   redirect(`/admin/products/${product_id}/edit?notice=saved-images`);
 }
 
@@ -640,6 +647,7 @@ export async function createProduct(formData: FormData) {
     }
   }
 
+  revalidateCatalog(slug);
   redirect(`/admin/products/${productId}/edit?notice=created`);
 }
 
@@ -1040,6 +1048,7 @@ export async function bulkImportProducts(formData: FormData) {
   params.set("imported", String(imported));
   if (failed) params.set("failed", String(failed));
   if (detail) params.set("detail", detail.slice(0, 900));
+  revalidateCatalog();
   redirect(`/admin/products/bulk?${params.toString()}`);
 }
 
@@ -1093,6 +1102,7 @@ export async function updateProduct(formData: FormData) {
 
   await syncProductCategories(supabase, id, categoryIds);
 
+  revalidateCatalog(slug);
   redirect(`/admin/products/${id}/edit?notice=saved`);
 }
 
@@ -1150,6 +1160,7 @@ export async function addProductVariant(formData: FormData) {
     );
   }
 
+  revalidateCatalog();
   redirect(`/admin/products/${product_id}/edit?notice=variant-added`);
 }
 
@@ -1211,6 +1222,7 @@ export async function updateProductVariant(formData: FormData) {
     redirect(
       `/admin/products/${product_id}/edit?error=${encodeURIComponent(invErr.message)}`,
     );
+  revalidateCatalog();
   redirect(`/admin/products/${product_id}/edit?notice=saved-variant`);
 }
 
@@ -1245,6 +1257,7 @@ export async function deleteProductVariant(formData: FormData) {
     redirect(
       `/admin/products/${product_id}/edit?error=${encodeURIComponent(error.message)}`,
     );
+  revalidateCatalog();
   redirect(`/admin/products/${product_id}/edit?notice=variant-removed`);
 }
 
@@ -1256,6 +1269,7 @@ export async function deleteProduct(formData: FormData) {
   const { error } = await supabase.from("products").delete().eq("id", id);
   if (error)
     redirect(`/admin/products?error=${encodeURIComponent(error.message)}`);
+  revalidateCatalog();
   redirect("/admin/products");
 }
 
@@ -1341,6 +1355,7 @@ export async function createHeroSlide(formData: FormData) {
     is_active: true,
   });
   if (error) redirect(`/admin/hero?error=${encodeURIComponent(error.message)}`);
+  revalidatePublicStorefront();
   redirect("/admin/hero");
 }
 
@@ -1368,6 +1383,7 @@ export async function updateHeroSlide(formData: FormData) {
     .update({ url: img.ok, alt, sort_order, is_active })
     .eq("id", id);
   if (error) redirect(`/admin/hero?error=${encodeURIComponent(error.message)}`);
+  revalidatePublicStorefront();
   redirect("/admin/hero");
 }
 
@@ -1379,6 +1395,7 @@ export async function deleteHeroSlide(formData: FormData) {
   const supabase = createSupabaseAdminClient();
   const { error } = await supabase.from("hero_slides").delete().eq("id", id);
   if (error) redirect(`/admin/hero?error=${encodeURIComponent(error.message)}`);
+  revalidatePublicStorefront();
   redirect("/admin/hero");
 }
 
@@ -1468,6 +1485,7 @@ export async function updateHomeReviewsBanner(formData: FormData) {
     redirect(
       `/admin/reviews-banner?error=${encodeURIComponent(error.message)}`,
     );
+  revalidatePublicStorefront();
   redirect(`/admin/reviews-banner?saved=${bannerId}`);
 }
 
@@ -1531,6 +1549,7 @@ export async function updateHomeAfterBrowseBanner(formData: FormData) {
   );
 
   if (error) redirect(`/admin/after-browse-banner?error=${encodeURIComponent(error.message)}`);
+  revalidatePublicStorefront();
   redirect("/admin/after-browse-banner");
 }
 
@@ -1611,6 +1630,7 @@ export async function updateHomeBannersHub(formData: FormData) {
     if (error) redirect(`/admin/home-banners?error=${encodeURIComponent(error.message)}`);
   }
 
+  revalidatePublicStorefront();
   redirect("/admin/home-banners?saved=1");
 }
 
@@ -1661,6 +1681,7 @@ export async function updateHomeBrowseShowcase(formData: FormData) {
   );
 
   if (error) redirect(`${BROWSE_SHOWCASE_ADMIN}?error=${encodeURIComponent(error.message)}`);
+  revalidatePublicStorefront();
   redirect(BROWSE_SHOWCASE_ADMIN);
 }
 
@@ -1684,6 +1705,7 @@ export async function addHomeBrowseShowcaseProduct(formData: FormData) {
 
   const { error } = await supabase.from("home_browse_showcase_products").insert({ product_id, sort_order });
   if (error) redirect(`${BROWSE_SHOWCASE_ADMIN}?error=${encodeURIComponent(error.message)}`);
+  revalidatePublicStorefront();
   redirect(BROWSE_SHOWCASE_ADMIN);
 }
 
@@ -1695,6 +1717,7 @@ export async function removeHomeBrowseShowcaseProduct(formData: FormData) {
   const supabase = createSupabaseAdminClient();
   const { error } = await supabase.from("home_browse_showcase_products").delete().eq("id", id);
   if (error) redirect(`${BROWSE_SHOWCASE_ADMIN}?error=${encodeURIComponent(error.message)}`);
+  revalidatePublicStorefront();
   redirect(BROWSE_SHOWCASE_ADMIN);
 }
 
@@ -1708,6 +1731,7 @@ export async function updateHomeBrowseShowcaseProductSort(formData: FormData) {
   const supabase = createSupabaseAdminClient();
   const { error } = await supabase.from("home_browse_showcase_products").update({ sort_order }).eq("id", id);
   if (error) redirect(`${BROWSE_SHOWCASE_ADMIN}?error=${encodeURIComponent(error.message)}`);
+  revalidatePublicStorefront();
   redirect(BROWSE_SHOWCASE_ADMIN);
 }
 
@@ -1730,6 +1754,7 @@ export async function updateProductFeatured(formData: FormData) {
     .eq("id", id);
   if (error)
     redirect(`/admin/featured?error=${encodeURIComponent(error.message)}`);
+  revalidateCatalog();
   redirect("/admin/featured");
 }
 
@@ -1814,6 +1839,7 @@ async function saveStorefrontMerged(
     .from("storefront_settings")
     .upsert({ id: 1, data: merged as never, updated_at: new Date().toISOString() }, { onConflict: "id" });
   if (error) redirect(`${redirectTo}?error=${encodeURIComponent(error.message)}`);
+  revalidatePublicStorefront();
   redirect(`${redirectTo}?saved=1`);
 }
 
@@ -2138,6 +2164,7 @@ export async function updateProductSeoFields(formData: FormData) {
 
   if (error)
     redirect(`/admin/products/seo?error=${encodeURIComponent(error.message)}`);
+  revalidateCatalog();
   redirect("/admin/products/seo");
 }
 
@@ -2159,6 +2186,7 @@ export async function addHomepageSectionProduct(formData: FormData) {
     .insert({ section, product_id, sort_order });
 
   if (error) redirect(`${next}&error=${encodeURIComponent(error.message)}`);
+  revalidatePublicStorefront();
   redirect(next);
 }
 
@@ -2178,6 +2206,7 @@ export async function removeHomepageSectionProduct(formData: FormData) {
     .eq("id", id);
 
   if (error) redirect(`${next}&error=${encodeURIComponent(error.message)}`);
+  revalidatePublicStorefront();
   redirect(next);
 }
 
@@ -2199,5 +2228,6 @@ export async function updateHomepageSectionSort(formData: FormData) {
     .eq("id", id);
 
   if (error) redirect(`${next}&error=${encodeURIComponent(error.message)}`);
+  revalidatePublicStorefront();
   redirect(next);
 }
