@@ -55,21 +55,21 @@ export function TestimonialsSection({
   eyebrow,
   heading,
   intro,
-  ratingNote,
+  ratingScore,
   testimonials,
 }: {
   eyebrow?: string;
   heading?: string;
   intro?: string;
+  /** Kept for admin/CMS compatibility; not shown on the storefront. */
   ratingNote?: string;
+  ratingScore?: string;
   testimonials?: readonly Testimonial[];
 }) {
   const items = testimonials && testimonials.length > 0 ? testimonials : DEMO_TESTIMONIALS;
   const eyebrowText = eyebrow?.trim() || "Reviews";
   const headingText = heading?.trim() || "What customers say";
-  const ratingNoteText =
-    ratingNote?.trim() ||
-    "Illustrative rating · swap for real Google / Trustpilot embed when ready.";
+  const ratingScoreText = ratingScore?.trim() || "5.0";
   const [perPage, setPerPage] = useState(2);
 
   useEffect(() => {
@@ -88,32 +88,36 @@ export function TestimonialsSection({
 
   return (
     <div className="relative" aria-labelledby="testimonials-heading">
-      <div className="flex flex-col gap-8 lg:flex-row lg:items-start lg:justify-between lg:gap-12">
-        <div className="max-w-xl">
+      {/* Same compact rating badge on phone + laptop (top-right), matching desktop layout */}
+      <div className="flex items-start justify-between gap-3 sm:gap-4">
+        <div className="min-w-0 max-w-xl">
           <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-blue-700">{eyebrowText}</p>
-          <h2 id="testimonials-heading" className="mt-3 text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">
+          <h2
+            id="testimonials-heading"
+            className="mt-2 text-2xl font-bold tracking-tight text-slate-900 sm:mt-3 sm:text-4xl"
+          >
             {headingText}
           </h2>
-          <p className="mt-3 text-sm leading-relaxed text-slate-600 sm:text-base">
-            {intro?.trim()?.length
-              ? intro.trim()
-              : "COD orders with phone confirmation — shoppers tell us when specs, delivery, and pricing line up. Quotes below are sample stories you can replace with live feedback."}
-          </p>
         </div>
 
-        <div className="flex shrink-0 flex-col gap-3 rounded-2xl border border-slate-200 bg-white px-5 py-4 shadow-sm ring-1 ring-slate-100 sm:flex-row sm:items-center sm:gap-5">
-          <div className="flex items-baseline gap-2">
-            <span className="text-2xl font-bold text-slate-900">5.0</span>
-            <span className="text-sm font-medium text-slate-500">/5</span>
+        <div className="flex shrink-0 items-center gap-2 rounded-2xl border border-slate-200 bg-white px-2.5 py-2 shadow-sm ring-1 ring-slate-100 sm:gap-4 sm:px-5 sm:py-3">
+          <div className="flex items-baseline gap-1 sm:gap-2">
+            <span className="text-lg font-bold text-slate-900 sm:text-2xl">{ratingScoreText}</span>
+            <span className="text-xs font-medium text-slate-500 sm:text-sm">/5</span>
           </div>
-          <div className="hidden h-10 w-px bg-slate-200 sm:block" aria-hidden />
-          <div className="flex flex-wrap items-center gap-3">
-            <GoogleGlyph className="h-7 w-7 shrink-0" />
-            <StarRow />
+          <div className="h-7 w-px bg-slate-200 sm:h-10" aria-hidden />
+          <div className="flex items-center gap-1.5 sm:gap-3">
+            <GoogleGlyph className="h-5 w-5 shrink-0 sm:h-7 sm:w-7" />
+            <StarRow className="[&_svg]:h-3 [&_svg]:w-3 sm:[&_svg]:h-4 sm:[&_svg]:w-4" />
           </div>
-          <p className="text-xs font-medium text-slate-500 sm:max-w-[11rem]">{ratingNoteText}</p>
         </div>
       </div>
+
+      <p className="mt-3 max-w-xl text-sm leading-relaxed text-slate-600 sm:mt-4 sm:text-base">
+        {intro?.trim()?.length
+          ? intro.trim()
+          : "COD orders with phone confirmation — shoppers tell us when specs, delivery, and pricing line up. Quotes below are sample stories you can replace with live feedback."}
+      </p>
 
       <div className="relative mt-12">
         <div

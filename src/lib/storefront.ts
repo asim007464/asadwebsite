@@ -12,7 +12,17 @@ export type StorefrontTestimonial = {
 
 export type AboutValueCard = { title: string; body: string };
 export type AboutWorkStep = { step: string; title: string; body: string };
-export type AboutTeamMember = { name: string; role: string; note: string; initials: string };
+export type AboutTeamMember = {
+  name: string;
+  role: string;
+  note: string;
+  initials: string;
+  /** Optional circular portrait URL. */
+  imageUrl?: string;
+};
+export type AboutStoryBlock = { title: string; body: string };
+export type StorefrontFaqItem = { q: string; a: string };
+export type StorefrontBrandLogo = { name: string; imageUrl?: string };
 
 export type StorefrontPayload = {
   socialLinks?: SocialLinkRow[];
@@ -41,6 +51,9 @@ export type StorefrontPayload = {
   supportCommitmentsIntro?: string;
   homeStatsTitle?: string;
   homeStatsLead?: string;
+  /** Homepage Browse categories grid heading + paragraph. */
+  browseCategoriesTitle?: string;
+  browseCategoriesLead?: string;
   /** Homepage Featured picks carousel heading + paragraph. */
   featuredSectionTitle?: string;
   featuredSectionLead?: string;
@@ -51,6 +64,20 @@ export type StorefrontPayload = {
   testimonialsEyebrow?: string;
   testimonialsHeading?: string;
   reviewsRatingNote?: string;
+  /** Score shown on the rating card (e.g. "5.0"). */
+  reviewsRatingScore?: string;
+  /** FAQ section on the homepage (below reviews). */
+  faqEyebrow?: string;
+  faqHeading?: string;
+  faqLead?: string;
+  faqContactLabel?: string;
+  faqContactHref?: string;
+  faqs?: StorefrontFaqItem[];
+  /** Homepage brands marquee (above reviews). */
+  brandsSectionEyebrow?: string;
+  brandsSectionTitle?: string;
+  brandsSectionLead?: string;
+  brandLogos?: StorefrontBrandLogo[];
   aboutPageTitle?: string;
   aboutPageLead?: string;
   aboutChips?: string[];
@@ -60,6 +87,8 @@ export type StorefrontPayload = {
   aboutCtaPrimaryHref?: string;
   aboutCtaSecondaryLabel?: string;
   aboutCtaSecondaryHref?: string;
+  /** Team section CTA link (defaults to /contact). */
+  aboutTeamCtaHref?: string;
   /** About promo banner height in px (laptop / big screens). */
   aboutBannerHeightPx?: number;
   /** About promo banner height in px (phones). */
@@ -74,6 +103,11 @@ export type StorefrontPayload = {
   aboutTeamLead?: string;
   aboutTeamCtaLabel?: string;
   aboutTeam?: AboutTeamMember[];
+  /** “Our story” block under leadership (shop photo + repeatable text). */
+  aboutStoryEyebrow?: string;
+  aboutStoryTitle?: string;
+  aboutStoryLead?: string;
+  aboutStoryBlocks?: AboutStoryBlock[];
   contactPageTitle?: string;
   contactPageLead?: string;
   contactEmail?: string;
@@ -116,7 +150,7 @@ export const DEFAULT_STOREFRONT: StorefrontPayload & { socialLinks: SocialLinkRo
   contactSecondaryImage: "",
   testimonials: [],
   testimonialsLead:
-    "Cash on delivery orders with phone confirmation — swap these lines for live Google or Trustpilot reviews when ready.",
+    "COD orders with phone confirmation — shoppers tell us when specs, delivery, and pricing line up. Quotes below are sample stories you can replace with live feedback.",
   socialLinks: [
     { label: "Facebook", url: "https://facebook.com/", platform: "facebook" },
     { label: "LinkedIn", url: "https://linkedin.com/", platform: "linkedin" },
@@ -135,6 +169,8 @@ export const DEFAULT_STOREFRONT: StorefrontPayload & { socialLinks: SocialLinkRo
   homeStatsTitle: "Trusted home appliances & electrical accessories — with transparent pricing.",
   homeStatsLead:
     "Cash on delivery, phone confirmation, and nationwide dispatch. These figures are placeholders — swap to real business stats anytime.",
+  browseCategoriesTitle: "Browse categories",
+  browseCategoriesLead: "Quick links to the same categories in the navbar dropdown.",
   featuredSectionTitle: "Featured picks",
   featuredSectionLead:
     "Hot-selling highlights chosen by admin — four across on extra-wide screens; step through one SKU at a time.",
@@ -143,6 +179,48 @@ export const DEFAULT_STOREFRONT: StorefrontPayload & { socialLinks: SocialLinkRo
   testimonialsEyebrow: "Reviews",
   testimonialsHeading: "What customers say",
   reviewsRatingNote: "Illustrative rating · swap for real Google / Trustpilot embed when ready.",
+  reviewsRatingScore: "5.0",
+  faqEyebrow: "FAQs",
+  faqHeading: "Frequently asked questions",
+  faqLead: "Quick answers about delivery, authenticity, wholesale, and support.",
+  faqContactLabel: "Contact us →",
+  faqContactHref: "/contact",
+  brandsSectionEyebrow: "Brands",
+  brandsSectionTitle: "Brands we carry",
+  brandsSectionLead:
+    "Popular appliance and electrical brands stocked for everyday homes — fans, lighting, wiring, and kitchen helpers.",
+  brandLogos: [
+    { name: "Philips" },
+    { name: "Orient" },
+    { name: "GFC Fans" },
+    { name: "Pak Fan" },
+    { name: "Super Asia" },
+    { name: "Haier" },
+    { name: "Kennwood" },
+    { name: "Westpoint" },
+  ],
+  faqs: [
+    {
+      q: "Do you offer delivery services?",
+      a: "Yes — we offer fast and reliable delivery within our service area. Delivery options and charges may vary depending on your location and order size.",
+    },
+    {
+      q: "Are your products original and guaranteed?",
+      a: "Absolutely. We deal only in genuine and trusted brands, ensuring quality, durability, and performance. Many products also come with manufacturer warranties.",
+    },
+    {
+      q: "Can I place bulk or wholesale orders?",
+      a: "Yes — we handle both retail and wholesale supply. For bulk orders, contact us directly to get the best pricing and customized deals.",
+    },
+    {
+      q: "How can I contact you for inquiries or support?",
+      a: "You can reach us via phone, WhatsApp, or email. Visit our Contact Us page for full details, and our team will assist you promptly.",
+    },
+    {
+      q: "Do you confirm orders before dispatch?",
+      a: "Yes — we confirm orders by phone or WhatsApp before dispatch to ensure the right variant, specs, and delivery details.",
+    },
+  ],
   aboutPageTitle: "Home appliances & electrical accessories for everyday Pakistan households",
   aboutPageLead:
     "Al Makkah Electric Traders is built for fans, LED lighting, heaters, coolers, kitchen helpers, grooming tools, and power accessories — organized by category with variant‑level specs and COD checkout. Every listing should spell out wattage, finishes, and what's in the box before you order.",
@@ -189,16 +267,51 @@ export const DEFAULT_STOREFRONT: StorefrontPayload & { socialLinks: SocialLinkRo
       body: "Courier-ready packs labeled clearly so drivers know when an item needs upright orientation or extra padding.",
     },
   ],
-  aboutTeamEyebrow: "Team",
-  aboutTeamTitle: "Meet our team",
+  aboutTeamEyebrow: "The people behind the business",
+  aboutTeamTitle: "Meet Our Leadership",
   aboutTeamLead:
-    "The people behind product sourcing, variant checks, and COD confirmation. Replace names/roles with your real staff anytime.",
+    "Our journey is shaped by the people who believe in honest relationships, dependable products, and long-term growth.",
   aboutTeamCtaLabel: "Talk to us",
+  aboutTeamCtaHref: "/contact",
   aboutTeam: [
-    { name: "Asad", role: "Owner & procurement", note: "Sourcing, pricing, vendor coordination.", initials: "AS" },
-    { name: "Hassan", role: "Sales & WhatsApp support", note: "Spec checks, COD confirmation.", initials: "HA" },
-    { name: "Amina", role: "Dispatch & packing", note: "Variant labeling, fragile handling.", initials: "AK" },
-    { name: "Bilal", role: "Catalog & listings", note: "Photos, attributes, SKU hygiene.", initials: "BM" },
+    {
+      name: "Asad",
+      role: "Owner & procurement",
+      note: "Guiding the business with a focus on customer trust and lasting partnerships.",
+      initials: "AS",
+    },
+    {
+      name: "Hassan",
+      role: "Sales & WhatsApp support",
+      note: "Helping strengthen our product range, service, and distribution network.",
+      initials: "HA",
+    },
+    {
+      name: "Amina",
+      role: "Dispatch & packing",
+      note: "Keeping orders labeled, packed, and ready so deliveries stay dependable.",
+      initials: "AK",
+    },
+    {
+      name: "Bilal",
+      role: "Catalog & listings",
+      note: "Building clear product pages so shoppers can compare specs before they order.",
+      initials: "BM",
+    },
+  ],
+  aboutStoryEyebrow: "Our story",
+  aboutStoryTitle: "From the shop floor to your doorstep",
+  aboutStoryLead:
+    "Al Makkah Electric Traders grew from serving nearby households to stocking fans, lighting, wiring, and kitchen helpers with clear specs and COD confirmation.",
+  aboutStoryBlocks: [
+    {
+      title: "What we stand for",
+      body: "Genuine products, honest stock checks, and phone confirmation before dispatch — so the right variant reaches you.",
+    },
+    {
+      title: "How we serve",
+      body: "Walk-in support at the shop, WhatsApp quotes for bulk lists, and nationwide dispatch for COD orders across Pakistan.",
+    },
   ],
   contactPageTitle: "Call, WhatsApp, or visit us",
   contactPageLead: "Quotes, stock checks, and COD confirmation — we reply during desk hours.",
@@ -245,6 +358,36 @@ function normalizeTestimonials(raw: unknown): StorefrontTestimonial[] {
   return out;
 }
 
+function normalizeFaqs(raw: unknown): StorefrontFaqItem[] {
+  if (!Array.isArray(raw)) return DEFAULT_STOREFRONT.faqs ?? [];
+  const out: StorefrontFaqItem[] = [];
+  for (const v of raw) {
+    if (!v || typeof v !== "object") continue;
+    const o = v as Record<string, unknown>;
+    const q = String(o.q ?? "").trim();
+    const a = String(o.a ?? "").trim();
+    if (q.length < 3 || a.length < 3) continue;
+    out.push({ q, a });
+    if (out.length >= 16) break;
+  }
+  return out.length ? out : (DEFAULT_STOREFRONT.faqs ?? []);
+}
+
+function normalizeBrandLogos(raw: unknown): StorefrontBrandLogo[] {
+  if (!Array.isArray(raw)) return DEFAULT_STOREFRONT.brandLogos ?? [];
+  const out: StorefrontBrandLogo[] = [];
+  for (const v of raw) {
+    if (!v || typeof v !== "object") continue;
+    const o = v as Record<string, unknown>;
+    const name = String(o.name ?? "").trim();
+    if (name.length < 2) continue;
+    const imageUrl = String(o.imageUrl ?? o.image_url ?? "").trim();
+    out.push(imageUrl ? { name, imageUrl } : { name });
+    if (out.length >= 24) break;
+  }
+  return out.length ? out : (DEFAULT_STOREFRONT.brandLogos ?? []);
+}
+
 function normalizeAboutValues(raw: unknown): AboutValueCard[] {
   if (!Array.isArray(raw)) return DEFAULT_STOREFRONT.aboutValues;
   const out: AboutValueCard[] = [];
@@ -288,10 +431,32 @@ function normalizeAboutTeam(raw: unknown): AboutTeamMember[] {
     let initials = String(o.initials ?? "").trim();
     if (!initials && name) initials = name.split(/\s/).map((x) => x[0]).join("").slice(0, 4).toUpperCase();
     if (!name || !role || !note || !initials) continue;
-    out.push({ name, role, note, initials: initials.slice(0, 4) });
+    const imageUrl = String(o.imageUrl ?? o.image_url ?? "").trim();
+    out.push({
+      name,
+      role,
+      note,
+      initials: initials.slice(0, 4),
+      ...(imageUrl ? { imageUrl } : {}),
+    });
     if (out.length >= 8) break;
   }
   return out.length ? out : DEFAULT_STOREFRONT.aboutTeam;
+}
+
+function normalizeAboutStoryBlocks(raw: unknown): AboutStoryBlock[] {
+  if (!Array.isArray(raw)) return DEFAULT_STOREFRONT.aboutStoryBlocks ?? [];
+  const out: AboutStoryBlock[] = [];
+  for (const v of raw) {
+    if (!v || typeof v !== "object") continue;
+    const o = v as Record<string, unknown>;
+    const title = String(o.title ?? "").trim();
+    const body = String(o.body ?? "").trim();
+    if (!title || !body) continue;
+    out.push({ title, body });
+    if (out.length >= 12) break;
+  }
+  return out.length ? out : (DEFAULT_STOREFRONT.aboutStoryBlocks ?? []);
 }
 
 export async function getStorefrontPayload(): Promise<ResolvedStorefront> {
@@ -310,14 +475,18 @@ export async function getStorefrontPayload(): Promise<ResolvedStorefront> {
     const aboutChips = Array.isArray(patch.aboutChips)
       ? patch.aboutChips.map((c) => String(c).trim()).filter(Boolean).slice(0, 12)
       : DEFAULT_STOREFRONT.aboutChips;
-    const aboutBannerHeightPx =
-      typeof patch.aboutBannerHeightPx === "number" && Number.isFinite(patch.aboutBannerHeightPx)
-        ? Math.min(720, Math.max(280, Math.round(patch.aboutBannerHeightPx)))
-        : DEFAULT_STOREFRONT.aboutBannerHeightPx;
-    const aboutBannerHeightMobilePx =
-      typeof patch.aboutBannerHeightMobilePx === "number" && Number.isFinite(patch.aboutBannerHeightMobilePx)
-        ? Math.min(720, Math.max(200, Math.round(patch.aboutBannerHeightMobilePx)))
-        : DEFAULT_STOREFRONT.aboutBannerHeightMobilePx;
+    const parseBannerH = (raw: unknown, fallback: number | undefined, min: number, max: number) => {
+      const n = typeof raw === "number" ? raw : Number.parseInt(String(raw ?? ""), 10);
+      if (!Number.isFinite(n)) return fallback;
+      return Math.min(max, Math.max(min, Math.round(n)));
+    };
+    const aboutBannerHeightPx = parseBannerH(patch.aboutBannerHeightPx, DEFAULT_STOREFRONT.aboutBannerHeightPx, 280, 720);
+    const aboutBannerHeightMobilePx = parseBannerH(
+      patch.aboutBannerHeightMobilePx,
+      DEFAULT_STOREFRONT.aboutBannerHeightMobilePx,
+      200,
+      720,
+    );
     const heroHeightPx =
       typeof patch.heroHeightPx === "number" && Number.isFinite(patch.heroHeightPx)
         ? Math.min(720, Math.max(200, Math.round(patch.heroHeightPx)))
@@ -326,6 +495,13 @@ export async function getStorefrontPayload(): Promise<ResolvedStorefront> {
       typeof patch.heroHeightMobilePx === "number" && Number.isFinite(patch.heroHeightMobilePx)
         ? Math.min(720, Math.max(160, Math.round(patch.heroHeightMobilePx)))
         : DEFAULT_STOREFRONT.heroHeightMobilePx;
+    /** Empty admin saves must not wipe built-in homepage copy. */
+    const text = (key: keyof StorefrontPayload, fallback: string | undefined) => {
+      const v = patch[key];
+      if (typeof v === "string" && v.trim()) return v.trim();
+      return fallback ?? "";
+    };
+
     return {
       ...DEFAULT_STOREFRONT,
       ...patch,
@@ -339,6 +515,48 @@ export async function getStorefrontPayload(): Promise<ResolvedStorefront> {
       aboutValues: normalizeAboutValues(patch.aboutValues),
       aboutHowSteps: normalizeAboutHowSteps(patch.aboutHowSteps),
       aboutTeam: normalizeAboutTeam(patch.aboutTeam),
+      aboutStoryBlocks: normalizeAboutStoryBlocks(patch.aboutStoryBlocks),
+      faqs: normalizeFaqs(patch.faqs),
+      brandLogos: normalizeBrandLogos(patch.brandLogos),
+      homeStatsTitle: text("homeStatsTitle", DEFAULT_STOREFRONT.homeStatsTitle),
+      brandsSectionEyebrow: text("brandsSectionEyebrow", DEFAULT_STOREFRONT.brandsSectionEyebrow),
+      brandsSectionTitle: text("brandsSectionTitle", DEFAULT_STOREFRONT.brandsSectionTitle),
+      brandsSectionLead: text("brandsSectionLead", DEFAULT_STOREFRONT.brandsSectionLead),
+      aboutStoryEyebrow: text("aboutStoryEyebrow", DEFAULT_STOREFRONT.aboutStoryEyebrow),
+      aboutStoryTitle: text("aboutStoryTitle", DEFAULT_STOREFRONT.aboutStoryTitle),
+      aboutStoryLead: text("aboutStoryLead", DEFAULT_STOREFRONT.aboutStoryLead),
+      homeStatsLead: text("homeStatsLead", DEFAULT_STOREFRONT.homeStatsLead),
+      browseCategoriesTitle: text("browseCategoriesTitle", DEFAULT_STOREFRONT.browseCategoriesTitle),
+      browseCategoriesLead: text("browseCategoriesLead", DEFAULT_STOREFRONT.browseCategoriesLead),
+      featuredSectionTitle: text("featuredSectionTitle", DEFAULT_STOREFRONT.featuredSectionTitle),
+      featuredSectionLead: text("featuredSectionLead", DEFAULT_STOREFRONT.featuredSectionLead),
+      gadgetsSectionTitle: text("gadgetsSectionTitle", DEFAULT_STOREFRONT.gadgetsSectionTitle),
+      gadgetsSectionLead: text("gadgetsSectionLead", DEFAULT_STOREFRONT.gadgetsSectionLead),
+      testimonialsEyebrow: text("testimonialsEyebrow", DEFAULT_STOREFRONT.testimonialsEyebrow),
+      testimonialsHeading: text("testimonialsHeading", DEFAULT_STOREFRONT.testimonialsHeading),
+      testimonialsLead: text("testimonialsLead", DEFAULT_STOREFRONT.testimonialsLead),
+      reviewsRatingNote: text("reviewsRatingNote", DEFAULT_STOREFRONT.reviewsRatingNote),
+      reviewsRatingScore: text("reviewsRatingScore", DEFAULT_STOREFRONT.reviewsRatingScore),
+      faqEyebrow: text("faqEyebrow", DEFAULT_STOREFRONT.faqEyebrow),
+      faqHeading: text("faqHeading", DEFAULT_STOREFRONT.faqHeading),
+      faqLead: text("faqLead", DEFAULT_STOREFRONT.faqLead),
+      faqContactLabel: text("faqContactLabel", DEFAULT_STOREFRONT.faqContactLabel),
+      faqContactHref: text("faqContactHref", DEFAULT_STOREFRONT.faqContactHref),
+      aboutEyebrow: text("aboutEyebrow", DEFAULT_STOREFRONT.aboutEyebrow),
+      aboutPageTitle: text("aboutPageTitle", DEFAULT_STOREFRONT.aboutPageTitle),
+      aboutPageLead: text("aboutPageLead", DEFAULT_STOREFRONT.aboutPageLead),
+      aboutCtaPrimaryLabel: text("aboutCtaPrimaryLabel", DEFAULT_STOREFRONT.aboutCtaPrimaryLabel),
+      aboutCtaPrimaryHref: text("aboutCtaPrimaryHref", DEFAULT_STOREFRONT.aboutCtaPrimaryHref),
+      aboutCtaSecondaryLabel: text("aboutCtaSecondaryLabel", DEFAULT_STOREFRONT.aboutCtaSecondaryLabel),
+      aboutCtaSecondaryHref: text("aboutCtaSecondaryHref", DEFAULT_STOREFRONT.aboutCtaSecondaryHref),
+      aboutHowTitle: text("aboutHowTitle", DEFAULT_STOREFRONT.aboutHowTitle),
+      aboutHowLead: text("aboutHowLead", DEFAULT_STOREFRONT.aboutHowLead),
+      aboutHowBadge: text("aboutHowBadge", DEFAULT_STOREFRONT.aboutHowBadge),
+      aboutTeamEyebrow: text("aboutTeamEyebrow", DEFAULT_STOREFRONT.aboutTeamEyebrow),
+      aboutTeamTitle: text("aboutTeamTitle", DEFAULT_STOREFRONT.aboutTeamTitle),
+      aboutTeamLead: text("aboutTeamLead", DEFAULT_STOREFRONT.aboutTeamLead),
+      aboutTeamCtaLabel: text("aboutTeamCtaLabel", DEFAULT_STOREFRONT.aboutTeamCtaLabel),
+      aboutTeamCtaHref: text("aboutTeamCtaHref", DEFAULT_STOREFRONT.aboutTeamCtaHref),
     };
   } catch {
     return DEFAULT_STOREFRONT;

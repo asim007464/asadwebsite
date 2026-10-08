@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { SafeRemoteImage } from "@/components/SafeRemoteImage";
 import {
-  BANNER_HEIGHT_CLASS,
+  BANNER_HEIGHT_FIXED_CLASS,
   bannerHeightStyle,
   clampBannerHeightPx,
   DEFAULT_ABOUT_BANNER_HEIGHT_MOBILE_PX,
@@ -46,12 +46,21 @@ export default async function AboutPage() {
   const values = storefront.aboutValues ?? [];
   const howSteps = storefront.aboutHowSteps ?? [];
   const team = storefront.aboutTeam ?? [];
+  const storyBlocks = storefront.aboutStoryBlocks ?? [];
+  const shopImage = (storefront.aboutSecondaryImage ?? "").trim() || ABOUT_FALLBACK_BANNER;
+  const teamEyebrow = storefront.aboutTeamEyebrow?.trim() || "The people behind the business";
+  const teamTitle = storefront.aboutTeamTitle?.trim() || "Meet Our Leadership";
+  const teamLead =
+    storefront.aboutTeamLead?.trim() ||
+    "Our journey is shaped by the people who believe in honest relationships, dependable products, and long-term growth.";
+  const storyEyebrow = storefront.aboutStoryEyebrow?.trim() || "Our story";
+  const storyTitle = storefront.aboutStoryTitle?.trim() || "From the shop floor to your doorstep";
+  const storyLead = storefront.aboutStoryLead?.trim() || "";
 
   return (
     <main className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 sm:py-10 lg:px-8">
-      {/* Full-bleed promotional banner — editable in Admin → About page */}
       <section
-        className={`relative isolate overflow-hidden rounded-2xl shadow-lg ring-1 ring-slate-200/70 sm:rounded-3xl ${BANNER_HEIGHT_CLASS}`}
+        className={`relative isolate overflow-hidden rounded-2xl shadow-lg ring-1 ring-slate-200/70 sm:rounded-3xl ${BANNER_HEIGHT_FIXED_CLASS}`}
         style={bannerHeightCss}
         aria-labelledby="about-banner-heading"
       >
@@ -81,25 +90,22 @@ export default async function AboutPage() {
           aria-hidden
         />
 
-        <div
-          className={`relative z-10 flex flex-col justify-end px-5 pb-5 pt-16 sm:px-8 sm:pb-8 sm:pt-20 md:px-10 md:pb-10 ${BANNER_HEIGHT_CLASS}`}
-          style={bannerHeightCss}
-        >
-          <div className="max-w-3xl">
+        <div className="relative z-10 flex h-full min-h-0 flex-col justify-end px-5 py-4 sm:px-8 sm:py-6 md:px-10 md:py-8">
+          <div className="max-w-3xl overflow-hidden">
             <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-blue-200/95">{eyebrow}</p>
             <h1
               id="about-banner-heading"
-              className="mt-2 text-2xl font-bold tracking-tight text-white sm:text-3xl lg:text-4xl lg:leading-tight"
+              className="mt-1.5 text-xl font-bold tracking-tight text-white sm:mt-2 sm:text-3xl lg:text-4xl lg:leading-tight"
             >
               {title}
             </h1>
             {lead ? (
-              <p className="mt-3 max-w-2xl text-[13px] leading-relaxed text-blue-50/90 sm:text-sm md:text-[15px]">
+              <p className="mt-2 line-clamp-3 max-w-2xl text-[13px] leading-relaxed text-blue-50/90 sm:mt-3 sm:line-clamp-none sm:text-sm md:text-[15px]">
                 {lead}
               </p>
             ) : null}
             {chips.length ? (
-              <div className="mt-4 flex flex-wrap gap-2">
+              <div className="mt-3 flex flex-wrap gap-2 sm:mt-4">
                 {chips.map((chip) => (
                   <span
                     key={chip}
@@ -112,16 +118,16 @@ export default async function AboutPage() {
             ) : null}
           </div>
 
-          <div className="mt-5 flex flex-col gap-2.5 sm:mt-6 sm:flex-row sm:items-center sm:gap-3">
+          <div className="mt-4 flex flex-col gap-2 sm:mt-5 sm:flex-row sm:items-center sm:gap-3">
             <Link
               href={primaryHref}
-              className="inline-flex h-11 items-center justify-center rounded-full bg-white px-6 text-sm font-bold text-blue-900 shadow-md transition hover:bg-blue-50 sm:h-12 sm:px-7"
+              className="inline-flex h-10 items-center justify-center rounded-full bg-white px-5 text-sm font-bold text-blue-900 shadow-md transition hover:bg-blue-50 sm:h-12 sm:px-7"
             >
               {primaryLabel}
             </Link>
             <Link
               href={secondaryHref}
-              className="inline-flex h-11 items-center justify-center rounded-full border border-white/40 bg-white/10 px-6 text-sm font-semibold text-white backdrop-blur-sm transition hover:bg-white/20 sm:h-12 sm:px-7"
+              className="inline-flex h-10 items-center justify-center rounded-full border border-white/40 bg-white/10 px-5 text-sm font-semibold text-white backdrop-blur-sm transition hover:bg-white/20 sm:h-12 sm:px-7"
             >
               {secondaryLabel}
             </Link>
@@ -140,7 +146,103 @@ export default async function AboutPage() {
         </div>
       ) : null}
 
-      <section className="mt-10 rounded-3xl border border-blue-100 bg-white p-8 shadow-sm">
+      {/* Leadership — centered heading + circular portraits */}
+      <section className="mt-14 sm:mt-16" aria-labelledby="about-leadership-heading">
+        <div className="mx-auto max-w-2xl text-center">
+          <div className="flex items-center justify-center gap-3">
+            <span className="hidden h-px w-10 bg-slate-300 sm:block" aria-hidden />
+            <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500">{teamEyebrow}</p>
+            <span className="hidden h-px w-10 bg-slate-300 sm:block" aria-hidden />
+          </div>
+          <h2
+            id="about-leadership-heading"
+            className="mt-3 text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl"
+          >
+            {teamTitle}
+          </h2>
+          <p className="mt-4 text-sm leading-relaxed text-slate-600 sm:text-[15px]">{teamLead}</p>
+        </div>
+
+        {team.length ? (
+          <div
+            className={`mt-10 grid gap-10 sm:mt-12 sm:gap-12 ${
+              team.length === 1
+                ? "mx-auto max-w-sm"
+                : team.length === 2
+                  ? "mx-auto max-w-3xl sm:grid-cols-2"
+                  : "sm:grid-cols-2 lg:grid-cols-4"
+            }`}
+          >
+            {team.map((m) => {
+              const photo = (m.imageUrl ?? "").trim();
+              const usePhoto =
+                photo.startsWith("https://") || (photo.startsWith("/") && photo.length > 1);
+              return (
+                <article key={m.name} className="flex flex-col items-center text-center">
+                  <div className="relative h-36 w-36 overflow-hidden rounded-full bg-slate-100 ring-2 ring-amber-200/80 sm:h-40 sm:w-40">
+                    {usePhoto ? (
+                      <SafeRemoteImage src={photo} alt={m.name} fill className="object-cover" sizes="160px" />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center bg-blue-50 text-2xl font-bold text-blue-800">
+                        {m.initials}
+                      </div>
+                    )}
+                  </div>
+                  <h3 className="mt-5 text-lg font-bold tracking-tight text-slate-900">{m.name}</h3>
+                  <p className="mt-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+                    {m.role}
+                  </p>
+                  <p className="mt-3 max-w-xs text-sm leading-relaxed text-slate-600">{m.note}</p>
+                </article>
+              );
+            })}
+          </div>
+        ) : null}
+
+        {storefront.aboutTeamCtaLabel?.trim() ? (
+          <div className="mt-10 flex justify-center">
+            <Link
+              href={storefront.aboutTeamCtaHref?.trim() || "/contact"}
+              className="inline-flex h-11 items-center justify-center rounded-full bg-blue-600 px-6 text-sm font-semibold text-white shadow-sm hover:bg-blue-700"
+            >
+              {storefront.aboutTeamCtaLabel.trim()}
+            </Link>
+          </div>
+        ) : null}
+      </section>
+
+      {/* Our story — shop image + repeatable heading/paragraph blocks */}
+      <section className="mt-16 sm:mt-20" aria-labelledby="about-story-heading">
+        <div className="mx-auto max-w-2xl text-center">
+          <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-blue-700">{storyEyebrow}</p>
+          <h2
+            id="about-story-heading"
+            className="mt-2 text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl"
+          >
+            {storyTitle}
+          </h2>
+          {storyLead ? (
+            <p className="mt-3 text-sm leading-relaxed text-slate-600 sm:text-[15px]">{storyLead}</p>
+          ) : null}
+        </div>
+
+        <div className="relative mt-8 aspect-[21/9] min-h-[180px] overflow-hidden rounded-3xl bg-slate-100 shadow-sm ring-1 ring-slate-200 sm:mt-10 sm:min-h-[240px]">
+          <SafeRemoteImage src={shopImage} alt={`${SITE_SHOP_NAME} shop`} fill className="object-cover" sizes="100vw" />
+        </div>
+
+        {storyBlocks.length ? (
+          <div className="mx-auto mt-10 max-w-3xl space-y-8 sm:mt-12">
+            {storyBlocks.map((block) => (
+              <div key={block.title} className="text-center sm:text-left">
+                <h3 className="text-lg font-semibold tracking-tight text-slate-900 sm:text-xl">{block.title}</h3>
+                <p className="mt-2 text-sm leading-relaxed text-slate-600 sm:text-[15px]">{block.body}</p>
+              </div>
+            ))}
+          </div>
+        ) : null}
+      </section>
+
+      <section className="mt-14 rounded-3xl border border-blue-100 bg-white p-8 shadow-sm sm:mt-16">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <h2 className="text-xl font-semibold tracking-tight text-slate-900">
@@ -167,47 +269,6 @@ export default async function AboutPage() {
               </li>
             ))}
           </ol>
-        ) : null}
-      </section>
-
-      <section className="mt-10 rounded-3xl border border-slate-200 bg-gradient-to-br from-blue-50/70 via-white to-white p-8 shadow-sm">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-          <div>
-            <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-blue-700">
-              {storefront.aboutTeamEyebrow?.trim() || "Team"}
-            </p>
-            <h2 className="mt-2 text-2xl font-semibold tracking-tight text-slate-900 sm:text-3xl">
-              {storefront.aboutTeamTitle?.trim() || "Meet our team"}
-            </h2>
-            <p className="mt-2 max-w-3xl text-sm leading-relaxed text-slate-600">
-              {storefront.aboutTeamLead?.trim() || ""}
-            </p>
-          </div>
-          <Link
-            href="/contact"
-            className="inline-flex h-11 items-center justify-center rounded-full bg-blue-600 px-6 text-sm font-semibold text-white shadow-sm hover:bg-blue-700"
-          >
-            {storefront.aboutTeamCtaLabel?.trim() || "Talk to us"}
-          </Link>
-        </div>
-
-        {team.length ? (
-          <div className="mt-7 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {team.map((m) => (
-              <div key={m.name} className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
-                <div className="flex items-center gap-3">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-50 text-sm font-bold text-blue-800 ring-1 ring-blue-100">
-                    {m.initials}
-                  </div>
-                  <div className="min-w-0">
-                    <div className="truncate text-sm font-semibold text-slate-900">{m.name}</div>
-                    <div className="text-xs font-medium text-slate-500">{m.role}</div>
-                  </div>
-                </div>
-                <p className="mt-4 text-sm leading-relaxed text-slate-600">{m.note}</p>
-              </div>
-            ))}
-          </div>
         ) : null}
       </section>
     </main>
