@@ -7,6 +7,7 @@ import {
   DEFAULT_ABOUT_BANNER_HEIGHT_MOBILE_PX,
   DEFAULT_ABOUT_BANNER_HEIGHT_PX,
 } from "@/lib/banner-height";
+import { resolveBannerImages } from "@/lib/banner-images";
 import { SITE_SHOP_NAME } from "@/lib/site-brand";
 import { getStorefrontPayload } from "@/lib/storefront";
 
@@ -16,7 +17,11 @@ const ABOUT_FALLBACK_BANNER = "/20260401_153109.jpg.jpeg";
 
 export default async function AboutPage() {
   const storefront = await getStorefrontPayload();
-  const bannerImage = (storefront.aboutPrimaryImage ?? "").trim() || ABOUT_FALLBACK_BANNER;
+  const { desktop: bannerDesktop, mobile: bannerMobile } = resolveBannerImages(
+    (storefront.aboutPrimaryImage ?? "").trim() || ABOUT_FALLBACK_BANNER,
+    storefront.aboutPrimaryImageMobile,
+    storefront.aboutSeparateMobileImage,
+  );
   const bannerHeight = clampBannerHeightPx(
     storefront.aboutBannerHeightPx,
     DEFAULT_ABOUT_BANNER_HEIGHT_PX,
@@ -50,9 +55,19 @@ export default async function AboutPage() {
         style={bannerHeightCss}
         aria-labelledby="about-banner-heading"
       >
-        <div className="absolute inset-0">
+        <div className="absolute inset-0 md:hidden">
           <SafeRemoteImage
-            src={bannerImage}
+            src={bannerMobile || bannerDesktop}
+            alt=""
+            fill
+            className="object-cover"
+            sizes="100vw"
+            priority
+          />
+        </div>
+        <div className="absolute inset-0 hidden md:block">
+          <SafeRemoteImage
+            src={bannerDesktop}
             alt=""
             fill
             className="object-cover"

@@ -52,6 +52,9 @@ export type Category = {
 export type HeroSlideRow = {
   id: string;
   url: string;
+  /** Optional phone image when separate_mobile_image is true. */
+  mobile_url: string;
+  separate_mobile_image: boolean;
   alt: string;
   sort_order: number;
   is_active: boolean;
@@ -61,6 +64,9 @@ export type HeroSlideRow = {
 export type HomeReviewsBannerRow = {
   id: number;
   background_image_url: string;
+  /** Phone background when separate_mobile_image is true. */
+  background_image_mobile_url: string;
+  separate_mobile_image: boolean;
   heading: string;
   paragraph: string;
   button_label: string;
@@ -98,6 +104,9 @@ export type HomeBrowseShowcaseProductRow = {
 export type HomeAfterBrowseBannerRow = {
   id: number;
   image_url: string;
+  /** Phone image when separate_mobile_image is true. */
+  image_mobile_url: string;
+  separate_mobile_image: boolean;
   link_href: string;
   alt_text: string;
   /** Banner image height in px on laptop / big screens (admin). */

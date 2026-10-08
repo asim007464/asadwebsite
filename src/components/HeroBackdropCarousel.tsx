@@ -3,7 +3,13 @@
 import { createContext, useContext, useEffect, useMemo, useState, type PointerEvent, type ReactNode } from "react";
 import { useSlider } from "@/lib/use-slider";
 
-export type HeroBackdropSlide = { id?: string; url: string; alt: string };
+export type HeroBackdropSlide = {
+  id?: string;
+  url: string;
+  /** Phone image; falls back to `url` when empty. */
+  mobileUrl?: string;
+  alt: string;
+};
 
 const INTERVAL_MS = 5000;
 
@@ -105,23 +111,35 @@ export function HeroCarouselImagePanel({
       aria-label="Homepage banner slideshow"
       {...(ctx && ctx.slideCount > 1 ? ctx.swipe : {})}
     >
-      {slides.map((s, i) => (
-        <div
-          key={s.id ?? `${s.url}-${i}`}
-          className={`absolute inset-0 transition-opacity duration-[900ms] ease-out ${
-            i === activeIndex ? "z-[1] opacity-100" : "pointer-events-none z-0 opacity-0"
-          }`}
-        >
-          <img
-            src={s.url}
-            alt={s.alt || "Hero slide"}
-            className="h-full w-full object-cover object-center"
-            loading={i === 0 ? "eager" : "lazy"}
-            decoding="async"
-            fetchPriority={i === 0 ? "high" : "low"}
-          />
-        </div>
-      ))}
+      {slides.map((s, i) => {
+        const mobileSrc = (s.mobileUrl ?? "").trim() || s.url;
+        return (
+          <div
+            key={s.id ?? `${s.url}-${i}`}
+            className={`absolute inset-0 transition-opacity duration-[900ms] ease-out ${
+              i === activeIndex ? "z-[1] opacity-100" : "pointer-events-none z-0 opacity-0"
+            }`}
+          >
+            <img
+              src={mobileSrc}
+              alt={s.alt || "Hero slide"}
+              className="h-full w-full object-cover object-center md:hidden"
+              loading={i === 0 ? "eager" : "lazy"}
+              decoding="async"
+              fetchPriority={i === 0 ? "high" : "low"}
+            />
+            <img
+              src={s.url}
+              alt=""
+              aria-hidden
+              className="hidden h-full w-full object-cover object-center md:block"
+              loading={i === 0 ? "eager" : "lazy"}
+              decoding="async"
+              fetchPriority={i === 0 ? "high" : "low"}
+            />
+          </div>
+        );
+      })}
     </div>
   );
 }

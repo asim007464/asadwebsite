@@ -23,6 +23,9 @@ export type StorefrontPayload = {
   heroBadgeRegion?: string;
   heroLeadParagraph?: string;
   aboutPrimaryImage?: string;
+  /** About banner image for phones when aboutSeparateMobileImage is true. */
+  aboutPrimaryImageMobile?: string;
+  aboutSeparateMobileImage?: boolean;
   aboutSecondaryImage?: string;
   contactPrimaryImage?: string;
   contactSecondaryImage?: string;
@@ -106,6 +109,8 @@ export const DEFAULT_STOREFRONT: StorefrontPayload & { socialLinks: SocialLinkRo
   heroBadgeRegion: "",
   heroLeadParagraph: "",
   aboutPrimaryImage: "",
+  aboutPrimaryImageMobile: "",
+  aboutSeparateMobileImage: false,
   aboutSecondaryImage: "",
   contactPrimaryImage: "",
   contactSecondaryImage: "",

@@ -22,6 +22,8 @@ export function parseHomePromoBannerRow(data: unknown, id: number): HomeReviewsB
   return {
     id,
     background_image_url: String(row.background_image_url ?? ""),
+    background_image_mobile_url: String(row.background_image_mobile_url ?? ""),
+    separate_mobile_image: Boolean(row.separate_mobile_image),
     heading: String(row.heading ?? ""),
     paragraph: String(row.paragraph ?? ""),
     button_label: String(row.button_label ?? ""),

@@ -5,6 +5,7 @@ import {
   clampBannerHeightPx,
   DEFAULT_PROMO_BANNER_HEIGHT_PX,
 } from "@/lib/banner-height";
+import { cssUrl, resolveBannerImages } from "@/lib/banner-images";
 import type { HomeReviewsBannerRow } from "@/lib/store-types";
 
 function cn(...parts: Array<string | false | null | undefined>) {
@@ -28,7 +29,11 @@ export function ReviewsBannerSection({
   className?: string;
   headingId?: string;
 }) {
-  const bg = banner.background_image_url.trim();
+  const { desktop: bgDesktop, mobile: bgMobile } = resolveBannerImages(
+    banner.background_image_url,
+    banner.background_image_mobile_url,
+    banner.separate_mobile_image,
+  );
   const heading = banner.heading.trim();
   const paragraph = banner.paragraph.trim();
   const label = banner.button_label.trim();
@@ -61,12 +66,21 @@ export function ReviewsBannerSection({
       )}
       style={heightStyle}
     >
-      {/* Background image — opacity / height controlled in Admin → Promo banners / Home banners */}
+      {/* Mobile image */}
       <div
         aria-hidden
-        className="absolute inset-0 scale-105 bg-center bg-cover bg-no-repeat"
+        className="absolute inset-0 scale-105 bg-center bg-cover bg-no-repeat md:hidden"
         style={{
-          backgroundImage: `url(${JSON.stringify(bg).slice(1, -1)})`,
+          backgroundImage: cssUrl(bgMobile || bgDesktop),
+          opacity: imageOpacity,
+        }}
+      />
+      {/* Desktop / tablet image */}
+      <div
+        aria-hidden
+        className="absolute inset-0 hidden scale-105 bg-center bg-cover bg-no-repeat md:block"
+        style={{
+          backgroundImage: cssUrl(bgDesktop),
           opacity: imageOpacity,
         }}
       />

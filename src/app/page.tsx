@@ -72,7 +72,7 @@ async function HomeServer() {
     getHomeSectionListings("gadgets", 48),
     supabase
       .from("hero_slides")
-      .select("id,url,alt,sort_order,is_active")
+      .select("id,url,mobile_url,separate_mobile_image,alt,sort_order,is_active")
       .eq("is_active", true)
       .order("sort_order"),
     supabase
@@ -81,7 +81,7 @@ async function HomeServer() {
     supabase
       .from("home_reviews_banner")
       .select(
-        "id,background_image_url,heading,paragraph,button_label,button_href,image_opacity,overlay_opacity,height_px,height_mobile_px,visible_on_mobile,is_active",
+        "id,background_image_url,background_image_mobile_url,separate_mobile_image,heading,paragraph,button_label,button_href,image_opacity,overlay_opacity,height_px,height_mobile_px,visible_on_mobile,is_active",
       )
       .in("id", [
         HOME_PROMO_BANNER_AFTER_HERO_ID,
@@ -90,7 +90,7 @@ async function HomeServer() {
     getHomeBrowseShowcasePayload(),
     supabase
       .from("home_after_browse_banner")
-      .select("id,image_url,link_href,alt_text,height_px,height_mobile_px,visible_on_mobile,is_active")
+      .select("id,image_url,image_mobile_url,separate_mobile_image,link_href,alt_text,height_px,height_mobile_px,visible_on_mobile,is_active")
       .eq("id", 1)
       .maybeSingle(),
     getStorefrontPayload(),
@@ -137,6 +137,8 @@ async function HomeServer() {
   const afterBrowseBanner = afterBrowseRaw
     ? {
         ...afterBrowseRaw,
+        image_mobile_url: String(afterBrowseRaw.image_mobile_url ?? ""),
+        separate_mobile_image: Boolean(afterBrowseRaw.separate_mobile_image),
         height_px: clampBannerHeightPx(
           afterBrowseRaw.height_px,
           DEFAULT_AFTER_BROWSE_HEIGHT_PX,
@@ -166,7 +168,14 @@ async function HomeServer() {
   );
   const heroBackdropSlides =
     dbHero.length > 0
-      ? dbHero.map((r) => ({ id: r.id, url: r.url.trim(), alt: r.alt }))
+      ? dbHero.map((r) => {
+          const url = r.url.trim();
+          const mobile =
+            r.separate_mobile_image && (r.mobile_url ?? "").trim()
+              ? (r.mobile_url ?? "").trim()
+              : url;
+          return { id: r.id, url, mobileUrl: mobile, alt: r.alt };
+        })
       : FALLBACK_HERO_BACKDROP_SLIDES.map((s, i) => ({
           id: `fallback-${i}`,
           url: s.url,

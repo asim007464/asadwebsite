@@ -7,7 +7,7 @@ import {
   updateHeroSlide,
 } from "@/app/admin/actions";
 import { BannerHeightsPair } from "@/components/admin/BannerHeightsPair";
-import { ADMIN_IMAGE_FILE_INPUT_CLASS, ADMIN_IMAGE_UPLOAD_HINT } from "@/lib/admin-media-upload";
+import { BannerResponsiveImageFields } from "@/components/admin/BannerResponsiveImageFields";
 import {
   clampBannerHeightPx,
   DEFAULT_HERO_HEIGHT_MOBILE_PX,
@@ -30,11 +30,18 @@ export default async function AdminHeroSlidesPage({
 
   const supabase = createSupabaseAdminClient();
   const [{ data: rows, error: loadError }, storefront] = await Promise.all([
-    supabase.from("hero_slides").select("id,url,alt,sort_order,is_active").order("sort_order"),
+    supabase
+      .from("hero_slides")
+      .select("id,url,mobile_url,separate_mobile_image,alt,sort_order,is_active")
+      .order("sort_order"),
     getStorefrontPayload(),
   ]);
 
-  const slides = (rows as HeroSlideRow[] | null) ?? [];
+  const slides = ((rows as HeroSlideRow[] | null) ?? []).map((s) => ({
+    ...s,
+    mobile_url: String(s.mobile_url ?? ""),
+    separate_mobile_image: Boolean(s.separate_mobile_image),
+  }));
   const heroEnabled = storefront.heroEnabled !== false;
   const heroVisibleOnMobile = storefront.heroVisibleOnMobile !== false;
   const heroHeightPx = clampBannerHeightPx(storefront.heroHeightPx, DEFAULT_HERO_HEIGHT_PX, 200, 720);
@@ -135,43 +142,43 @@ export default async function AdminHeroSlidesPage({
 
         <form
           action={createHeroSlide}
-          className="mt-6 grid grid-cols-1 gap-3 rounded-3xl border border-slate-200 bg-slate-50 p-4 sm:grid-cols-12 sm:p-5"
+          className="mt-6 space-y-4 rounded-3xl border border-slate-200 bg-slate-50 p-4 sm:p-5"
         >
-          <div className="sm:col-span-5">
-            <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">Image URL (https)</label>
-            <input
-              name="url"
-              placeholder="https://…"
-              className="mt-2 h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm outline-none focus:border-blue-300 focus:ring-4 focus:ring-blue-100"
-            />
-            <label className="mt-3 block text-xs font-semibold uppercase tracking-wide text-slate-500">Or upload</label>
-            <input name="image_file" type="file" accept="image/jpeg,image/png,image/webp,image/gif" className={ADMIN_IMAGE_FILE_INPUT_CLASS} />
-            <p className="mt-1 text-[11px] text-slate-500">{ADMIN_IMAGE_UPLOAD_HINT}</p>
-          </div>
-          <div className="sm:col-span-4">
-            <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">Alt text</label>
-            <input
-              name="alt"
-              placeholder="Short description (accessibility)"
-              className="mt-2 h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm outline-none focus:border-blue-300 focus:ring-4 focus:ring-blue-100"
-            />
-          </div>
-          <div className="sm:col-span-2">
-            <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">Sort order</label>
-            <input
-              name="sort_order"
-              type="number"
-              defaultValue={slides.length}
-              className="mt-2 h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm outline-none focus:border-blue-300 focus:ring-4 focus:ring-blue-100"
-            />
-          </div>
-          <div className="flex items-end sm:col-span-1">
-            <button
-              type="submit"
-              className="inline-flex h-12 w-full items-center justify-center rounded-full bg-blue-600 text-sm font-semibold text-white shadow-sm hover:bg-blue-700"
-            >
-              Add
-            </button>
+          <BannerResponsiveImageFields
+            desktopUrlName="url"
+            desktopFileName="image_file"
+            desktopDefault=""
+            mobileUrlName="mobile_url"
+            mobileFileName="mobile_image_file"
+            mobileDefault=""
+            sharedLabel="Slide image (all screens)"
+          />
+          <div className="grid gap-3 sm:grid-cols-12">
+            <div className="sm:col-span-7">
+              <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">Alt text</label>
+              <input
+                name="alt"
+                placeholder="Short description (accessibility)"
+                className="mt-2 h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm outline-none focus:border-blue-300 focus:ring-4 focus:ring-blue-100"
+              />
+            </div>
+            <div className="sm:col-span-3">
+              <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">Sort order</label>
+              <input
+                name="sort_order"
+                type="number"
+                defaultValue={slides.length}
+                className="mt-2 h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm outline-none focus:border-blue-300 focus:ring-4 focus:ring-blue-100"
+              />
+            </div>
+            <div className="flex items-end sm:col-span-2">
+              <button
+                type="submit"
+                className="inline-flex h-12 w-full items-center justify-center rounded-full bg-blue-600 text-sm font-semibold text-white shadow-sm hover:bg-blue-700"
+              >
+                Add
+              </button>
+            </div>
           </div>
         </form>
 
@@ -183,40 +190,41 @@ export default async function AdminHeroSlidesPage({
                   <SafeRemoteImage src={s.url} alt="" fill className="object-cover" sizes="140px" />
                 </div>
                 <div className="p-4">
-                  <form id={`hero-slide-edit-${s.id}`} action={updateHeroSlide} className="grid gap-3 sm:grid-cols-12">
+                  <form id={`hero-slide-edit-${s.id}`} action={updateHeroSlide} className="space-y-3">
                     <input type="hidden" name="id" value={s.id} />
-                    <div className="sm:col-span-5">
-                      <label className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">URL</label>
-                      <input
-                        name="url"
-                        defaultValue={s.url}
-                        className="mt-1 h-10 w-full rounded-xl border border-slate-200 px-3 font-mono text-xs outline-none focus:border-blue-300"
-                      />
-                      <label className="mt-2 block text-[10px] font-semibold uppercase tracking-wide text-slate-500">Upload</label>
-                      <input name="image_file" type="file" accept="image/jpeg,image/png,image/webp,image/gif" className={ADMIN_IMAGE_FILE_INPUT_CLASS} />
-                    </div>
-                    <div className="sm:col-span-3">
-                      <label className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Alt</label>
-                      <input
-                        name="alt"
-                        defaultValue={s.alt}
-                        className="mt-1 h-10 w-full rounded-xl border border-slate-200 px-3 text-sm outline-none focus:border-blue-300"
-                      />
-                    </div>
-                    <div className="sm:col-span-2">
-                      <label className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Sort</label>
-                      <input
-                        name="sort_order"
-                        type="number"
-                        defaultValue={s.sort_order}
-                        className="mt-1 h-10 w-full rounded-xl border border-slate-200 px-3 text-sm outline-none focus:border-blue-300"
-                      />
-                    </div>
-                    <div className="flex items-end sm:col-span-2">
-                      <label className="flex cursor-pointer items-center gap-2 text-sm font-semibold text-slate-800">
-                        <input type="checkbox" name="is_active" defaultChecked={s.is_active} className="h-4 w-4 rounded border-slate-300" />
-                        Active
-                      </label>
+                    <BannerResponsiveImageFields
+                      separateDefault={Boolean(s.separate_mobile_image)}
+                      desktopUrlName="url"
+                      desktopFileName="image_file"
+                      desktopDefault={s.url}
+                      mobileUrlName="mobile_url"
+                      mobileFileName="mobile_image_file"
+                      mobileDefault={s.mobile_url}
+                    />
+                    <div className="grid gap-3 sm:grid-cols-12">
+                      <div className="sm:col-span-6">
+                        <label className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Alt</label>
+                        <input
+                          name="alt"
+                          defaultValue={s.alt}
+                          className="mt-1 h-10 w-full rounded-xl border border-slate-200 px-3 text-sm outline-none focus:border-blue-300"
+                        />
+                      </div>
+                      <div className="sm:col-span-3">
+                        <label className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Sort</label>
+                        <input
+                          name="sort_order"
+                          type="number"
+                          defaultValue={s.sort_order}
+                          className="mt-1 h-10 w-full rounded-xl border border-slate-200 px-3 text-sm outline-none focus:border-blue-300"
+                        />
+                      </div>
+                      <div className="flex items-end sm:col-span-3">
+                        <label className="flex cursor-pointer items-center gap-2 text-sm font-semibold text-slate-800">
+                          <input type="checkbox" name="is_active" defaultChecked={s.is_active} className="h-4 w-4 rounded border-slate-300" />
+                          Active
+                        </label>
+                      </div>
                     </div>
                   </form>
                   <div className="mt-3 flex flex-wrap gap-2">
@@ -251,17 +259,15 @@ export default async function AdminHeroSlidesPage({
               </div>
               <form id={`hero-slide-edit-m-${s.id}`} action={updateHeroSlide} className="mt-4 space-y-3">
                 <input type="hidden" name="id" value={s.id} />
-                <div>
-                  <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">URL</label>
-                  <input
-                    name="url"
-                    defaultValue={s.url}
-                    className="mt-1 h-11 w-full rounded-xl border border-slate-200 px-3 font-mono text-[11px] outline-none focus:border-blue-300"
-                  />
-                  <label className="mt-2 block text-xs font-semibold uppercase tracking-wide text-slate-500">Or upload</label>
-                  <input name="image_file" type="file" accept="image/jpeg,image/png,image/webp,image/gif" className={ADMIN_IMAGE_FILE_INPUT_CLASS} />
-                  <p className="mt-1 text-[11px] text-slate-500">{ADMIN_IMAGE_UPLOAD_HINT}</p>
-                </div>
+                <BannerResponsiveImageFields
+                  separateDefault={Boolean(s.separate_mobile_image)}
+                  desktopUrlName="url"
+                  desktopFileName="image_file"
+                  desktopDefault={s.url}
+                  mobileUrlName="mobile_url"
+                  mobileFileName="mobile_image_file"
+                  mobileDefault={s.mobile_url}
+                />
                 <div>
                   <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">Alt</label>
                   <input name="alt" defaultValue={s.alt} className="mt-1 h-11 w-full rounded-xl border border-slate-200 px-3 text-sm outline-none focus:border-blue-300" />

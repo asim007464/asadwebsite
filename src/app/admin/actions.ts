@@ -1309,22 +1309,25 @@ async function heroSlideImageFromForm(
   formData: FormData,
   pathPrefix: string,
   existingUrl = "",
+  urlKey = "url",
+  fileKey = "image_file",
+  required = true,
 ): Promise<{ ok: string } | { err: string }> {
-  const file = formData.get("image_file");
+  const file = formData.get(fileKey);
   if (file instanceof File && file.size > 0) {
     const up = await uploadAdminMediaImage(supabase, pathPrefix, file);
     if ("error" in up) return { err: up.error };
     return { ok: up.publicUrl };
   }
-  const raw = String(formData.get("url") ?? "").trim();
+  const raw = String(formData.get(urlKey) ?? "").trim();
   if (raw) {
     const url = normalizeHeroImageUrl(raw);
     if (url === null) return { err: "invalid-url" };
-    if (!url) return { err: "invalid-url" };
+    if (!url) return required ? { err: "invalid-url" } : { ok: "" };
     return { ok: url };
   }
   if (existingUrl.trim()) return { ok: existingUrl.trim() };
-  return { err: "invalid-url" };
+  return required ? { err: "invalid-url" } : { ok: "" };
 }
 
 export async function createHeroSlide(formData: FormData) {
@@ -1332,25 +1335,38 @@ export async function createHeroSlide(formData: FormData) {
   const alt = String(formData.get("alt") ?? "").trim();
   const sortRaw = Number(formData.get("sort_order") ?? 0);
   const sort_order = Number.isFinite(sortRaw) ? Math.floor(sortRaw) : 0;
+  const separate_mobile_image = String(formData.get("separate_mobile_image") ?? "") === "separate";
 
   const supabase = createSupabaseAdminClient();
   const pathKey =
     typeof crypto !== "undefined" && "randomUUID" in crypto
       ? crypto.randomUUID()
       : `${Date.now()}-${Math.random().toString(16).slice(2)}`;
-  const img = await heroSlideImageFromForm(
-    supabase,
-    formData,
-    `hero/${pathKey}`,
-  );
+  const img = await heroSlideImageFromForm(supabase, formData, `hero/${pathKey}`);
   if ("err" in img) {
     redirect(
       `/admin/hero?error=${img.err === "invalid-url" ? "invalid-url" : encodeURIComponent(img.err)}`,
     );
   }
+  const mobileImg = await heroSlideImageFromForm(
+    supabase,
+    formData,
+    `hero/${pathKey}-mobile`,
+    "",
+    "mobile_url",
+    "mobile_image_file",
+    false,
+  );
+  if ("err" in mobileImg) {
+    redirect(
+      `/admin/hero?error=${mobileImg.err === "invalid-url" ? "invalid-url" : encodeURIComponent(mobileImg.err)}`,
+    );
+  }
 
   const { error } = await supabase.from("hero_slides").insert({
     url: img.ok,
+    mobile_url: separate_mobile_image ? mobileImg.ok : "",
+    separate_mobile_image,
     alt,
     sort_order,
     is_active: true,
@@ -1367,21 +1383,48 @@ export async function updateHeroSlide(formData: FormData) {
   const sortRaw = Number(formData.get("sort_order") ?? 0);
   const sort_order = Number.isFinite(sortRaw) ? Math.floor(sortRaw) : 0;
   const is_active = formData.get("is_active") === "on";
+  const separate_mobile_image = String(formData.get("separate_mobile_image") ?? "") === "separate";
   if (!id) redirect("/admin/hero?error=invalid-url");
 
   const supabase = createSupabaseAdminClient();
-  const { data: existingRow } = await supabase.from("hero_slides").select("url").eq("id", id).maybeSingle();
+  const { data: existingRow } = await supabase
+    .from("hero_slides")
+    .select("url,mobile_url")
+    .eq("id", id)
+    .maybeSingle();
   const existingUrl = String(existingRow?.url ?? "");
+  const existingMobile = String((existingRow as { mobile_url?: string } | null)?.mobile_url ?? "");
   const img = await heroSlideImageFromForm(supabase, formData, `hero/${id}`, existingUrl);
   if ("err" in img) {
     redirect(
       `/admin/hero?error=${img.err === "invalid-url" ? "invalid-url" : encodeURIComponent(img.err)}`,
     );
   }
+  const mobileImg = await heroSlideImageFromForm(
+    supabase,
+    formData,
+    `hero/${id}-mobile`,
+    existingMobile,
+    "mobile_url",
+    "mobile_image_file",
+    false,
+  );
+  if ("err" in mobileImg) {
+    redirect(
+      `/admin/hero?error=${mobileImg.err === "invalid-url" ? "invalid-url" : encodeURIComponent(mobileImg.err)}`,
+    );
+  }
 
   const { error } = await supabase
     .from("hero_slides")
-    .update({ url: img.ok, alt, sort_order, is_active })
+    .update({
+      url: img.ok,
+      mobile_url: separate_mobile_image ? mobileImg.ok : existingMobile,
+      separate_mobile_image,
+      alt,
+      sort_order,
+      is_active,
+    })
     .eq("id", id);
   if (error) redirect(`/admin/hero?error=${encodeURIComponent(error.message)}`);
   revalidatePublicStorefront();
@@ -1430,6 +1473,7 @@ export async function updateHomeReviewsBanner(formData: FormData) {
   const button_hrefRaw = String(formData.get("button_href") ?? "").trim();
 
   const supabase = createSupabaseAdminClient();
+  const separate_mobile_image = String(formData.get("separate_mobile_image") ?? "") === "separate";
   const bgFile = formData.get("background_image_file");
   let background_image_url: string;
   if (bgFile instanceof File && bgFile.size > 0) {
@@ -1444,6 +1488,22 @@ export async function updateHomeReviewsBanner(formData: FormData) {
     if (backgroundNormalized === null)
       redirect("/admin/reviews-banner?error=invalid-bg-url");
     background_image_url = backgroundNormalized;
+  }
+
+  const bgMobileFile = formData.get("background_image_mobile_file");
+  let background_image_mobile_url = "";
+  if (bgMobileFile instanceof File && bgMobileFile.size > 0) {
+    const up = await uploadAdminMediaImage(supabase, "reviews-banner-mobile", bgMobileFile);
+    if ("error" in up) {
+      redirect(`/admin/reviews-banner?error=${encodeURIComponent(up.error)}`);
+    }
+    background_image_mobile_url = up.publicUrl;
+  } else {
+    const bg = String(formData.get("background_image_mobile_url") ?? "").trim();
+    const backgroundNormalized = normalizeOptionalHttpsBackground(bg);
+    if (backgroundNormalized === null)
+      redirect("/admin/reviews-banner?error=invalid-bg-url");
+    background_image_mobile_url = backgroundNormalized;
   }
 
   const button_href = normalizeReviewsBannerHref(button_hrefRaw);
@@ -1472,6 +1532,8 @@ export async function updateHomeReviewsBanner(formData: FormData) {
     {
       id: bannerId,
       background_image_url,
+      background_image_mobile_url,
+      separate_mobile_image,
       heading,
       paragraph,
       button_label,
@@ -1504,6 +1566,7 @@ export async function updateHomeAfterBrowseBanner(formData: FormData) {
   const visible_on_mobile = formData.get("visible_on_mobile") === "on";
 
   const supabase = createSupabaseAdminClient();
+  const separate_mobile_image = String(formData.get("separate_mobile_image") ?? "") === "separate";
 
   const imgFile = formData.get("image_file");
   let image_url: string;
@@ -1518,6 +1581,21 @@ export async function updateHomeAfterBrowseBanner(formData: FormData) {
     const imageNormalized = normalizeOptionalHttpsBackground(bg);
     if (imageNormalized === null) redirect("/admin/after-browse-banner?error=invalid-image-url");
     image_url = imageNormalized;
+  }
+
+  const imgMobileFile = formData.get("image_mobile_file");
+  let image_mobile_url = "";
+  if (imgMobileFile instanceof File && imgMobileFile.size > 0) {
+    const up = await uploadAdminMediaImage(supabase, "after-browse-banner-mobile", imgMobileFile);
+    if ("error" in up) {
+      redirect(`/admin/after-browse-banner?error=${encodeURIComponent(up.error)}`);
+    }
+    image_mobile_url = up.publicUrl;
+  } else {
+    const bg = String(formData.get("image_mobile_url") ?? "").trim();
+    const imageNormalized = normalizeOptionalHttpsBackground(bg);
+    if (imageNormalized === null) redirect("/admin/after-browse-banner?error=invalid-image-url");
+    image_mobile_url = imageNormalized;
   }
 
   let link_href = "";
@@ -1548,6 +1626,8 @@ export async function updateHomeAfterBrowseBanner(formData: FormData) {
     {
       id: 1,
       image_url,
+      image_mobile_url,
+      separate_mobile_image,
       link_href,
       alt_text,
       height_px,
@@ -1919,6 +1999,7 @@ export async function updateAboutPageContent(formData: FormData) {
   const pick = (k: string) => String(formData.get(k) ?? "").trim();
   const supabase = createSupabaseAdminClient();
   const base = await loadStorefrontBase(supabase);
+  const aboutSeparateMobileImage = String(formData.get("separate_mobile_image") ?? "") === "separate";
   const aboutPrimaryImage = await storefrontImageFromForm(
     supabase,
     formData,
@@ -1927,6 +2008,15 @@ export async function updateAboutPageContent(formData: FormData) {
     "site/about-primary",
     "/admin/about-content",
     String(base.aboutPrimaryImage ?? ""),
+  );
+  const aboutPrimaryImageMobile = await storefrontImageFromForm(
+    supabase,
+    formData,
+    "about_primary_image_mobile",
+    "about_primary_image_mobile_file",
+    "site/about-primary-mobile",
+    "/admin/about-content",
+    String(base.aboutPrimaryImageMobile ?? ""),
   );
   const aboutSecondaryImage = await storefrontImageFromForm(
     supabase,
@@ -1937,7 +2027,7 @@ export async function updateAboutPageContent(formData: FormData) {
     "/admin/about-content",
     String(base.aboutSecondaryImage ?? ""),
   );
-  if (aboutPrimaryImage === null || aboutSecondaryImage === null) {
+  if (aboutPrimaryImage === null || aboutPrimaryImageMobile === null || aboutSecondaryImage === null) {
     redirect("/admin/about-content?error=bad-image-url");
   }
   const chips = pick("about_chips")
@@ -1996,6 +2086,8 @@ export async function updateAboutPageContent(formData: FormData) {
       aboutBannerHeightPx,
       aboutBannerHeightMobilePx,
       aboutPrimaryImage,
+      aboutPrimaryImageMobile,
+      aboutSeparateMobileImage,
       aboutSecondaryImage,
       aboutValues: aboutValues.length ? aboutValues : base.aboutValues,
       aboutHowTitle: pick("about_how_title"),
