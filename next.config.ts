@@ -41,6 +41,8 @@ const nextConfig: NextConfig = {
   images: {
     remotePatterns: collectRemotePatterns(),
   },
+  /** Keep SheetJS out of the webpack server-action graph when needed. */
+  serverExternalPackages: ["xlsx"],
   experimental: {
     serverActions: {
       bodySizeLimit: "6mb",
