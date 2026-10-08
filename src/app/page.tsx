@@ -19,6 +19,7 @@ import {
 import { FeaturedProductsCarousel } from "@/components/FeaturedProductsCarousel";
 import { HomeAfterBrowseBanner } from "@/components/HomeAfterBrowseBanner";
 import { ReviewsBannerSection } from "@/components/ReviewsBannerSection";
+import { BrandLogosMarquee } from "@/components/BrandLogosMarquee";
 import { TestimonialsSection } from "@/components/TestimonialsSection";
 import { FAQSection } from "@/components/FAQSection";
 import { StatCountUp } from "@/components/StatCountUp";
@@ -246,11 +247,11 @@ async function HomeServer() {
               <div className="flex items-start justify-between gap-3 sm:items-end sm:gap-4">
                 <div className="min-w-0">
                   <h2 className="text-lg font-semibold tracking-tight text-slate-900">
-                    Browse categories
+                    {storefront.browseCategoriesTitle?.trim() || "Browse categories"}
                   </h2>
-                  <p className="mt-1 text-sm text-slate-600">
-                    Quick links to the same categories in the navbar dropdown.
-                  </p>
+                  {storefront.browseCategoriesLead?.trim() ? (
+                    <p className="mt-1 text-sm text-slate-600">{storefront.browseCategoriesLead.trim()}</p>
+                  ) : null}
                 </div>
                 <Link
                   href="/products"
@@ -277,10 +278,9 @@ async function HomeServer() {
               <h2 className="text-lg font-semibold tracking-tight text-slate-900">
                 {storefront.featuredSectionTitle?.trim() || "Featured picks"}
               </h2>
-              <p className="mt-1 text-sm text-slate-600">
-                {storefront.featuredSectionLead?.trim() ||
-                  "Hot-selling highlights chosen by admin — four across on extra-wide screens; step through one SKU at a time."}
-              </p>
+              {storefront.featuredSectionLead?.trim() ? (
+                <p className="mt-1 text-sm text-slate-600">{storefront.featuredSectionLead.trim()}</p>
+              ) : null}
             </div>
             <Link
               href="/products"
@@ -343,10 +343,9 @@ async function HomeServer() {
               <h2 className="text-lg font-semibold tracking-tight text-slate-900">
                 {storefront.gadgetsSectionTitle?.trim() || "Gadget section"}
               </h2>
-              <p className="mt-1 text-sm text-slate-600">
-                {storefront.gadgetsSectionLead?.trim() ||
-                  "More popular items — same layout as Featured picks."}
-              </p>
+              {storefront.gadgetsSectionLead?.trim() ? (
+                <p className="mt-1 text-sm text-slate-600">{storefront.gadgetsSectionLead.trim()}</p>
+              ) : null}
             </div>
             <Link
               href="/products"
@@ -363,11 +362,14 @@ async function HomeServer() {
         <section className="mt-12 rounded-3xl border border-slate-200 bg-gradient-to-br from-blue-50 via-white to-white p-6 shadow-sm sm:p-8">
           <div className="max-w-3xl">
             <h2 className="text-2xl font-semibold tracking-tight text-slate-900 sm:text-3xl">
-              {storefront.homeStatsTitle}
+              {storefront.homeStatsTitle?.trim() ||
+                "Trusted home appliances & electrical accessories — with transparent pricing."}
             </h2>
-            <p className="mt-3 text-sm leading-relaxed text-slate-600 sm:text-[15px]">
-              {storefront.homeStatsLead}
-            </p>
+            {storefront.homeStatsLead?.trim() ? (
+              <p className="mt-3 text-sm leading-relaxed text-slate-600 sm:text-[15px]">
+                {storefront.homeStatsLead.trim()}
+              </p>
+            ) : null}
           </div>
 
           <div className="mt-7 grid grid-cols-2 gap-4 sm:grid-cols-4">
@@ -420,8 +422,21 @@ async function HomeServer() {
           />
         ) : null}
 
+        <div
+          className={`mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 ${
+            showPromoBeforeReviews ? "mt-8 sm:mt-10" : "mt-12 sm:mt-14"
+          }`}
+        >
+          <BrandLogosMarquee
+            eyebrow={storefront.brandsSectionEyebrow}
+            heading={storefront.brandsSectionTitle}
+            lead={storefront.brandsSectionLead}
+            logos={storefront.brandLogos}
+          />
+        </div>
+
         <section
-          className={`-mx-3 border-y border-slate-200 bg-white py-10 text-slate-900 sm:-mx-4 sm:py-14 lg:mx-0 lg:rounded-none -mb-12 ${showPromoBeforeReviews ? "mt-8 sm:mt-10" : "mt-12 sm:mt-16"}`}
+          className={`-mx-3 border-y border-slate-200 bg-white py-10 text-slate-900 sm:-mx-4 sm:py-14 lg:mx-0 lg:rounded-none -mb-12 mt-10 sm:mt-12`}
         >
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <TestimonialsSection
@@ -429,13 +444,21 @@ async function HomeServer() {
               heading={storefront.testimonialsHeading}
               intro={storefront.testimonialsLead}
               ratingNote={storefront.reviewsRatingNote}
+              ratingScore={storefront.reviewsRatingScore}
               testimonials={
                 (storefront.testimonials ?? []).length > 0
                   ? storefront.testimonials
                   : undefined
               }
             />
-            <FAQSection />
+            <FAQSection
+              eyebrow={storefront.faqEyebrow}
+              heading={storefront.faqHeading}
+              lead={storefront.faqLead}
+              contactLabel={storefront.faqContactLabel}
+              contactHref={storefront.faqContactHref}
+              faqs={storefront.faqs}
+            />
           </div>
         </section>
 

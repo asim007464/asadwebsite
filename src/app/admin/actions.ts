@@ -19,6 +19,7 @@ import {
 } from "@/lib/product-spec-lists";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { DEFAULT_STOREFRONT } from "@/lib/storefront";
 
 export async function adminLogin(formData: FormData) {
   const email = String(formData.get("email") ?? "").trim();
@@ -1949,15 +1950,50 @@ async function saveStorefrontMerged(
   redirectTo: string,
 ) {
   merged.updated_marker = Date.now();
-  const { error } = await supabase
-    .from("storefront_settings")
-    .upsert({ id: 1, data: merged as never, updated_at: new Date().toISOString() }, { onConflict: "id" });
+  const payload = {
+    id: 1,
+    data: merged as never,
+    updated_at: new Date().toISOString(),
+  };
+  const { error } = await supabase.from("storefront_settings").upsert(payload, { onConflict: "id" });
   if (error) redirect(`${redirectTo}?error=${encodeURIComponent(error.message)}`);
+
+  // Confirm the row actually persisted (catches silent RLS / schema issues).
+  const { data: verify, error: verifyErr } = await supabase
+    .from("storefront_settings")
+    .select("data")
+    .eq("id", 1)
+    .maybeSingle();
+  if (verifyErr || !verify?.data) {
+    redirect(`${redirectTo}?error=${encodeURIComponent(verifyErr?.message ?? "save-not-persisted")}`);
+  }
+
   revalidatePublicStorefront();
   redirect(`${redirectTo}?saved=1`);
 }
 
 function parseTestimonialsFromForm(formData: FormData, pick: (k: string) => string) {
+  /** Prefer structured review slots from Home content admin. */
+  const fromSlots: { quote: string; name: string; meta: string; initials: string }[] = [];
+  for (let i = 0; i < 8; i++) {
+    const quote = pick(`review_${i}_quote`);
+    const name = pick(`review_${i}_name`);
+    const meta = pick(`review_${i}_meta`);
+    let initials = pick(`review_${i}_initials`);
+    if (!quote && !name && !meta) continue;
+    if (!initials && name) {
+      initials = name
+        .split(/\s/)
+        .map((x) => x[0])
+        .join("")
+        .slice(0, 4)
+        .toUpperCase();
+    }
+    const row = { quote, name, meta, initials: initials.slice(0, 4).toUpperCase() };
+    if (isStorefrontTestimonial(row)) fromSlots.push(row);
+  }
+  if (fromSlots.length > 0) return fromSlots;
+
   const testRaw = pick("testimonials_json");
   if (!testRaw.length) return undefined;
   let parsed: unknown;
@@ -1972,31 +2008,138 @@ function parseTestimonialsFromForm(formData: FormData, pick: (k: string) => stri
   return cleaned;
 }
 
+function parseFaqsFromForm(pick: (k: string) => string) {
+  const out: { q: string; a: string }[] = [];
+  for (let i = 0; i < 10; i++) {
+    const q = pick(`faq_${i}_q`);
+    const a = pick(`faq_${i}_a`);
+    if (!q && !a) continue;
+    if (q.length < 3 || a.length < 3) continue;
+    out.push({ q, a });
+  }
+  return out;
+}
+
 export async function updateHomePageContent(formData: FormData) {
   await assertAdminAuthenticated();
   const pick = (k: string) => String(formData.get(k) ?? "").trim();
+  /** Empty field → keep prior saved value, else built-in default (never wipe homepage copy). */
+  const pickOr = (k: string, prev: unknown, fallback: string) => {
+    const v = pick(k);
+    if (v) return v;
+    const prevStr = typeof prev === "string" ? prev.trim() : "";
+    return prevStr || fallback;
+  };
   const supabase = createSupabaseAdminClient();
   const base = await loadStorefrontBase(supabase);
   const patch: Record<string, unknown> = {
-    homeStatsTitle: pick("home_stats_title"),
-    homeStatsLead: pick("home_stats_lead"),
-    featuredSectionTitle: pick("featured_section_title"),
-    featuredSectionLead: pick("featured_section_lead"),
-    gadgetsSectionTitle: pick("gadgets_section_title"),
-    gadgetsSectionLead: pick("gadgets_section_lead"),
-    testimonialsEyebrow: pick("testimonials_eyebrow"),
-    testimonialsHeading: pick("testimonials_heading"),
-    testimonialsLead: pick("testimonials_lead"),
-    reviewsRatingNote: pick("reviews_rating_note"),
+    homeStatsTitle: pickOr("home_stats_title", base.homeStatsTitle, DEFAULT_STOREFRONT.homeStatsTitle ?? ""),
+    homeStatsLead: pickOr("home_stats_lead", base.homeStatsLead, DEFAULT_STOREFRONT.homeStatsLead ?? ""),
+    browseCategoriesTitle: pickOr(
+      "browse_categories_title",
+      base.browseCategoriesTitle,
+      DEFAULT_STOREFRONT.browseCategoriesTitle ?? "",
+    ),
+    browseCategoriesLead: pickOr(
+      "browse_categories_lead",
+      base.browseCategoriesLead,
+      DEFAULT_STOREFRONT.browseCategoriesLead ?? "",
+    ),
+    featuredSectionTitle: pickOr(
+      "featured_section_title",
+      base.featuredSectionTitle,
+      DEFAULT_STOREFRONT.featuredSectionTitle ?? "",
+    ),
+    featuredSectionLead: pickOr(
+      "featured_section_lead",
+      base.featuredSectionLead,
+      DEFAULT_STOREFRONT.featuredSectionLead ?? "",
+    ),
+    gadgetsSectionTitle: pickOr(
+      "gadgets_section_title",
+      base.gadgetsSectionTitle,
+      DEFAULT_STOREFRONT.gadgetsSectionTitle ?? "",
+    ),
+    gadgetsSectionLead: pickOr(
+      "gadgets_section_lead",
+      base.gadgetsSectionLead,
+      DEFAULT_STOREFRONT.gadgetsSectionLead ?? "",
+    ),
+    testimonialsEyebrow: pickOr(
+      "testimonials_eyebrow",
+      base.testimonialsEyebrow,
+      DEFAULT_STOREFRONT.testimonialsEyebrow ?? "",
+    ),
+    testimonialsHeading: pickOr(
+      "testimonials_heading",
+      base.testimonialsHeading,
+      DEFAULT_STOREFRONT.testimonialsHeading ?? "",
+    ),
+    testimonialsLead: pickOr("testimonials_lead", base.testimonialsLead, DEFAULT_STOREFRONT.testimonialsLead ?? ""),
+    reviewsRatingNote: pickOr(
+      "reviews_rating_note",
+      base.reviewsRatingNote,
+      DEFAULT_STOREFRONT.reviewsRatingNote ?? "",
+    ),
+    reviewsRatingScore: pickOr(
+      "reviews_rating_score",
+      base.reviewsRatingScore,
+      DEFAULT_STOREFRONT.reviewsRatingScore ?? "",
+    ),
+    faqEyebrow: pickOr("faq_eyebrow", base.faqEyebrow, DEFAULT_STOREFRONT.faqEyebrow ?? ""),
+    faqHeading: pickOr("faq_heading", base.faqHeading, DEFAULT_STOREFRONT.faqHeading ?? ""),
+    faqLead: pickOr("faq_lead", base.faqLead, DEFAULT_STOREFRONT.faqLead ?? ""),
+    faqContactLabel: pickOr("faq_contact_label", base.faqContactLabel, DEFAULT_STOREFRONT.faqContactLabel ?? ""),
+    faqContactHref: pickOr("faq_contact_href", base.faqContactHref, DEFAULT_STOREFRONT.faqContactHref ?? ""),
+    brandsSectionEyebrow: pickOr(
+      "brands_section_eyebrow",
+      base.brandsSectionEyebrow,
+      DEFAULT_STOREFRONT.brandsSectionEyebrow ?? "",
+    ),
+    brandsSectionTitle: pickOr(
+      "brands_section_title",
+      base.brandsSectionTitle,
+      DEFAULT_STOREFRONT.brandsSectionTitle ?? "",
+    ),
+    brandsSectionLead: pickOr(
+      "brands_section_lead",
+      base.brandsSectionLead,
+      DEFAULT_STOREFRONT.brandsSectionLead ?? "",
+    ),
   };
   const testimonials = parseTestimonialsFromForm(formData, pick);
   if (testimonials) patch.testimonials = testimonials;
+  const faqs = parseFaqsFromForm(pick);
+  if (faqs.length > 0) patch.faqs = faqs;
+  else if (Array.isArray(base.faqs) && (base.faqs as unknown[]).length > 0) patch.faqs = base.faqs;
+  else patch.faqs = DEFAULT_STOREFRONT.faqs;
+
+  const brandLogos: { name: string; imageUrl?: string }[] = [];
+  for (let i = 0; i < 12; i++) {
+    const name = pick(`brand_logo_${i}_name`);
+    const imageUrl = pick(`brand_logo_${i}_image`);
+    if (!name) continue;
+    brandLogos.push(imageUrl ? { name, imageUrl } : { name });
+  }
+  if (brandLogos.length > 0) patch.brandLogos = brandLogos;
+  else if (Array.isArray(base.brandLogos) && (base.brandLogos as unknown[]).length > 0) {
+    patch.brandLogos = base.brandLogos;
+  } else {
+    patch.brandLogos = DEFAULT_STOREFRONT.brandLogos;
+  }
+
   await saveStorefrontMerged(supabase, { ...base, ...patch }, "/admin/home-content");
 }
 
 export async function updateAboutPageContent(formData: FormData) {
   await assertAdminAuthenticated();
   const pick = (k: string) => String(formData.get(k) ?? "").trim();
+  const pickOr = (k: string, prev: unknown, fallback: string) => {
+    const v = pick(k);
+    if (v) return v;
+    const prevStr = typeof prev === "string" ? prev.trim() : "";
+    return prevStr || fallback;
+  };
   const supabase = createSupabaseAdminClient();
   const base = await loadStorefrontBase(supabase);
   const aboutSeparateMobileImage = String(formData.get("separate_mobile_image") ?? "") === "separate";
@@ -2030,11 +2173,16 @@ export async function updateAboutPageContent(formData: FormData) {
   if (aboutPrimaryImage === null || aboutPrimaryImageMobile === null || aboutSecondaryImage === null) {
     redirect("/admin/about-content?error=bad-image-url");
   }
-  const chips = pick("about_chips")
+
+  /** Prefer individual chip slots; fall back to newline textarea. */
+  const chipsFromSlots = [0, 1, 2, 3, 4, 5]
+    .map((i) => pick(`about_chip_${i}`))
+    .filter(Boolean);
+  const chipsFromTextarea = pick("about_chips")
     .split(/\r?\n/)
     .map((s) => s.trim())
-    .filter(Boolean)
-    .slice(0, 12);
+    .filter(Boolean);
+  const chips = (chipsFromSlots.length ? chipsFromSlots : chipsFromTextarea).slice(0, 12);
 
   const aboutValues = [0, 1, 2]
     .map((i) => ({
@@ -2051,16 +2199,50 @@ export async function updateAboutPageContent(formData: FormData) {
     }))
     .filter((v) => v.step && v.title && v.body);
 
-  const aboutTeam = [0, 1, 2, 3]
-    .map((i) => {
-      const name = pick(`about_team_${i}_name`);
-      const role = pick(`about_team_${i}_role`);
-      const note = pick(`about_team_${i}_note`);
-      let initials = pick(`about_team_${i}_initials`);
-      if (!initials && name) initials = name.split(/\s/).map((x) => x[0]).join("").slice(0, 4).toUpperCase();
-      return { name, role, note, initials: initials.slice(0, 4) };
-    })
-    .filter((m) => m.name && m.role && m.note && m.initials);
+  const prevTeam = Array.isArray(base.aboutTeam)
+    ? (base.aboutTeam as { name?: string; imageUrl?: string }[])
+    : [];
+  const aboutTeam: { name: string; role: string; note: string; initials: string; imageUrl?: string }[] = [];
+  for (const i of [0, 1, 2, 3]) {
+    const name = pick(`about_team_${i}_name`);
+    const role = pick(`about_team_${i}_role`);
+    const note = pick(`about_team_${i}_note`);
+    let initials = pick(`about_team_${i}_initials`);
+    if (!initials && name) {
+      initials = name
+        .split(/\s/)
+        .map((x) => x[0])
+        .join("")
+        .slice(0, 4)
+        .toUpperCase();
+    }
+    const existingUrl = String(prevTeam[i]?.imageUrl ?? "");
+    const imageUrl = await storefrontImageFromForm(
+      supabase,
+      formData,
+      `about_team_${i}_image`,
+      `about_team_${i}_image_file`,
+      `site/about-team-${i}`,
+      "/admin/about-content",
+      existingUrl,
+    );
+    if (imageUrl === null) redirect("/admin/about-content?error=bad-image-url");
+    if (!name || !role || !note || !initials) continue;
+    aboutTeam.push({
+      name,
+      role,
+      note,
+      initials: initials.slice(0, 4),
+      ...(imageUrl ? { imageUrl } : {}),
+    });
+  }
+
+  const aboutStoryBlocks = [0, 1, 2, 3, 4, 5]
+    .map((i) => ({
+      title: pick(`about_story_block_${i}_title`),
+      body: pick(`about_story_block_${i}_body`),
+    }))
+    .filter((b) => b.title && b.body);
 
   const heightRaw = Number.parseInt(pick("about_banner_height_px") || "420", 10);
   const aboutBannerHeightPx = Number.isFinite(heightRaw)
@@ -2075,30 +2257,77 @@ export async function updateAboutPageContent(formData: FormData) {
     supabase,
     {
       ...base,
-      aboutEyebrow: pick("about_eyebrow"),
-      aboutPageTitle: pick("about_page_title"),
-      aboutPageLead: pick("about_page_lead"),
-      aboutChips: chips.length ? chips : base.aboutChips,
-      aboutCtaPrimaryLabel: pick("about_cta_primary_label"),
-      aboutCtaPrimaryHref: pick("about_cta_primary_href") || "/products",
-      aboutCtaSecondaryLabel: pick("about_cta_secondary_label"),
-      aboutCtaSecondaryHref: pick("about_cta_secondary_href") || "/contact",
+      aboutEyebrow: pickOr("about_eyebrow", base.aboutEyebrow, DEFAULT_STOREFRONT.aboutEyebrow ?? ""),
+      aboutPageTitle: pickOr("about_page_title", base.aboutPageTitle, DEFAULT_STOREFRONT.aboutPageTitle ?? ""),
+      aboutPageLead: pickOr("about_page_lead", base.aboutPageLead, DEFAULT_STOREFRONT.aboutPageLead ?? ""),
+      aboutChips: chips.length ? chips : (base.aboutChips ?? DEFAULT_STOREFRONT.aboutChips),
+      aboutCtaPrimaryLabel: pickOr(
+        "about_cta_primary_label",
+        base.aboutCtaPrimaryLabel,
+        DEFAULT_STOREFRONT.aboutCtaPrimaryLabel ?? "",
+      ),
+      aboutCtaPrimaryHref: pickOr(
+        "about_cta_primary_href",
+        base.aboutCtaPrimaryHref,
+        DEFAULT_STOREFRONT.aboutCtaPrimaryHref ?? "/products",
+      ),
+      aboutCtaSecondaryLabel: pickOr(
+        "about_cta_secondary_label",
+        base.aboutCtaSecondaryLabel,
+        DEFAULT_STOREFRONT.aboutCtaSecondaryLabel ?? "",
+      ),
+      aboutCtaSecondaryHref: pickOr(
+        "about_cta_secondary_href",
+        base.aboutCtaSecondaryHref,
+        DEFAULT_STOREFRONT.aboutCtaSecondaryHref ?? "/contact",
+      ),
       aboutBannerHeightPx,
       aboutBannerHeightMobilePx,
       aboutPrimaryImage,
       aboutPrimaryImageMobile,
       aboutSeparateMobileImage,
       aboutSecondaryImage,
-      aboutValues: aboutValues.length ? aboutValues : base.aboutValues,
-      aboutHowTitle: pick("about_how_title"),
-      aboutHowLead: pick("about_how_lead"),
-      aboutHowBadge: pick("about_how_badge"),
-      aboutHowSteps: aboutHowSteps.length ? aboutHowSteps : base.aboutHowSteps,
-      aboutTeamEyebrow: pick("about_team_eyebrow"),
-      aboutTeamTitle: pick("about_team_title"),
-      aboutTeamLead: pick("about_team_lead"),
-      aboutTeamCtaLabel: pick("about_team_cta_label"),
-      aboutTeam: aboutTeam.length ? aboutTeam : base.aboutTeam,
+      aboutValues: aboutValues.length
+        ? aboutValues
+        : (base.aboutValues ?? DEFAULT_STOREFRONT.aboutValues),
+      aboutHowTitle: pickOr("about_how_title", base.aboutHowTitle, DEFAULT_STOREFRONT.aboutHowTitle ?? ""),
+      aboutHowLead: pickOr("about_how_lead", base.aboutHowLead, DEFAULT_STOREFRONT.aboutHowLead ?? ""),
+      aboutHowBadge: pickOr("about_how_badge", base.aboutHowBadge, DEFAULT_STOREFRONT.aboutHowBadge ?? ""),
+      aboutHowSteps: aboutHowSteps.length
+        ? aboutHowSteps
+        : (base.aboutHowSteps ?? DEFAULT_STOREFRONT.aboutHowSteps),
+      aboutTeamEyebrow: pickOr(
+        "about_team_eyebrow",
+        base.aboutTeamEyebrow,
+        DEFAULT_STOREFRONT.aboutTeamEyebrow ?? "",
+      ),
+      aboutTeamTitle: pickOr("about_team_title", base.aboutTeamTitle, DEFAULT_STOREFRONT.aboutTeamTitle ?? ""),
+      aboutTeamLead: pickOr("about_team_lead", base.aboutTeamLead, DEFAULT_STOREFRONT.aboutTeamLead ?? ""),
+      aboutTeamCtaLabel: pickOr(
+        "about_team_cta_label",
+        base.aboutTeamCtaLabel,
+        DEFAULT_STOREFRONT.aboutTeamCtaLabel ?? "",
+      ),
+      aboutTeamCtaHref: pickOr(
+        "about_team_cta_href",
+        base.aboutTeamCtaHref,
+        DEFAULT_STOREFRONT.aboutTeamCtaHref ?? "/contact",
+      ),
+      aboutTeam: aboutTeam.length ? aboutTeam : (base.aboutTeam ?? DEFAULT_STOREFRONT.aboutTeam),
+      aboutStoryEyebrow: pickOr(
+        "about_story_eyebrow",
+        base.aboutStoryEyebrow,
+        DEFAULT_STOREFRONT.aboutStoryEyebrow ?? "",
+      ),
+      aboutStoryTitle: pickOr(
+        "about_story_title",
+        base.aboutStoryTitle,
+        DEFAULT_STOREFRONT.aboutStoryTitle ?? "",
+      ),
+      aboutStoryLead: pickOr("about_story_lead", base.aboutStoryLead, DEFAULT_STOREFRONT.aboutStoryLead ?? ""),
+      aboutStoryBlocks: aboutStoryBlocks.length
+        ? aboutStoryBlocks
+        : (base.aboutStoryBlocks ?? DEFAULT_STOREFRONT.aboutStoryBlocks),
     },
     "/admin/about-content",
   );
