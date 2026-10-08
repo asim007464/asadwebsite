@@ -18,6 +18,7 @@ function clampPct(raw: unknown, fallback: number) {
 
 export function parseHomePromoBannerRow(data: unknown, id: number): HomeReviewsBannerRow {
   const row = (data ?? {}) as Partial<HomeReviewsBannerRow>;
+  const height_px = clampBannerHeightPx(row.height_px, DEFAULT_PROMO_BANNER_HEIGHT_PX, 140, 720);
   return {
     id,
     background_image_url: String(row.background_image_url ?? ""),
@@ -27,7 +28,13 @@ export function parseHomePromoBannerRow(data: unknown, id: number): HomeReviewsB
     button_href: String(row.button_href ?? "/products"),
     image_opacity: clampPct(row.image_opacity, 100),
     overlay_opacity: clampPct(row.overlay_opacity, 70),
-    height_px: clampBannerHeightPx(row.height_px, DEFAULT_PROMO_BANNER_HEIGHT_PX, 140, 720),
+    height_px,
+    height_mobile_px: clampBannerHeightPx(
+      row.height_mobile_px,
+      Math.max(140, Math.round(height_px * 0.65)),
+      120,
+      720,
+    ),
     visible_on_mobile: row.visible_on_mobile !== false,
     is_active: Boolean(row.is_active),
   };

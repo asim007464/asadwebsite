@@ -1,9 +1,11 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { updateHomeBannersHub } from "@/app/admin/actions";
-import { BannerHeightField } from "@/components/admin/BannerHeightField";
+import { BannerHeightsPair } from "@/components/admin/BannerHeightsPair";
 import {
+  DEFAULT_AFTER_BROWSE_HEIGHT_MOBILE_PX,
   DEFAULT_AFTER_BROWSE_HEIGHT_PX,
+  DEFAULT_HERO_HEIGHT_MOBILE_PX,
   DEFAULT_HERO_HEIGHT_PX,
   DEFAULT_PROMO_BANNER_HEIGHT_PX,
   clampBannerHeightPx,
@@ -112,9 +114,9 @@ export default async function AdminHomeBannersPage({
     getStorefrontPayload(),
     supabase
       .from("home_reviews_banner")
-      .select("id,background_image_url,heading,paragraph,button_label,button_href,image_opacity,overlay_opacity,height_px,visible_on_mobile,is_active")
+      .select("id,background_image_url,heading,paragraph,button_label,button_href,image_opacity,overlay_opacity,height_px,height_mobile_px,visible_on_mobile,is_active")
       .in("id", [1, 2]),
-    supabase.from("home_after_browse_banner").select("id,image_url,link_href,alt_text,height_px,visible_on_mobile,is_active").eq("id", 1).maybeSingle(),
+    supabase.from("home_after_browse_banner").select("id,image_url,link_href,alt_text,height_px,height_mobile_px,visible_on_mobile,is_active").eq("id", 1).maybeSingle(),
     supabase.from("home_browse_showcase").select("id,category_id,section_title,is_active,visible_on_mobile").eq("id", 1).maybeSingle(),
   ]);
 
@@ -139,6 +141,12 @@ export default async function AdminHomeBannersPage({
           120,
           640,
         ),
+        height_mobile_px: clampBannerHeightPx(
+          (afterRes.data as HomeAfterBrowseBannerRow).height_mobile_px,
+          DEFAULT_AFTER_BROWSE_HEIGHT_MOBILE_PX,
+          100,
+          640,
+        ),
         visible_on_mobile: (afterRes.data as HomeAfterBrowseBannerRow).visible_on_mobile !== false,
         is_active: Boolean((afterRes.data as HomeAfterBrowseBannerRow).is_active),
       } satisfies HomeAfterBrowseBannerRow)
@@ -148,6 +156,7 @@ export default async function AdminHomeBannersPage({
         link_href: "",
         alt_text: "",
         height_px: DEFAULT_AFTER_BROWSE_HEIGHT_PX,
+        height_mobile_px: DEFAULT_AFTER_BROWSE_HEIGHT_MOBILE_PX,
         visible_on_mobile: true,
         is_active: false,
       };
@@ -165,6 +174,12 @@ export default async function AdminHomeBannersPage({
   const heroEnabled = storefront.heroEnabled !== false;
   const heroVisibleOnMobile = storefront.heroVisibleOnMobile !== false;
   const heroHeightPx = clampBannerHeightPx(storefront.heroHeightPx, DEFAULT_HERO_HEIGHT_PX, 200, 720);
+  const heroHeightMobilePx = clampBannerHeightPx(
+    storefront.heroHeightMobilePx,
+    DEFAULT_HERO_HEIGHT_MOBILE_PX,
+    160,
+    720,
+  );
 
   return (
     <main className="py-6 lg:py-0">
@@ -174,8 +189,8 @@ export default async function AdminHomeBannersPage({
             <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-blue-600/90">Homepage</p>
             <h1 className="mt-1 text-2xl font-semibold tracking-tight text-slate-900">Home banners</h1>
             <p className="mt-2 max-w-2xl text-sm text-slate-600">
-              Show or hide every homepage banner and set image height. Use <span className="font-semibold">Edit content</span>{" "}
-              on each card to change images, copy, and links.
+              Show or hide every homepage banner and set separate heights for laptop/big screens and mobile. Use{" "}
+              <span className="font-semibold">Edit content</span> on each card to change images, copy, and links.
             </p>
           </div>
           <Link href="/admin" className="text-sm font-semibold text-blue-700 hover:text-blue-800">
@@ -186,14 +201,15 @@ export default async function AdminHomeBannersPage({
         {promoRes.error || afterRes.error ? (
           <div className="mt-5 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-950">
             Could not load all banner settings. Run{" "}
-            <span className="font-mono text-xs">supabase/migrations/20260523200000_banner_heights.sql</span> in Supabase if
-            height fields are missing.
+            <span className="font-mono text-xs">supabase/migrations/20260523200000_banner_heights.sql</span> and{" "}
+            <span className="font-mono text-xs">supabase/migrations/20260523220000_banner_mobile_heights.sql</span> in
+            Supabase if height fields are missing.
           </div>
         ) : null}
 
         {saved ? (
           <div className="mt-5 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-900">
-            Banner visibility and heights saved.
+            Banner visibility and laptop/mobile heights saved.
           </div>
         ) : null}
         {error ? (
@@ -210,12 +226,14 @@ export default async function AdminHomeBannersPage({
           >
             <ActiveToggle name="hero_enabled" defaultChecked={heroEnabled} label="Show hero carousel" />
             <MobileToggle name="hero_visible_on_mobile" defaultChecked={heroVisibleOnMobile} />
-            <BannerHeightField
-              name="hero_height_px"
-              defaultValue={heroHeightPx}
+            <BannerHeightsPair
+              desktopName="hero_height_px"
+              mobileName="hero_height_mobile_px"
+              desktopDefault={heroHeightPx}
+              mobileDefault={heroHeightMobilePx}
               min={200}
               max={720}
-              label="Hero height"
+              mobileMin={160}
             />
           </BannerCard>
 
@@ -233,11 +251,14 @@ export default async function AdminHomeBannersPage({
               name={`promo_${HOME_PROMO_BANNER_AFTER_HERO_ID}_visible_on_mobile`}
               defaultChecked={promo1.visible_on_mobile !== false}
             />
-            <BannerHeightField
-              name={`promo_${HOME_PROMO_BANNER_AFTER_HERO_ID}_height_px`}
-              defaultValue={promo1.height_px ?? DEFAULT_PROMO_BANNER_HEIGHT_PX}
+            <BannerHeightsPair
+              desktopName={`promo_${HOME_PROMO_BANNER_AFTER_HERO_ID}_height_px`}
+              mobileName={`promo_${HOME_PROMO_BANNER_AFTER_HERO_ID}_height_mobile_px`}
+              desktopDefault={promo1.height_px ?? DEFAULT_PROMO_BANNER_HEIGHT_PX}
+              mobileDefault={promo1.height_mobile_px}
               min={140}
               max={720}
+              mobileMin={120}
             />
           </BannerCard>
 
@@ -271,11 +292,14 @@ export default async function AdminHomeBannersPage({
               name="after_browse_visible_on_mobile"
               defaultChecked={afterBrowse.visible_on_mobile !== false}
             />
-            <BannerHeightField
-              name="after_browse_height_px"
-              defaultValue={afterBrowse.height_px}
+            <BannerHeightsPair
+              desktopName="after_browse_height_px"
+              mobileName="after_browse_height_mobile_px"
+              desktopDefault={afterBrowse.height_px}
+              mobileDefault={afterBrowse.height_mobile_px}
               min={120}
               max={640}
+              mobileMin={100}
             />
           </BannerCard>
 
@@ -293,11 +317,14 @@ export default async function AdminHomeBannersPage({
               name={`promo_${HOME_PROMO_BANNER_BEFORE_REVIEWS_ID}_visible_on_mobile`}
               defaultChecked={promo2.visible_on_mobile !== false}
             />
-            <BannerHeightField
-              name={`promo_${HOME_PROMO_BANNER_BEFORE_REVIEWS_ID}_height_px`}
-              defaultValue={promo2.height_px ?? DEFAULT_PROMO_BANNER_HEIGHT_PX}
+            <BannerHeightsPair
+              desktopName={`promo_${HOME_PROMO_BANNER_BEFORE_REVIEWS_ID}_height_px`}
+              mobileName={`promo_${HOME_PROMO_BANNER_BEFORE_REVIEWS_ID}_height_mobile_px`}
+              desktopDefault={promo2.height_px ?? DEFAULT_PROMO_BANNER_HEIGHT_PX}
+              mobileDefault={promo2.height_mobile_px}
               min={140}
               max={720}
+              mobileMin={120}
             />
           </BannerCard>
 

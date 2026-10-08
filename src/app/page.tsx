@@ -28,7 +28,11 @@ import { getHomeBrowseShowcasePayload } from "@/lib/home-browse-showcase";
 import { getHomeSectionListings } from "@/lib/home-section-products";
 import { getStorefrontPayload } from "@/lib/storefront";
 import {
+  BANNER_HEIGHT_FIXED_CLASS,
+  bannerHeightStyle,
   clampBannerHeightPx,
+  DEFAULT_HERO_HEIGHT_MOBILE_PX,
+  DEFAULT_AFTER_BROWSE_HEIGHT_MOBILE_PX,
   DEFAULT_AFTER_BROWSE_HEIGHT_PX,
   DEFAULT_HERO_HEIGHT_PX,
   hideOnMobileClass,
@@ -77,7 +81,7 @@ async function HomeServer() {
     supabase
       .from("home_reviews_banner")
       .select(
-        "id,background_image_url,heading,paragraph,button_label,button_href,image_opacity,overlay_opacity,height_px,visible_on_mobile,is_active",
+        "id,background_image_url,heading,paragraph,button_label,button_href,image_opacity,overlay_opacity,height_px,height_mobile_px,visible_on_mobile,is_active",
       )
       .in("id", [
         HOME_PROMO_BANNER_AFTER_HERO_ID,
@@ -86,7 +90,7 @@ async function HomeServer() {
     getHomeBrowseShowcasePayload(),
     supabase
       .from("home_after_browse_banner")
-      .select("id,image_url,link_href,alt_text,height_px,visible_on_mobile,is_active")
+      .select("id,image_url,link_href,alt_text,height_px,height_mobile_px,visible_on_mobile,is_active")
       .eq("id", 1)
       .maybeSingle(),
     getStorefrontPayload(),
@@ -139,6 +143,12 @@ async function HomeServer() {
           120,
           640,
         ),
+        height_mobile_px: clampBannerHeightPx(
+          afterBrowseRaw.height_mobile_px,
+          DEFAULT_AFTER_BROWSE_HEIGHT_MOBILE_PX,
+          100,
+          640,
+        ),
         visible_on_mobile: afterBrowseRaw.visible_on_mobile !== false,
       }
     : null;
@@ -164,6 +174,12 @@ async function HomeServer() {
         }));
   const showHeroCarousel = storefront.heroEnabled !== false;
   const heroHeightPx = clampBannerHeightPx(storefront.heroHeightPx, DEFAULT_HERO_HEIGHT_PX, 200, 720);
+  const heroHeightMobilePx = clampBannerHeightPx(
+    storefront.heroHeightMobilePx,
+    DEFAULT_HERO_HEIGHT_MOBILE_PX,
+    160,
+    720,
+  );
   const heroMobileClass = hideOnMobileClass(storefront.heroVisibleOnMobile !== false);
 
   const demoComfortPower = DEMO_PRODUCTS.slice(0, 3);
@@ -175,8 +191,8 @@ async function HomeServer() {
       {/* Image-only hero carousel — show/hide + height: Admin → Home banners / Hero slides */}
       {showHeroCarousel ? (
         <section
-          className={`relative w-full border-b border-slate-200 ${heroMobileClass}`}
-          style={{ height: heroHeightPx }}
+          className={`relative w-full border-b border-slate-200 ${BANNER_HEIGHT_FIXED_CLASS} ${heroMobileClass}`}
+          style={bannerHeightStyle(heroHeightPx, heroHeightMobilePx)}
         >
           <HeroCarouselProvider slides={heroBackdropSlides}>
             <HeroCarouselImagePanel variant="banner" className="h-full w-full" />

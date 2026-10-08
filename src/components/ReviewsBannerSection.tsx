@@ -1,5 +1,10 @@
 import Link from "next/link";
-import { clampBannerHeightPx, DEFAULT_PROMO_BANNER_HEIGHT_PX } from "@/lib/banner-height";
+import {
+  BANNER_HEIGHT_CLASS,
+  bannerHeightStyle,
+  clampBannerHeightPx,
+  DEFAULT_PROMO_BANNER_HEIGHT_PX,
+} from "@/lib/banner-height";
 import type { HomeReviewsBannerRow } from "@/lib/store-types";
 
 function cn(...parts: Array<string | false | null | undefined>) {
@@ -30,7 +35,14 @@ export function ReviewsBannerSection({
   const href = banner.button_href.trim() || "/products";
   const imageOpacity = clampPct(Number(banner.image_opacity), 100) / 100;
   const overlayOpacity = clampPct(Number(banner.overlay_opacity), 70) / 100;
-  const heightPx = clampBannerHeightPx(banner.height_px, DEFAULT_PROMO_BANNER_HEIGHT_PX, 140, 720);
+  const heightDesktop = clampBannerHeightPx(banner.height_px, DEFAULT_PROMO_BANNER_HEIGHT_PX, 140, 720);
+  const heightMobile = clampBannerHeightPx(
+    banner.height_mobile_px,
+    Math.max(140, Math.round(heightDesktop * 0.65)),
+    120,
+    720,
+  );
+  const heightStyle = bannerHeightStyle(heightDesktop, heightMobile);
 
   const showBtn = label.length > 0 && href.length > 0;
 
@@ -42,11 +54,12 @@ export function ReviewsBannerSection({
       aria-label={heading ? undefined : "Promotional banner"}
       className={cn(
         "relative isolate overflow-hidden rounded-2xl bg-slate-900 shadow-lg ring-1 ring-slate-200/70 sm:rounded-3xl",
+        BANNER_HEIGHT_CLASS,
         layout === "fullBleed" && "left-1/2 mt-10 w-[min(100dvw,100%)] max-w-none -translate-x-1/2 sm:mt-12",
         layout === "contained" && "w-full",
         className,
       )}
-      style={{ minHeight: heightPx }}
+      style={heightStyle}
     >
       {/* Background image — opacity / height controlled in Admin → Promo banners / Home banners */}
       <div
@@ -74,8 +87,8 @@ export function ReviewsBannerSection({
       />
 
       <div
-        className="relative z-10 mx-auto flex max-w-7xl flex-col justify-end px-4 pb-4 pt-8 sm:justify-center sm:gap-6 sm:px-8 sm:py-12 md:min-h-0 md:flex-row md:items-center md:justify-between md:py-14 lg:px-10"
-        style={{ minHeight: heightPx }}
+        className={`relative z-10 mx-auto flex max-w-7xl flex-col justify-end px-4 pb-4 pt-8 sm:justify-center sm:gap-6 sm:px-8 sm:py-12 md:flex-row md:items-center md:justify-between md:py-14 lg:px-10 ${BANNER_HEIGHT_CLASS}`}
+        style={heightStyle}
       >
         {(heading || paragraph) ? (
           <div className="mb-14 max-w-2xl space-y-2.5 text-white sm:mb-0 sm:space-y-3">

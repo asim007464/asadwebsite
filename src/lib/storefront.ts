@@ -57,8 +57,10 @@ export type StorefrontPayload = {
   aboutCtaPrimaryHref?: string;
   aboutCtaSecondaryLabel?: string;
   aboutCtaSecondaryHref?: string;
-  /** Banner height in px (desktop). */
+  /** About promo banner height in px (laptop / big screens). */
   aboutBannerHeightPx?: number;
+  /** About promo banner height in px (phones). */
+  aboutBannerHeightMobilePx?: number;
   aboutValues?: AboutValueCard[];
   aboutHowTitle?: string;
   aboutHowLead?: string;
@@ -89,8 +91,10 @@ export type StorefrontPayload = {
   googleMapsPlaceUrl?: string;
   /** When false, homepage hero carousel is hidden. */
   heroEnabled?: boolean;
-  /** Homepage hero carousel height in pixels. */
+  /** Homepage hero carousel height in pixels (laptop / big screens). */
   heroHeightPx?: number;
+  /** Homepage hero carousel height in pixels (phones). */
+  heroHeightMobilePx?: number;
   /** When false, hero is hidden on phone screens only. */
   heroVisibleOnMobile?: boolean;
 };
@@ -144,6 +148,7 @@ export const DEFAULT_STOREFRONT: StorefrontPayload & { socialLinks: SocialLinkRo
   aboutCtaSecondaryLabel: "Contact sales",
   aboutCtaSecondaryHref: "/contact",
   aboutBannerHeightPx: 420,
+  aboutBannerHeightMobilePx: 300,
   aboutValues: [
     {
       title: "Genuine products",
@@ -211,6 +216,7 @@ export const DEFAULT_STOREFRONT: StorefrontPayload & { socialLinks: SocialLinkRo
     "https://www.google.com/maps/place/Al+Makkah+Electric+Traders/@31.0658769,72.9439501,17z/data=!3m1!4b1!4m6!3m5!1s0x3922f15e62348bcf:0xd4712bb9e23c818e!8m2!3d31.0658769!4d72.9439501!16s%2Fg%2F11ynf8lkz5",
   heroEnabled: true,
   heroHeightPx: 420,
+  heroHeightMobilePx: 260,
   heroVisibleOnMobile: true,
 };
 
@@ -303,6 +309,18 @@ export async function getStorefrontPayload(): Promise<ResolvedStorefront> {
       typeof patch.aboutBannerHeightPx === "number" && Number.isFinite(patch.aboutBannerHeightPx)
         ? Math.min(720, Math.max(280, Math.round(patch.aboutBannerHeightPx)))
         : DEFAULT_STOREFRONT.aboutBannerHeightPx;
+    const aboutBannerHeightMobilePx =
+      typeof patch.aboutBannerHeightMobilePx === "number" && Number.isFinite(patch.aboutBannerHeightMobilePx)
+        ? Math.min(720, Math.max(200, Math.round(patch.aboutBannerHeightMobilePx)))
+        : DEFAULT_STOREFRONT.aboutBannerHeightMobilePx;
+    const heroHeightPx =
+      typeof patch.heroHeightPx === "number" && Number.isFinite(patch.heroHeightPx)
+        ? Math.min(720, Math.max(200, Math.round(patch.heroHeightPx)))
+        : DEFAULT_STOREFRONT.heroHeightPx;
+    const heroHeightMobilePx =
+      typeof patch.heroHeightMobilePx === "number" && Number.isFinite(patch.heroHeightMobilePx)
+        ? Math.min(720, Math.max(160, Math.round(patch.heroHeightMobilePx)))
+        : DEFAULT_STOREFRONT.heroHeightMobilePx;
     return {
       ...DEFAULT_STOREFRONT,
       ...patch,
@@ -310,6 +328,9 @@ export async function getStorefrontPayload(): Promise<ResolvedStorefront> {
       testimonials,
       aboutChips: aboutChips.length ? aboutChips : DEFAULT_STOREFRONT.aboutChips,
       aboutBannerHeightPx,
+      aboutBannerHeightMobilePx,
+      heroHeightPx,
+      heroHeightMobilePx,
       aboutValues: normalizeAboutValues(patch.aboutValues),
       aboutHowSteps: normalizeAboutHowSteps(patch.aboutHowSteps),
       aboutTeam: normalizeAboutTeam(patch.aboutTeam),

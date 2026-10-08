@@ -69,8 +69,10 @@ export type HomeReviewsBannerRow = {
   image_opacity: number;
   /** Dark overlay strength 0–100 (admin). */
   overlay_opacity: number;
-  /** Banner strip height in px (admin). */
+  /** Banner strip height in px on laptop / big screens (admin). */
   height_px: number;
+  /** Banner strip height in px on phones (admin). */
+  height_mobile_px: number;
   /** When false, banner is hidden on phone screens only. */
   visible_on_mobile: boolean;
   is_active: boolean;
@@ -98,8 +100,10 @@ export type HomeAfterBrowseBannerRow = {
   image_url: string;
   link_href: string;
   alt_text: string;
-  /** Banner image height in px (admin). */
+  /** Banner image height in px on laptop / big screens (admin). */
   height_px: number;
+  /** Banner image height in px on phones (admin). */
+  height_mobile_px: number;
   /** When false, banner is hidden on phone screens only. */
   visible_on_mobile: boolean;
   is_active: boolean;

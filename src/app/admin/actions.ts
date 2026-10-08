@@ -1462,6 +1462,10 @@ export async function updateHomeReviewsBanner(formData: FormData) {
   const height_px = Number.isFinite(heightRaw)
     ? Math.min(720, Math.max(140, Math.round(heightRaw)))
     : 340;
+  const heightMobileRaw = Number.parseInt(String(formData.get("height_mobile_px") ?? "220"), 10);
+  const height_mobile_px = Number.isFinite(heightMobileRaw)
+    ? Math.min(720, Math.max(120, Math.round(heightMobileRaw)))
+    : Math.max(140, Math.round(height_px * 0.65));
 
   const { error } = await supabase.from("home_reviews_banner").upsert(
     {
@@ -1474,6 +1478,7 @@ export async function updateHomeReviewsBanner(formData: FormData) {
       image_opacity,
       overlay_opacity,
       height_px,
+      height_mobile_px,
       visible_on_mobile,
       is_active,
       updated_at: new Date().toISOString(),
@@ -1533,6 +1538,10 @@ export async function updateHomeAfterBrowseBanner(formData: FormData) {
   const height_px = Number.isFinite(heightRaw)
     ? Math.min(640, Math.max(120, Math.round(heightRaw)))
     : 240;
+  const heightMobileRaw = Number.parseInt(String(formData.get("height_mobile_px") ?? "160"), 10);
+  const height_mobile_px = Number.isFinite(heightMobileRaw)
+    ? Math.min(640, Math.max(100, Math.round(heightMobileRaw)))
+    : Math.max(120, Math.round(height_px * 0.7));
 
   const { error } = await supabase.from("home_after_browse_banner").upsert(
     {
@@ -1541,6 +1550,7 @@ export async function updateHomeAfterBrowseBanner(formData: FormData) {
       link_href,
       alt_text,
       height_px,
+      height_mobile_px,
       visible_on_mobile,
       is_active,
       updated_at: new Date().toISOString(),
@@ -1563,12 +1573,16 @@ export async function updateHeroCarouselLayout(formData: FormData) {
   const heroHeightPx = Number.isFinite(heightRaw)
     ? Math.min(720, Math.max(200, Math.round(heightRaw)))
     : 420;
+  const heightMobileRaw = Number.parseInt(String(formData.get("hero_height_mobile_px") ?? "260"), 10);
+  const heroHeightMobilePx = Number.isFinite(heightMobileRaw)
+    ? Math.min(720, Math.max(160, Math.round(heightMobileRaw)))
+    : 260;
 
   const supabase = createSupabaseAdminClient();
   const base = await loadStorefrontBase(supabase);
   await saveStorefrontMerged(
     supabase,
-    { ...base, heroEnabled, heroHeightPx, heroVisibleOnMobile },
+    { ...base, heroEnabled, heroHeightPx, heroHeightMobilePx, heroVisibleOnMobile },
     redirectTo,
   );
 }
@@ -1585,11 +1599,22 @@ export async function updateHomeBannersHub(formData: FormData) {
   const heroHeightPx = Number.isFinite(heroHeightRaw)
     ? Math.min(720, Math.max(200, Math.round(heroHeightRaw)))
     : 420;
+  const heroHeightMobileRaw = Number.parseInt(String(formData.get("hero_height_mobile_px") ?? "260"), 10);
+  const heroHeightMobilePx = Number.isFinite(heroHeightMobileRaw)
+    ? Math.min(720, Math.max(160, Math.round(heroHeightMobileRaw)))
+    : 260;
   const base = await loadStorefrontBase(supabase);
   const { error: heroErr } = await supabase.from("storefront_settings").upsert(
     {
       id: 1,
-      data: { ...base, heroEnabled, heroHeightPx, heroVisibleOnMobile, updated_marker: Date.now() } as never,
+      data: {
+        ...base,
+        heroEnabled,
+        heroHeightPx,
+        heroHeightMobilePx,
+        heroVisibleOnMobile,
+        updated_marker: Date.now(),
+      } as never,
       updated_at: now,
     },
     { onConflict: "id" },
@@ -1601,9 +1626,13 @@ export async function updateHomeBannersHub(formData: FormData) {
     const visible_on_mobile = formData.get(`promo_${bannerId}_visible_on_mobile`) === "on";
     const hRaw = Number.parseInt(String(formData.get(`promo_${bannerId}_height_px`) ?? "340"), 10);
     const height_px = Number.isFinite(hRaw) ? Math.min(720, Math.max(140, Math.round(hRaw))) : 340;
+    const hmRaw = Number.parseInt(String(formData.get(`promo_${bannerId}_height_mobile_px`) ?? "220"), 10);
+    const height_mobile_px = Number.isFinite(hmRaw)
+      ? Math.min(720, Math.max(120, Math.round(hmRaw)))
+      : Math.max(140, Math.round(height_px * 0.65));
     const { error } = await supabase
       .from("home_reviews_banner")
-      .update({ is_active, visible_on_mobile, height_px, updated_at: now })
+      .update({ is_active, visible_on_mobile, height_px, height_mobile_px, updated_at: now })
       .eq("id", bannerId);
     if (error) redirect(`/admin/home-banners?error=${encodeURIComponent(error.message)}`);
   }
@@ -1613,9 +1642,13 @@ export async function updateHomeBannersHub(formData: FormData) {
     const visible_on_mobile = formData.get("after_browse_visible_on_mobile") === "on";
     const hRaw = Number.parseInt(String(formData.get("after_browse_height_px") ?? "240"), 10);
     const height_px = Number.isFinite(hRaw) ? Math.min(640, Math.max(120, Math.round(hRaw))) : 240;
+    const hmRaw = Number.parseInt(String(formData.get("after_browse_height_mobile_px") ?? "160"), 10);
+    const height_mobile_px = Number.isFinite(hmRaw)
+      ? Math.min(640, Math.max(100, Math.round(hmRaw)))
+      : Math.max(120, Math.round(height_px * 0.7));
     const { error } = await supabase
       .from("home_after_browse_banner")
-      .update({ is_active, visible_on_mobile, height_px, updated_at: now })
+      .update({ is_active, visible_on_mobile, height_px, height_mobile_px, updated_at: now })
       .eq("id", 1);
     if (error) redirect(`/admin/home-banners?error=${encodeURIComponent(error.message)}`);
   }
@@ -1942,6 +1975,10 @@ export async function updateAboutPageContent(formData: FormData) {
   const aboutBannerHeightPx = Number.isFinite(heightRaw)
     ? Math.min(720, Math.max(280, Math.round(heightRaw)))
     : 420;
+  const heightMobileRaw = Number.parseInt(pick("about_banner_height_mobile_px") || "300", 10);
+  const aboutBannerHeightMobilePx = Number.isFinite(heightMobileRaw)
+    ? Math.min(720, Math.max(200, Math.round(heightMobileRaw)))
+    : 300;
 
   await saveStorefrontMerged(
     supabase,
@@ -1956,6 +1993,7 @@ export async function updateAboutPageContent(formData: FormData) {
       aboutCtaSecondaryLabel: pick("about_cta_secondary_label"),
       aboutCtaSecondaryHref: pick("about_cta_secondary_href") || "/contact",
       aboutBannerHeightPx,
+      aboutBannerHeightMobilePx,
       aboutPrimaryImage,
       aboutSecondaryImage,
       aboutValues: aboutValues.length ? aboutValues : base.aboutValues,

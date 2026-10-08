@@ -1,8 +1,12 @@
 import Link from "next/link";
 import { updateAboutPageContent } from "@/app/admin/actions";
-import { BannerHeightField } from "@/components/admin/BannerHeightField";
+import { BannerHeightsPair } from "@/components/admin/BannerHeightsPair";
 import { StorefrontImageUploadField } from "@/components/admin/StorefrontImageUploadField";
-import { clampBannerHeightPx } from "@/lib/banner-height";
+import {
+  clampBannerHeightPx,
+  DEFAULT_ABOUT_BANNER_HEIGHT_MOBILE_PX,
+  DEFAULT_ABOUT_BANNER_HEIGHT_PX,
+} from "@/lib/banner-height";
 import { getStorefrontPayload } from "@/lib/storefront";
 
 export const dynamic = "force-dynamic";
@@ -25,7 +29,18 @@ export default async function AdminAboutContentPage({
   const values = storefront.aboutValues ?? [];
   const steps = storefront.aboutHowSteps ?? [];
   const team = storefront.aboutTeam ?? [];
-  const bannerHeight = clampBannerHeightPx(storefront.aboutBannerHeightPx, 420, 280, 720);
+  const bannerHeight = clampBannerHeightPx(
+    storefront.aboutBannerHeightPx,
+    DEFAULT_ABOUT_BANNER_HEIGHT_PX,
+    280,
+    720,
+  );
+  const bannerHeightMobile = clampBannerHeightPx(
+    storefront.aboutBannerHeightMobilePx,
+    DEFAULT_ABOUT_BANNER_HEIGHT_MOBILE_PX,
+    200,
+    720,
+  );
 
   return (
     <main className="py-6 lg:py-0">
@@ -70,13 +85,14 @@ export default async function AdminAboutContentPage({
               urlName="about_primary_image"
               defaultUrl={storefront.aboutPrimaryImage}
             />
-            <BannerHeightField
-              name="about_banner_height_px"
-              defaultValue={bannerHeight}
+            <BannerHeightsPair
+              desktopName="about_banner_height_px"
+              mobileName="about_banner_height_mobile_px"
+              desktopDefault={bannerHeight}
+              mobileDefault={bannerHeightMobile}
               min={280}
               max={720}
-              label="Banner height"
-              hint="How tall the about promo banner appears."
+              mobileMin={200}
             />
             <div>
               <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">Small label</label>

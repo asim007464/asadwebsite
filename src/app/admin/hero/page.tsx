@@ -6,9 +6,13 @@ import {
   updateHeroCarouselLayout,
   updateHeroSlide,
 } from "@/app/admin/actions";
-import { BannerHeightField } from "@/components/admin/BannerHeightField";
+import { BannerHeightsPair } from "@/components/admin/BannerHeightsPair";
 import { ADMIN_IMAGE_FILE_INPUT_CLASS, ADMIN_IMAGE_UPLOAD_HINT } from "@/lib/admin-media-upload";
-import { clampBannerHeightPx, DEFAULT_HERO_HEIGHT_PX } from "@/lib/banner-height";
+import {
+  clampBannerHeightPx,
+  DEFAULT_HERO_HEIGHT_MOBILE_PX,
+  DEFAULT_HERO_HEIGHT_PX,
+} from "@/lib/banner-height";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { getStorefrontPayload } from "@/lib/storefront";
 import type { HeroSlideRow } from "@/lib/store-types";
@@ -34,6 +38,12 @@ export default async function AdminHeroSlidesPage({
   const heroEnabled = storefront.heroEnabled !== false;
   const heroVisibleOnMobile = storefront.heroVisibleOnMobile !== false;
   const heroHeightPx = clampBannerHeightPx(storefront.heroHeightPx, DEFAULT_HERO_HEIGHT_PX, 200, 720);
+  const heroHeightMobilePx = clampBannerHeightPx(
+    storefront.heroHeightMobilePx,
+    DEFAULT_HERO_HEIGHT_MOBILE_PX,
+    160,
+    720,
+  );
 
   return (
     <main className="py-6 lg:py-0">
@@ -93,12 +103,14 @@ export default async function AdminHeroSlidesPage({
               </span>
             </span>
           </label>
-          <BannerHeightField
-            name="hero_height_px"
-            defaultValue={heroHeightPx}
+          <BannerHeightsPair
+            desktopName="hero_height_px"
+            mobileName="hero_height_mobile_px"
+            desktopDefault={heroHeightPx}
+            mobileDefault={heroHeightMobilePx}
             min={200}
             max={720}
-            label="Hero height"
+            mobileMin={160}
           />
           <button
             type="submit"
