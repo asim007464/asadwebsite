@@ -1,21 +1,33 @@
 import Link from "next/link";
-import { clampBannerHeightPx, DEFAULT_AFTER_BROWSE_HEIGHT_PX } from "@/lib/banner-height";
+import {
+  BANNER_HEIGHT_FIXED_CLASS,
+  bannerHeightStyle,
+  clampBannerHeightPx,
+  DEFAULT_AFTER_BROWSE_HEIGHT_MOBILE_PX,
+  DEFAULT_AFTER_BROWSE_HEIGHT_PX,
+} from "@/lib/banner-height";
 import type { HomeAfterBrowseBannerRow } from "@/lib/store-types";
 
 export function HomeAfterBrowseBanner({ banner }: { banner: HomeAfterBrowseBannerRow }) {
   const imageUrl = banner.image_url.trim();
   const href = banner.link_href.trim();
   const alt = banner.alt_text.trim() || "Promotional banner";
-  const heightPx = clampBannerHeightPx(banner.height_px, DEFAULT_AFTER_BROWSE_HEIGHT_PX, 120, 640);
+  const heightDesktop = clampBannerHeightPx(banner.height_px, DEFAULT_AFTER_BROWSE_HEIGHT_PX, 120, 640);
+  const heightMobile = clampBannerHeightPx(
+    banner.height_mobile_px,
+    DEFAULT_AFTER_BROWSE_HEIGHT_MOBILE_PX,
+    100,
+    640,
+  );
 
   if (!imageUrl) return null;
 
   const imageBlock = (
     <span
-      className="block w-full bg-cover bg-center bg-no-repeat transition duration-300 ease-smooth-out motion-reduce:transition-none group-hover:scale-[1.02] motion-reduce:group-hover:scale-100"
+      className={`block w-full bg-cover bg-center bg-no-repeat transition duration-300 ease-smooth-out motion-reduce:transition-none group-hover:scale-[1.02] motion-reduce:group-hover:scale-100 ${BANNER_HEIGHT_FIXED_CLASS}`}
       style={{
+        ...bannerHeightStyle(heightDesktop, heightMobile),
         backgroundImage: `url(${JSON.stringify(imageUrl).slice(1, -1)})`,
-        height: heightPx,
       }}
       role="img"
       aria-label={alt}

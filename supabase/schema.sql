@@ -115,6 +115,7 @@ create table if not exists public.home_reviews_banner (
   image_opacity integer not null default 100 check (image_opacity >= 0 and image_opacity <= 100),
   overlay_opacity integer not null default 70 check (overlay_opacity >= 0 and overlay_opacity <= 100),
   height_px integer not null default 340 check (height_px >= 140 and height_px <= 720),
+  height_mobile_px integer not null default 220 check (height_mobile_px >= 120 and height_mobile_px <= 720),
   visible_on_mobile boolean not null default true,
   is_active boolean not null default false,
   updated_at timestamptz not null default now()
@@ -201,6 +202,7 @@ create table if not exists public.home_after_browse_banner (
   link_href text not null default '',
   alt_text text not null default '',
   height_px integer not null default 240 check (height_px >= 120 and height_px <= 640),
+  height_mobile_px integer not null default 160 check (height_mobile_px >= 100 and height_mobile_px <= 640),
   visible_on_mobile boolean not null default true,
   is_active boolean not null default false,
   updated_at timestamptz not null default now()
@@ -346,9 +348,15 @@ alter table public.home_reviews_banner
 alter table public.home_reviews_banner
   add column if not exists height_px integer not null default 340
     check (height_px >= 140 and height_px <= 720);
+alter table public.home_reviews_banner
+  add column if not exists height_mobile_px integer not null default 220
+    check (height_mobile_px >= 120 and height_mobile_px <= 720);
 alter table public.home_after_browse_banner
   add column if not exists height_px integer not null default 240
     check (height_px >= 120 and height_px <= 640);
+alter table public.home_after_browse_banner
+  add column if not exists height_mobile_px integer not null default 160
+    check (height_mobile_px >= 100 and height_mobile_px <= 640);
 alter table public.home_reviews_banner
   add column if not exists visible_on_mobile boolean not null default true;
 alter table public.home_after_browse_banner

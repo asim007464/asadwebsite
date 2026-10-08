@@ -1,6 +1,12 @@
 import Link from "next/link";
 import { SafeRemoteImage } from "@/components/SafeRemoteImage";
-import { clampBannerHeightPx } from "@/lib/banner-height";
+import {
+  BANNER_HEIGHT_CLASS,
+  bannerHeightStyle,
+  clampBannerHeightPx,
+  DEFAULT_ABOUT_BANNER_HEIGHT_MOBILE_PX,
+  DEFAULT_ABOUT_BANNER_HEIGHT_PX,
+} from "@/lib/banner-height";
 import { SITE_SHOP_NAME } from "@/lib/site-brand";
 import { getStorefrontPayload } from "@/lib/storefront";
 
@@ -11,7 +17,19 @@ const ABOUT_FALLBACK_BANNER = "/20260401_153109.jpg.jpeg";
 export default async function AboutPage() {
   const storefront = await getStorefrontPayload();
   const bannerImage = (storefront.aboutPrimaryImage ?? "").trim() || ABOUT_FALLBACK_BANNER;
-  const bannerHeight = clampBannerHeightPx(storefront.aboutBannerHeightPx, 420, 280, 720);
+  const bannerHeight = clampBannerHeightPx(
+    storefront.aboutBannerHeightPx,
+    DEFAULT_ABOUT_BANNER_HEIGHT_PX,
+    280,
+    720,
+  );
+  const bannerHeightMobile = clampBannerHeightPx(
+    storefront.aboutBannerHeightMobilePx,
+    DEFAULT_ABOUT_BANNER_HEIGHT_MOBILE_PX,
+    200,
+    720,
+  );
+  const bannerHeightCss = bannerHeightStyle(bannerHeight, bannerHeightMobile);
   const eyebrow = storefront.aboutEyebrow?.trim() || `About ${SITE_SHOP_NAME}`;
   const title = storefront.aboutPageTitle?.trim() || DEFAULT_TITLE;
   const lead = storefront.aboutPageLead?.trim() || "";
@@ -28,8 +46,8 @@ export default async function AboutPage() {
     <main className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 sm:py-10 lg:px-8">
       {/* Full-bleed promotional banner — editable in Admin → About page */}
       <section
-        className="relative isolate overflow-hidden rounded-2xl shadow-lg ring-1 ring-slate-200/70 sm:rounded-3xl"
-        style={{ minHeight: bannerHeight }}
+        className={`relative isolate overflow-hidden rounded-2xl shadow-lg ring-1 ring-slate-200/70 sm:rounded-3xl ${BANNER_HEIGHT_CLASS}`}
+        style={bannerHeightCss}
         aria-labelledby="about-banner-heading"
       >
         <div className="absolute inset-0">
@@ -49,8 +67,8 @@ export default async function AboutPage() {
         />
 
         <div
-          className="relative z-10 flex flex-col justify-end px-5 pb-5 pt-16 sm:px-8 sm:pb-8 sm:pt-20 md:px-10 md:pb-10"
-          style={{ minHeight: bannerHeight }}
+          className={`relative z-10 flex flex-col justify-end px-5 pb-5 pt-16 sm:px-8 sm:pb-8 sm:pt-20 md:px-10 md:pb-10 ${BANNER_HEIGHT_CLASS}`}
+          style={bannerHeightCss}
         >
           <div className="max-w-3xl">
             <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-blue-200/95">{eyebrow}</p>

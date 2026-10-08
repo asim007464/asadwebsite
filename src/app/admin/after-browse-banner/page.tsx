@@ -1,8 +1,12 @@
 import Link from "next/link";
 import { updateHomeAfterBrowseBanner } from "@/app/admin/actions";
-import { BannerHeightField } from "@/components/admin/BannerHeightField";
+import { BannerHeightsPair } from "@/components/admin/BannerHeightsPair";
 import { ADMIN_IMAGE_FILE_INPUT_CLASS, ADMIN_IMAGE_UPLOAD_HINT } from "@/lib/admin-media-upload";
-import { clampBannerHeightPx, DEFAULT_AFTER_BROWSE_HEIGHT_PX } from "@/lib/banner-height";
+import {
+  clampBannerHeightPx,
+  DEFAULT_AFTER_BROWSE_HEIGHT_MOBILE_PX,
+  DEFAULT_AFTER_BROWSE_HEIGHT_PX,
+} from "@/lib/banner-height";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import type { HomeAfterBrowseBannerRow } from "@/lib/store-types";
 
@@ -14,6 +18,7 @@ const EMPTY_ROW: HomeAfterBrowseBannerRow = {
   link_href: "",
   alt_text: "",
   height_px: DEFAULT_AFTER_BROWSE_HEIGHT_PX,
+  height_mobile_px: DEFAULT_AFTER_BROWSE_HEIGHT_MOBILE_PX,
   visible_on_mobile: true,
   is_active: false,
 };
@@ -49,6 +54,12 @@ export default async function AdminAfterBrowseBannerPage({
             (data as HomeAfterBrowseBannerRow).height_px,
             DEFAULT_AFTER_BROWSE_HEIGHT_PX,
             120,
+            640,
+          ),
+          height_mobile_px: clampBannerHeightPx(
+            (data as HomeAfterBrowseBannerRow).height_mobile_px,
+            DEFAULT_AFTER_BROWSE_HEIGHT_MOBILE_PX,
+            100,
             640,
           ),
           visible_on_mobile: (data as HomeAfterBrowseBannerRow).visible_on_mobile !== false,
@@ -193,7 +204,13 @@ export default async function AdminAfterBrowseBannerPage({
             </span>
           </label>
 
-          <BannerHeightField defaultValue={row.height_px} min={120} max={640} />
+          <BannerHeightsPair
+            desktopDefault={row.height_px}
+            mobileDefault={row.height_mobile_px}
+            min={120}
+            max={640}
+            mobileMin={100}
+          />
 
           <button
             type="submit"

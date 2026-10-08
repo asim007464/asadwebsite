@@ -24,7 +24,7 @@ export function BannerHeightField({
   return (
     <div className="rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-4">
       <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-        {label} ({value}px)
+        {label} · {value}px
       </label>
       <input
         type="range"

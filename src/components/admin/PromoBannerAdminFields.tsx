@@ -1,4 +1,4 @@
-import { BannerHeightField } from "@/components/admin/BannerHeightField";
+import { BannerHeightsPair } from "@/components/admin/BannerHeightsPair";
 import { PromoBannerOpacitySliders } from "@/components/admin/PromoBannerOpacitySliders";
 import { ADMIN_IMAGE_FILE_INPUT_CLASS, ADMIN_IMAGE_UPLOAD_HINT } from "@/lib/admin-media-upload";
 import type { HomeReviewsBannerRow } from "@/lib/store-types";
@@ -36,7 +36,13 @@ export function PromoBannerAdminFields({ row }: { row: HomeReviewsBannerRow }) {
         </span>
       </label>
 
-      <BannerHeightField defaultValue={row.height_px ?? 340} min={140} max={720} />
+      <BannerHeightsPair
+        desktopDefault={row.height_px ?? 340}
+        mobileDefault={row.height_mobile_px ?? Math.max(140, Math.round((row.height_px ?? 340) * 0.65))}
+        min={140}
+        max={720}
+        mobileMin={120}
+      />
 
       <div>
         <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">Background image URL</label>
