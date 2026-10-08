@@ -1,6 +1,6 @@
 import { BannerHeightsPair } from "@/components/admin/BannerHeightsPair";
+import { BannerResponsiveImageFields } from "@/components/admin/BannerResponsiveImageFields";
 import { PromoBannerOpacitySliders } from "@/components/admin/PromoBannerOpacitySliders";
-import { ADMIN_IMAGE_FILE_INPUT_CLASS, ADMIN_IMAGE_UPLOAD_HINT } from "@/lib/admin-media-upload";
 import type { HomeReviewsBannerRow } from "@/lib/store-types";
 
 export function PromoBannerAdminFields({ row }: { row: HomeReviewsBannerRow }) {
@@ -44,23 +44,16 @@ export function PromoBannerAdminFields({ row }: { row: HomeReviewsBannerRow }) {
         mobileMin={120}
       />
 
-      <div>
-        <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">Background image URL</label>
-        <input
-          name="background_image_url"
-          defaultValue={row.background_image_url}
-          placeholder="https://… or /image-in-public.jpg"
-          className="mt-2 h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 font-mono text-xs outline-none focus:border-blue-300 focus:ring-4 focus:ring-blue-100 md:text-sm"
-        />
-        <label className="mt-3 block text-xs font-semibold uppercase tracking-wide text-slate-500">Or upload from computer</label>
-        <input
-          name="background_image_file"
-          type="file"
-          accept="image/jpeg,image/png,image/webp,image/gif"
-          className={ADMIN_IMAGE_FILE_INPUT_CLASS}
-        />
-        <p className="mt-1 text-[11px] text-slate-500">{ADMIN_IMAGE_UPLOAD_HINT}</p>
-      </div>
+      <BannerResponsiveImageFields
+        separateDefault={Boolean(row.separate_mobile_image)}
+        desktopUrlName="background_image_url"
+        desktopFileName="background_image_file"
+        desktopDefault={row.background_image_url}
+        mobileUrlName="background_image_mobile_url"
+        mobileFileName="background_image_mobile_file"
+        mobileDefault={row.background_image_mobile_url}
+        sharedLabel="Background image (all screens)"
+      />
 
       <PromoBannerOpacitySliders
         imageOpacity={row.image_opacity ?? 100}
@@ -108,7 +101,6 @@ export function PromoBannerAdminFields({ row }: { row: HomeReviewsBannerRow }) {
           />
         </div>
       </div>
-
     </>
   );
 }

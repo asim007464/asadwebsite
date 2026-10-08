@@ -94,6 +94,8 @@ create index if not exists product_images_sort_idx on public.product_images(prod
 create table if not exists public.hero_slides (
   id uuid primary key default gen_random_uuid(),
   url text not null,
+  mobile_url text not null default '',
+  separate_mobile_image boolean not null default false,
   alt text not null default '',
   sort_order integer not null default 0,
   is_active boolean not null default true,
@@ -116,6 +118,8 @@ create table if not exists public.home_reviews_banner (
   overlay_opacity integer not null default 70 check (overlay_opacity >= 0 and overlay_opacity <= 100),
   height_px integer not null default 340 check (height_px >= 140 and height_px <= 720),
   height_mobile_px integer not null default 220 check (height_mobile_px >= 120 and height_mobile_px <= 720),
+  background_image_mobile_url text not null default '',
+  separate_mobile_image boolean not null default false,
   visible_on_mobile boolean not null default true,
   is_active boolean not null default false,
   updated_at timestamptz not null default now()
@@ -203,6 +207,8 @@ create table if not exists public.home_after_browse_banner (
   alt_text text not null default '',
   height_px integer not null default 240 check (height_px >= 120 and height_px <= 640),
   height_mobile_px integer not null default 160 check (height_mobile_px >= 100 and height_mobile_px <= 640),
+  image_mobile_url text not null default '',
+  separate_mobile_image boolean not null default false,
   visible_on_mobile boolean not null default true,
   is_active boolean not null default false,
   updated_at timestamptz not null default now()
@@ -357,6 +363,18 @@ alter table public.home_after_browse_banner
 alter table public.home_after_browse_banner
   add column if not exists height_mobile_px integer not null default 160
     check (height_mobile_px >= 100 and height_mobile_px <= 640);
+alter table public.home_reviews_banner
+  add column if not exists background_image_mobile_url text not null default '';
+alter table public.home_reviews_banner
+  add column if not exists separate_mobile_image boolean not null default false;
+alter table public.home_after_browse_banner
+  add column if not exists image_mobile_url text not null default '';
+alter table public.home_after_browse_banner
+  add column if not exists separate_mobile_image boolean not null default false;
+alter table public.hero_slides
+  add column if not exists mobile_url text not null default '';
+alter table public.hero_slides
+  add column if not exists separate_mobile_image boolean not null default false;
 alter table public.home_reviews_banner
   add column if not exists visible_on_mobile boolean not null default true;
 alter table public.home_after_browse_banner

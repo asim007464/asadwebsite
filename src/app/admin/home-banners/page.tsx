@@ -141,6 +141,8 @@ export default async function AdminHomeBannersPage({
           120,
           640,
         ),
+        image_mobile_url: String((afterRes.data as HomeAfterBrowseBannerRow).image_mobile_url ?? ""),
+        separate_mobile_image: Boolean((afterRes.data as HomeAfterBrowseBannerRow).separate_mobile_image),
         height_mobile_px: clampBannerHeightPx(
           (afterRes.data as HomeAfterBrowseBannerRow).height_mobile_px,
           DEFAULT_AFTER_BROWSE_HEIGHT_MOBILE_PX,
@@ -155,6 +157,8 @@ export default async function AdminHomeBannersPage({
         image_url: "",
         link_href: "",
         alt_text: "",
+        image_mobile_url: "",
+        separate_mobile_image: false,
         height_px: DEFAULT_AFTER_BROWSE_HEIGHT_PX,
         height_mobile_px: DEFAULT_AFTER_BROWSE_HEIGHT_MOBILE_PX,
         visible_on_mobile: true,

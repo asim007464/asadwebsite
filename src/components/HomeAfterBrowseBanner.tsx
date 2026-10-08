@@ -6,10 +6,15 @@ import {
   DEFAULT_AFTER_BROWSE_HEIGHT_MOBILE_PX,
   DEFAULT_AFTER_BROWSE_HEIGHT_PX,
 } from "@/lib/banner-height";
+import { cssUrl, resolveBannerImages } from "@/lib/banner-images";
 import type { HomeAfterBrowseBannerRow } from "@/lib/store-types";
 
 export function HomeAfterBrowseBanner({ banner }: { banner: HomeAfterBrowseBannerRow }) {
-  const imageUrl = banner.image_url.trim();
+  const { desktop, mobile } = resolveBannerImages(
+    banner.image_url,
+    banner.image_mobile_url,
+    banner.separate_mobile_image,
+  );
   const href = banner.link_href.trim();
   const alt = banner.alt_text.trim() || "Promotional banner";
   const heightDesktop = clampBannerHeightPx(banner.height_px, DEFAULT_AFTER_BROWSE_HEIGHT_PX, 120, 640);
@@ -20,18 +25,25 @@ export function HomeAfterBrowseBanner({ banner }: { banner: HomeAfterBrowseBanne
     640,
   );
 
-  if (!imageUrl) return null;
+  if (!desktop) return null;
+
+  const heightStyle = bannerHeightStyle(heightDesktop, heightMobile);
 
   const imageBlock = (
-    <span
-      className={`block w-full bg-cover bg-center bg-no-repeat transition duration-300 ease-smooth-out motion-reduce:transition-none group-hover:scale-[1.02] motion-reduce:group-hover:scale-100 ${BANNER_HEIGHT_FIXED_CLASS}`}
-      style={{
-        ...bannerHeightStyle(heightDesktop, heightMobile),
-        backgroundImage: `url(${JSON.stringify(imageUrl).slice(1, -1)})`,
-      }}
-      role="img"
-      aria-label={alt}
-    />
+    <span className={`relative block w-full ${BANNER_HEIGHT_FIXED_CLASS}`} style={heightStyle}>
+      <span
+        className="absolute inset-0 bg-cover bg-center bg-no-repeat transition duration-300 ease-smooth-out motion-reduce:transition-none group-hover:scale-[1.02] motion-reduce:group-hover:scale-100 md:hidden"
+        style={{ backgroundImage: cssUrl(mobile || desktop) }}
+        role="img"
+        aria-label={alt}
+      />
+      <span
+        className="absolute inset-0 hidden bg-cover bg-center bg-no-repeat transition duration-300 ease-smooth-out motion-reduce:transition-none group-hover:scale-[1.02] motion-reduce:group-hover:scale-100 md:block"
+        style={{ backgroundImage: cssUrl(desktop) }}
+        role="img"
+        aria-hidden
+      />
+    </span>
   );
 
   const shellClass =

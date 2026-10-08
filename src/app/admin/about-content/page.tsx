@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { updateAboutPageContent } from "@/app/admin/actions";
 import { BannerHeightsPair } from "@/components/admin/BannerHeightsPair";
-import { StorefrontImageUploadField } from "@/components/admin/StorefrontImageUploadField";
+import { BannerResponsiveImageFields } from "@/components/admin/BannerResponsiveImageFields";
 import {
   clampBannerHeightPx,
   DEFAULT_ABOUT_BANNER_HEIGHT_MOBILE_PX,
@@ -80,10 +80,15 @@ export default async function AdminAboutContentPage({
                 One full-width background image with title, paragraph, chips, and buttons overlaid at the bottom.
               </p>
             </div>
-            <StorefrontImageUploadField
-              label="Banner background image"
-              urlName="about_primary_image"
-              defaultUrl={storefront.aboutPrimaryImage}
+            <BannerResponsiveImageFields
+              separateDefault={Boolean(storefront.aboutSeparateMobileImage)}
+              desktopUrlName="about_primary_image"
+              desktopFileName="about_primary_image_file"
+              desktopDefault={storefront.aboutPrimaryImage ?? ""}
+              mobileUrlName="about_primary_image_mobile"
+              mobileFileName="about_primary_image_mobile_file"
+              mobileDefault={storefront.aboutPrimaryImageMobile ?? ""}
+              sharedLabel="Banner background (all screens)"
             />
             <BannerHeightsPair
               desktopName="about_banner_height_px"

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { updateHomeAfterBrowseBanner } from "@/app/admin/actions";
 import { BannerHeightsPair } from "@/components/admin/BannerHeightsPair";
-import { ADMIN_IMAGE_FILE_INPUT_CLASS, ADMIN_IMAGE_UPLOAD_HINT } from "@/lib/admin-media-upload";
+import { BannerResponsiveImageFields } from "@/components/admin/BannerResponsiveImageFields";
 import {
   clampBannerHeightPx,
   DEFAULT_AFTER_BROWSE_HEIGHT_MOBILE_PX,
@@ -15,6 +15,8 @@ export const dynamic = "force-dynamic";
 const EMPTY_ROW: HomeAfterBrowseBannerRow = {
   id: 1,
   image_url: "",
+  image_mobile_url: "",
+  separate_mobile_image: false,
   link_href: "",
   alt_text: "",
   height_px: DEFAULT_AFTER_BROWSE_HEIGHT_PX,
@@ -50,6 +52,8 @@ export default async function AdminAfterBrowseBannerPage({
           image_url: String((data as HomeAfterBrowseBannerRow).image_url ?? ""),
           link_href: String((data as HomeAfterBrowseBannerRow).link_href ?? ""),
           alt_text: String((data as HomeAfterBrowseBannerRow).alt_text ?? ""),
+          image_mobile_url: String((data as HomeAfterBrowseBannerRow).image_mobile_url ?? ""),
+          separate_mobile_image: Boolean((data as HomeAfterBrowseBannerRow).separate_mobile_image),
           height_px: clampBannerHeightPx(
             (data as HomeAfterBrowseBannerRow).height_px,
             DEFAULT_AFTER_BROWSE_HEIGHT_PX,
@@ -122,23 +126,15 @@ export default async function AdminAfterBrowseBannerPage({
         ) : null}
 
         <form action={updateHomeAfterBrowseBanner} className="mt-8 grid grid-cols-1 gap-5 border-t border-slate-100 pt-8 md:gap-6">
-          <div>
-            <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">Banner image URL</label>
-            <input
-              name="image_url"
-              defaultValue={row.image_url}
-              placeholder="https://… or /image-in-public.jpg"
-              className="mt-2 h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 font-mono text-xs outline-none focus:border-blue-300 focus:ring-4 focus:ring-blue-100 md:text-sm"
-            />
-            <label className="mt-3 block text-xs font-semibold uppercase tracking-wide text-slate-500">Or upload from computer</label>
-            <input
-              name="image_file"
-              type="file"
-              accept="image/jpeg,image/png,image/webp,image/gif"
-              className={ADMIN_IMAGE_FILE_INPUT_CLASS}
-            />
-            <p className="mt-1 text-[11px] text-slate-500">{ADMIN_IMAGE_UPLOAD_HINT}</p>
-          </div>
+          <BannerResponsiveImageFields
+            separateDefault={Boolean(row.separate_mobile_image)}
+            desktopUrlName="image_url"
+            desktopFileName="image_file"
+            desktopDefault={row.image_url}
+            mobileUrlName="image_mobile_url"
+            mobileFileName="image_mobile_file"
+            mobileDefault={row.image_mobile_url}
+          />
 
           <div>
             <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">Link to product (optional)</label>
