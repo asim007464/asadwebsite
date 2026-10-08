@@ -4,6 +4,8 @@ import { clampBannerHeightPx } from "@/lib/banner-height";
 import { SITE_SHOP_NAME } from "@/lib/site-brand";
 import { getStorefrontPayload } from "@/lib/storefront";
 
+export const dynamic = "force-dynamic";
+
 const ABOUT_FALLBACK_BANNER = "/20260401_153109.jpg.jpeg";
 
 export default async function AboutPage() {
