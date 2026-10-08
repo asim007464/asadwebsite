@@ -718,6 +718,7 @@ async function resolveCategoryIdByLabel(
 export async function bulkCreateProducts(rows: import("@/lib/admin-bulk-products").BulkProductInput[]) {
   await assertAdminAuthenticated();
 
+  // Import shared helpers only (no `xlsx`) so the server-action bundle stays clean.
   const {
     BULK_PRODUCT_MAX_ROWS,
     normalizeHttpsOrSlashImage: normalizeImage,

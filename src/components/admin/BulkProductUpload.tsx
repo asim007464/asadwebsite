@@ -3,11 +3,8 @@
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { bulkCreateProducts } from "@/app/admin/actions";
-import {
-  downloadBulkProductTemplate,
-  parseBulkProductFile,
-  type BulkProductPreview,
-} from "@/lib/admin-bulk-products";
+import type { BulkProductPreview } from "@/lib/admin-bulk-products";
+import { downloadBulkProductTemplate, parseBulkProductFile } from "@/lib/admin-bulk-products-xlsx";
 
 const pill =
   "inline-flex h-11 min-w-[9rem] items-center justify-center rounded-full px-5 text-sm font-semibold shadow-sm transition";

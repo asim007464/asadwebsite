@@ -1,3 +1,5 @@
+/** Shared bulk-product helpers — no `xlsx` (safe for server actions). */
+
 export const BULK_PRODUCT_MAX_ROWS = 150;
 
 export type BulkProductInput = {
@@ -22,7 +24,10 @@ export type BulkProductPreview = BulkProductInput & {
   issues: string[];
 };
 
-const HEADER_ALIASES: Record<string, keyof BulkProductInput | "price_raw" | "compare_raw" | "stock_raw" | "active_raw" | "featured_raw"> = {
+export const HEADER_ALIASES: Record<
+  string,
+  keyof BulkProductInput | "price_raw" | "compare_raw" | "stock_raw" | "active_raw" | "featured_raw"
+> = {
   name: "name",
   product: "name",
   product_name: "name",
@@ -85,7 +90,7 @@ export const BULK_TEMPLATE_SAMPLE: Record<(typeof BULK_TEMPLATE_HEADERS)[number]
   is_featured: "no",
 };
 
-function normalizeHeader(raw: string) {
+export function normalizeHeader(raw: string) {
   return raw
     .trim()
     .toLowerCase()
@@ -135,7 +140,7 @@ export function validateBulkProductRow(row: BulkProductInput): string[] {
   return issues;
 }
 
-function mapSheetRow(raw: Record<string, unknown>, rowNumber: number): BulkProductPreview {
+export function mapSheetRow(raw: Record<string, unknown>, rowNumber: number): BulkProductPreview {
   const mapped: Record<string, string> = {};
   for (const [key, value] of Object.entries(raw)) {
     const alias = HEADER_ALIASES[normalizeHeader(key)];
@@ -166,48 +171,4 @@ function mapSheetRow(raw: Record<string, unknown>, rowNumber: number): BulkProdu
   };
 
   return { ...row, rowNumber, issues: validateBulkProductRow(row) };
-}
-
-export async function parseBulkProductFile(file: File): Promise<{ rows: BulkProductPreview[]; error?: string }> {
-  const name = file.name.toLowerCase();
-  if (!/\.(csv|xlsx|xls)$/.test(name)) {
-    return { rows: [], error: "Please upload a .csv, .xlsx, or .xls file." };
-  }
-
-  const XLSX = await import("xlsx");
-  const workbook = XLSX.read(await file.arrayBuffer(), { type: "array" });
-  const sheetName = workbook.SheetNames[0];
-  if (!sheetName) return { rows: [], error: "The file has no worksheets." };
-
-  const sheet = workbook.Sheets[sheetName];
-  const json = XLSX.utils.sheet_to_json<Record<string, unknown>>(sheet, { defval: "", raw: false });
-  if (json.length === 0) return { rows: [], error: "The first sheet is empty." };
-  if (json.length > BULK_PRODUCT_MAX_ROWS) {
-    return {
-      rows: [],
-      error: `Too many rows (${json.length}). Import up to ${BULK_PRODUCT_MAX_ROWS} products at a time.`,
-    };
-  }
-
-  const rows = json.map((raw, i) => mapSheetRow(raw, i + 2));
-  if (!rows.some((r) => r.name || Number.isFinite(r.price_pkr))) {
-    return {
-      rows: [],
-      error: "Could not find a name or price column. Use the template headers (name, price_pkr, …).",
-    };
-  }
-
-  return { rows };
-}
-
-export function downloadBulkProductTemplate(format: "csv" | "xlsx") {
-  const headers = [...BULK_TEMPLATE_HEADERS];
-  const sample = headers.map((h) => BULK_TEMPLATE_SAMPLE[h]);
-
-  void import("xlsx").then((XLSX) => {
-    const workbook = XLSX.utils.book_new();
-    const sheet = XLSX.utils.aoa_to_sheet([headers, sample]);
-    XLSX.utils.book_append_sheet(workbook, sheet, "Products");
-    XLSX.writeFile(workbook, format === "xlsx" ? "product-bulk-template.xlsx" : "product-bulk-template.csv");
-  });
 }
