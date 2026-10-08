@@ -232,8 +232,8 @@ export default async function AboutPage() {
 
         {storyBlocks.length ? (
           <div className="mx-auto mt-10 max-w-3xl space-y-8 sm:mt-12">
-            {storyBlocks.map((block) => (
-              <div key={block.title} className="text-center sm:text-left">
+            {storyBlocks.map((block, i) => (
+              <div key={`${i}-${block.title}`} className="text-center sm:text-left">
                 <h3 className="text-lg font-semibold tracking-tight text-slate-900 sm:text-xl">{block.title}</h3>
                 <p className="mt-2 text-sm leading-relaxed text-slate-600 sm:text-[15px]">{block.body}</p>
               </div>
