@@ -389,7 +389,8 @@ function normalizeBrandLogos(raw: unknown): StorefrontBrandLogo[] {
 }
 
 function normalizeAboutValues(raw: unknown): AboutValueCard[] {
-  if (!Array.isArray(raw)) return DEFAULT_STOREFRONT.aboutValues;
+  const fallback = DEFAULT_STOREFRONT.aboutValues ?? [];
+  if (!Array.isArray(raw)) return fallback;
   const out: AboutValueCard[] = [];
   for (const v of raw) {
     if (!v || typeof v !== "object") continue;
@@ -400,11 +401,12 @@ function normalizeAboutValues(raw: unknown): AboutValueCard[] {
     out.push({ title, body });
     if (out.length >= 6) break;
   }
-  return out.length ? out : DEFAULT_STOREFRONT.aboutValues;
+  return out.length ? out : fallback;
 }
 
 function normalizeAboutHowSteps(raw: unknown): AboutWorkStep[] {
-  if (!Array.isArray(raw)) return DEFAULT_STOREFRONT.aboutHowSteps;
+  const fallback = DEFAULT_STOREFRONT.aboutHowSteps ?? [];
+  if (!Array.isArray(raw)) return fallback;
   const out: AboutWorkStep[] = [];
   for (const v of raw) {
     if (!v || typeof v !== "object") continue;
@@ -416,11 +418,12 @@ function normalizeAboutHowSteps(raw: unknown): AboutWorkStep[] {
     out.push({ step, title, body });
     if (out.length >= 6) break;
   }
-  return out.length ? out : DEFAULT_STOREFRONT.aboutHowSteps;
+  return out.length ? out : fallback;
 }
 
 function normalizeAboutTeam(raw: unknown): AboutTeamMember[] {
-  if (!Array.isArray(raw)) return DEFAULT_STOREFRONT.aboutTeam;
+  const fallback = DEFAULT_STOREFRONT.aboutTeam ?? [];
+  if (!Array.isArray(raw)) return fallback;
   const out: AboutTeamMember[] = [];
   for (const v of raw) {
     if (!v || typeof v !== "object") continue;
@@ -441,7 +444,7 @@ function normalizeAboutTeam(raw: unknown): AboutTeamMember[] {
     });
     if (out.length >= 8) break;
   }
-  return out.length ? out : DEFAULT_STOREFRONT.aboutTeam;
+  return out.length ? out : fallback;
 }
 
 function normalizeAboutStoryBlocks(raw: unknown): AboutStoryBlock[] {
@@ -472,18 +475,24 @@ export async function getStorefrontPayload(): Promise<ResolvedStorefront> {
         ? patch.socialLinks!.filter((l) => l.label && l.url)
         : DEFAULT_STOREFRONT.socialLinks;
     const testimonials = normalizeTestimonials(patch.testimonials);
+    const defaultChips = DEFAULT_STOREFRONT.aboutChips ?? [];
     const aboutChips = Array.isArray(patch.aboutChips)
       ? patch.aboutChips.map((c) => String(c).trim()).filter(Boolean).slice(0, 12)
-      : DEFAULT_STOREFRONT.aboutChips;
-    const parseBannerH = (raw: unknown, fallback: number | undefined, min: number, max: number) => {
+      : defaultChips;
+    const parseBannerH = (raw: unknown, fallback: number, min: number, max: number): number => {
       const n = typeof raw === "number" ? raw : Number.parseInt(String(raw ?? ""), 10);
       if (!Number.isFinite(n)) return fallback;
       return Math.min(max, Math.max(min, Math.round(n)));
     };
-    const aboutBannerHeightPx = parseBannerH(patch.aboutBannerHeightPx, DEFAULT_STOREFRONT.aboutBannerHeightPx, 280, 720);
+    const aboutBannerHeightPx = parseBannerH(
+      patch.aboutBannerHeightPx,
+      DEFAULT_STOREFRONT.aboutBannerHeightPx ?? 420,
+      280,
+      720,
+    );
     const aboutBannerHeightMobilePx = parseBannerH(
       patch.aboutBannerHeightMobilePx,
-      DEFAULT_STOREFRONT.aboutBannerHeightMobilePx,
+      DEFAULT_STOREFRONT.aboutBannerHeightMobilePx ?? 300,
       200,
       720,
     );
@@ -507,7 +516,7 @@ export async function getStorefrontPayload(): Promise<ResolvedStorefront> {
       ...patch,
       socialLinks: social,
       testimonials,
-      aboutChips: aboutChips.length ? aboutChips : DEFAULT_STOREFRONT.aboutChips,
+      aboutChips: aboutChips.length ? aboutChips : defaultChips,
       aboutBannerHeightPx,
       aboutBannerHeightMobilePx,
       heroHeightPx,

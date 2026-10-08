@@ -77,7 +77,11 @@ export default async function AdminAboutContentPage({
           </div>
         ) : null}
 
-        <form action={updateAboutPageContent} className="mt-8 space-y-10 border-t border-slate-100 pt-8">
+        <form
+          action={updateAboutPageContent}
+          encType="multipart/form-data"
+          className="mt-8 space-y-10 border-t border-slate-100 pt-8"
+        >
           <section className="space-y-5">
             <div>
               <h2 className="text-lg font-semibold text-slate-900">1. Banner image &amp; height</h2>
