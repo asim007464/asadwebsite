@@ -3,6 +3,7 @@ import { updateAboutPageContent } from "@/app/admin/actions";
 import { BannerHeightsPair } from "@/components/admin/BannerHeightsPair";
 import { BannerResponsiveImageFields } from "@/components/admin/BannerResponsiveImageFields";
 import { StorefrontImageUploadField } from "@/components/admin/StorefrontImageUploadField";
+import { SafeRemoteImage } from "@/components/SafeRemoteImage";
 import {
   clampBannerHeightPx,
   DEFAULT_ABOUT_BANNER_HEIGHT_MOBILE_PX,
@@ -32,6 +33,7 @@ export default async function AdminAboutContentPage({
   const chips = storefront.aboutChips ?? [];
   const values = storefront.aboutValues ?? [];
   const steps = storefront.aboutHowSteps ?? [];
+  const howBlocks = storefront.aboutHowBlocks ?? [];
   const team = storefront.aboutTeam ?? [];
   const storyBlocks = storefront.aboutStoryBlocks ?? [];
   const bannerHeight = clampBannerHeightPx(
@@ -77,11 +79,7 @@ export default async function AdminAboutContentPage({
           </div>
         ) : null}
 
-        <form
-          action={updateAboutPageContent}
-          encType="multipart/form-data"
-          className="mt-8 space-y-10 border-t border-slate-100 pt-8"
-        >
+        <form action={updateAboutPageContent} className="mt-8 space-y-10 border-t border-slate-100 pt-8">
           <section className="space-y-5">
             <div>
               <h2 className="text-lg font-semibold text-slate-900">1. Banner image &amp; height</h2>
@@ -252,29 +250,79 @@ export default async function AdminAboutContentPage({
 
           <section className="space-y-4 border-t border-slate-100 pt-8">
             <div>
-              <h2 className="text-lg font-semibold text-slate-900">4. How we work</h2>
+              <h2 className="text-lg font-semibold text-slate-900">4. How we work / story</h2>
+              <p className="mt-1 text-xs text-slate-500">
+                Main heading, badge, then heading + paragraph blocks (each heading sits above its text on /about). Leave
+                a block blank to skip it.
+              </p>
             </div>
             <div>
-              <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">Section heading</label>
-              <input name="about_how_title" defaultValue={storefront.aboutHowTitle} className={inputClass} />
-            </div>
-            <div>
-              <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">Section paragraph</label>
-              <textarea
-                name="about_how_lead"
-                rows={3}
-                defaultValue={storefront.aboutHowLead}
-                className={textareaClass}
+              <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">Main heading</label>
+              <input
+                name="about_how_title"
+                defaultValue={storefront.aboutHowTitle}
+                className={inputClass}
+                placeholder="Powering Homes and Businesses Since 2001"
               />
             </div>
             <div>
               <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">Badge text</label>
               <input name="about_how_badge" defaultValue={storefront.aboutHowBadge} className={inputClass} />
             </div>
+            <div>
+              <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                Intro paragraphs (optional)
+              </label>
+              <p className="mt-1 text-[11px] text-slate-500">
+                Used only when the blocks below are empty. Prefer the heading/paragraph blocks for cleaner layout.
+              </p>
+              <textarea
+                name="about_how_lead"
+                rows={4}
+                defaultValue={storefront.aboutHowLead}
+                className={textareaClass}
+              />
+            </div>
+            <div className="space-y-4">
+              <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                Heading + paragraph blocks
+              </p>
+              {[0, 1, 2, 3, 4, 5].map((i) => (
+                <div key={i} className="grid gap-3 rounded-2xl border border-slate-200 bg-slate-50/60 p-4">
+                  <div className="text-[11px] font-bold uppercase tracking-wide text-slate-500">Block {i + 1}</div>
+                  <div>
+                    <label className="text-xs font-semibold text-slate-500">Heading (shown above the text)</label>
+                    <input
+                      name={`about_how_block_${i}_title`}
+                      defaultValue={howBlocks[i]?.title ?? ""}
+                      className={inputClass}
+                      placeholder={
+                        i === 0
+                          ? "Your Trusted Partner for Electrical and Electronic Products"
+                          : i === 1
+                            ? "From Samundri to the Surrounding Cities"
+                            : ""
+                      }
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold text-slate-500">
+                      Paragraph(s) — blank line = new paragraph
+                    </label>
+                    <textarea
+                      name={`about_how_block_${i}_body`}
+                      rows={5}
+                      defaultValue={howBlocks[i]?.body ?? ""}
+                      className={textareaClass}
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
             {[0, 1, 2].map((i) => (
               <div key={i} className="grid gap-3 rounded-2xl border border-slate-200 bg-slate-50/60 p-4 sm:grid-cols-3">
                 <div className="sm:col-span-3 text-[11px] font-bold uppercase tracking-wide text-slate-500">
-                  Step {i + 1}
+                  Step card {i + 1}
                 </div>
                 <div>
                   <label className="text-xs font-semibold text-slate-500">Step label</label>
@@ -353,58 +401,80 @@ export default async function AdminAboutContentPage({
                 />
               </div>
             </div>
-            {[0, 1, 2, 3].map((i) => (
-              <div key={i} className="grid gap-3 rounded-2xl border border-slate-200 bg-slate-50/60 p-4 sm:grid-cols-2">
-                <div className="sm:col-span-2 text-[11px] font-bold uppercase tracking-wide text-slate-500">
-                  Person {i + 1}
+            {[0, 1, 2, 3].map((i) => {
+              const photo = (team[i]?.imageUrl ?? "").trim();
+              const hasPhoto =
+                photo.startsWith("https://") || (photo.startsWith("/") && photo.length > 1);
+              return (
+                <div
+                  key={i}
+                  className="grid gap-3 rounded-2xl border border-slate-200 bg-slate-50/60 p-4 sm:grid-cols-2"
+                >
+                  <div className="sm:col-span-2 text-[11px] font-bold uppercase tracking-wide text-slate-500">
+                    Person {i + 1}
+                  </div>
+                  <div className="sm:col-span-2 flex flex-col items-center gap-3 rounded-2xl border border-dashed border-slate-200 bg-white p-4 sm:flex-row sm:items-start">
+                    <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-full bg-blue-50 ring-2 ring-amber-200/80">
+                      {hasPhoto ? (
+                        <SafeRemoteImage src={photo} alt="" fill className="object-cover" sizes="96px" />
+                      ) : (
+                        <div className="flex h-full w-full items-center justify-center text-sm font-bold text-blue-800">
+                          {(team[i]?.initials ?? "?").slice(0, 2)}
+                        </div>
+                      )}
+                    </div>
+                    <div className="min-w-0 flex-1 w-full">
+                      <p className="text-xs font-semibold text-slate-700">Profile photo (circular on /about)</p>
+                      <p className="mt-1 text-[11px] text-slate-500">
+                        Upload a square photo, or paste an image URL. Initials show if no photo is set.
+                      </p>
+                      <input
+                        name={`about_team_${i}_image`}
+                        defaultValue={team[i]?.imageUrl ?? ""}
+                        className={inputClass}
+                        placeholder="https://… or /photo.jpg"
+                      />
+                      <label className="mt-3 block text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+                        Upload from computer
+                      </label>
+                      <input
+                        name={`about_team_${i}_image_file`}
+                        type="file"
+                        accept="image/jpeg,image/png,image/webp,image/gif,.jpg,.jpeg,.png,.webp,.gif"
+                        className={ADMIN_IMAGE_FILE_INPUT_CLASS}
+                      />
+                      <p className="mt-1 text-[11px] text-slate-500">{ADMIN_IMAGE_UPLOAD_HINT}</p>
+                    </div>
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold text-slate-500">Name</label>
+                    <input name={`about_team_${i}_name`} defaultValue={team[i]?.name ?? ""} className={inputClass} />
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold text-slate-500">Initials (fallback)</label>
+                    <input
+                      name={`about_team_${i}_initials`}
+                      defaultValue={team[i]?.initials ?? ""}
+                      className={inputClass}
+                      maxLength={4}
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold text-slate-500">Role</label>
+                    <input name={`about_team_${i}_role`} defaultValue={team[i]?.role ?? ""} className={inputClass} />
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold text-slate-500">Short description</label>
+                    <textarea
+                      name={`about_team_${i}_note`}
+                      rows={2}
+                      defaultValue={team[i]?.note ?? ""}
+                      className={textareaClass}
+                    />
+                  </div>
                 </div>
-                <div>
-                  <label className="text-xs font-semibold text-slate-500">Name</label>
-                  <input name={`about_team_${i}_name`} defaultValue={team[i]?.name ?? ""} className={inputClass} />
-                </div>
-                <div>
-                  <label className="text-xs font-semibold text-slate-500">Initials (fallback)</label>
-                  <input
-                    name={`about_team_${i}_initials`}
-                    defaultValue={team[i]?.initials ?? ""}
-                    className={inputClass}
-                    maxLength={4}
-                  />
-                </div>
-                <div>
-                  <label className="text-xs font-semibold text-slate-500">Role</label>
-                  <input name={`about_team_${i}_role`} defaultValue={team[i]?.role ?? ""} className={inputClass} />
-                </div>
-                <div>
-                  <label className="text-xs font-semibold text-slate-500">Short description</label>
-                  <textarea
-                    name={`about_team_${i}_note`}
-                    rows={2}
-                    defaultValue={team[i]?.note ?? ""}
-                    className={textareaClass}
-                  />
-                </div>
-                <div className="sm:col-span-2">
-                  <label className="text-xs font-semibold text-slate-500">Photo URL</label>
-                  <input
-                    name={`about_team_${i}_image`}
-                    defaultValue={team[i]?.imageUrl ?? ""}
-                    className={inputClass}
-                    placeholder="https://… or /photo.jpg"
-                  />
-                  <label className="mt-3 block text-[11px] font-semibold uppercase tracking-wide text-slate-500">
-                    Or upload photo
-                  </label>
-                  <input
-                    name={`about_team_${i}_image_file`}
-                    type="file"
-                    accept="image/jpeg,image/png,image/webp,image/gif,.jpg,.jpeg,.png,.webp,.gif"
-                    className={ADMIN_IMAGE_FILE_INPUT_CLASS}
-                  />
-                  <p className="mt-1 text-[11px] text-slate-500">{ADMIN_IMAGE_UPLOAD_HINT}</p>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </section>
 
           <section className="space-y-4 border-t border-slate-100 pt-8">

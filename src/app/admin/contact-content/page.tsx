@@ -52,11 +52,7 @@ export default async function AdminContactContentPage({
           </div>
         ) : null}
 
-        <form
-          action={updateContactPageContent}
-          encType="multipart/form-data"
-          className="mt-8 space-y-10 border-t border-slate-100 pt-8"
-        >
+        <form action={updateContactPageContent} className="mt-8 space-y-10 border-t border-slate-100 pt-8">
           <section className="space-y-5">
             <div>
               <h2 className="text-lg font-semibold text-slate-900">1. Top intro</h2>

@@ -97,6 +97,8 @@ export type StorefrontPayload = {
   aboutHowTitle?: string;
   aboutHowLead?: string;
   aboutHowBadge?: string;
+  /** Extra heading + paragraph blocks under the How we work intro. */
+  aboutHowBlocks?: AboutStoryBlock[];
   aboutHowSteps?: AboutWorkStep[];
   aboutTeamEyebrow?: string;
   aboutTeamTitle?: string;
@@ -250,6 +252,7 @@ export const DEFAULT_STOREFRONT: StorefrontPayload & { socialLinks: SocialLinkRo
   aboutHowLead:
     "Whether you are furnishing a new flat or restocking a shop shelf, the flow stays simple: shortlist online → confirm specs → receive picking confirmation → pay on delivery.",
   aboutHowBadge: "Straightforward onboarding",
+  aboutHowBlocks: [],
   aboutHowSteps: [
     {
       step: "01",
@@ -462,6 +465,22 @@ function normalizeAboutStoryBlocks(raw: unknown): AboutStoryBlock[] {
   return out.length ? out : (DEFAULT_STOREFRONT.aboutStoryBlocks ?? []);
 }
 
+/** Empty array is valid (no extra blocks) — do not force defaults. */
+function normalizeAboutHowBlocks(raw: unknown): AboutStoryBlock[] {
+  if (!Array.isArray(raw)) return DEFAULT_STOREFRONT.aboutHowBlocks ?? [];
+  const out: AboutStoryBlock[] = [];
+  for (const v of raw) {
+    if (!v || typeof v !== "object") continue;
+    const o = v as Record<string, unknown>;
+    const title = String(o.title ?? "").trim();
+    const body = String(o.body ?? "").trim();
+    if (!body) continue;
+    out.push({ title, body });
+    if (out.length >= 12) break;
+  }
+  return out;
+}
+
 export async function getStorefrontPayload(): Promise<ResolvedStorefront> {
   // Always read live admin edits — never serve a build-time / cached snapshot.
   noStore();
@@ -523,6 +542,7 @@ export async function getStorefrontPayload(): Promise<ResolvedStorefront> {
       heroHeightMobilePx,
       aboutValues: normalizeAboutValues(patch.aboutValues),
       aboutHowSteps: normalizeAboutHowSteps(patch.aboutHowSteps),
+      aboutHowBlocks: normalizeAboutHowBlocks(patch.aboutHowBlocks),
       aboutTeam: normalizeAboutTeam(patch.aboutTeam),
       aboutStoryBlocks: normalizeAboutStoryBlocks(patch.aboutStoryBlocks),
       faqs: normalizeFaqs(patch.faqs),

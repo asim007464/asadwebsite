@@ -2237,6 +2237,13 @@ export async function updateAboutPageContent(formData: FormData) {
     });
   }
 
+  const aboutHowBlocks = [0, 1, 2, 3, 4, 5]
+    .map((i) => ({
+      title: pick(`about_how_block_${i}_title`),
+      body: pick(`about_how_block_${i}_body`),
+    }))
+    .filter((b) => b.body);
+
   const aboutStoryBlocks = [0, 1, 2, 3, 4, 5]
     .map((i) => ({
       title: pick(`about_story_block_${i}_title`),
@@ -2291,8 +2298,9 @@ export async function updateAboutPageContent(formData: FormData) {
         ? aboutValues
         : (base.aboutValues ?? DEFAULT_STOREFRONT.aboutValues),
       aboutHowTitle: pickOr("about_how_title", base.aboutHowTitle, DEFAULT_STOREFRONT.aboutHowTitle ?? ""),
-      aboutHowLead: pickOr("about_how_lead", base.aboutHowLead, DEFAULT_STOREFRONT.aboutHowLead ?? ""),
+      aboutHowLead: pick("about_how_lead"),
       aboutHowBadge: pickOr("about_how_badge", base.aboutHowBadge, DEFAULT_STOREFRONT.aboutHowBadge ?? ""),
+      aboutHowBlocks,
       aboutHowSteps: aboutHowSteps.length
         ? aboutHowSteps
         : (base.aboutHowSteps ?? DEFAULT_STOREFRONT.aboutHowSteps),

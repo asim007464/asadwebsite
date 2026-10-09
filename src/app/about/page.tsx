@@ -9,6 +9,7 @@ import {
 } from "@/lib/banner-height";
 import { resolveBannerImages } from "@/lib/banner-images";
 import { SITE_SHOP_NAME } from "@/lib/site-brand";
+import { splitProseSections } from "@/lib/split-prose";
 import { getStorefrontPayload } from "@/lib/storefront";
 
 export const dynamic = "force-dynamic";
@@ -164,21 +165,16 @@ export default async function AboutPage() {
         </div>
 
         {team.length ? (
-          <div
-            className={`mt-10 grid gap-10 sm:mt-12 sm:gap-12 ${
-              team.length === 1
-                ? "mx-auto max-w-sm"
-                : team.length === 2
-                  ? "mx-auto max-w-3xl sm:grid-cols-2"
-                  : "sm:grid-cols-2 lg:grid-cols-4"
-            }`}
-          >
+          <div className="mx-auto mt-10 flex max-w-5xl flex-wrap justify-center gap-x-10 gap-y-12 sm:mt-12 sm:gap-x-14">
             {team.map((m) => {
               const photo = (m.imageUrl ?? "").trim();
               const usePhoto =
                 photo.startsWith("https://") || (photo.startsWith("/") && photo.length > 1);
               return (
-                <article key={m.name} className="flex flex-col items-center text-center">
+                <article
+                  key={m.name}
+                  className="flex w-[11.5rem] flex-col items-center text-center sm:w-[13rem]"
+                >
                   <div className="relative h-36 w-36 overflow-hidden rounded-full bg-slate-100 ring-2 ring-amber-200/80 sm:h-40 sm:w-40">
                     {usePhoto ? (
                       <SafeRemoteImage src={photo} alt={m.name} fill className="object-cover" sizes="160px" />
@@ -192,7 +188,7 @@ export default async function AboutPage() {
                   <p className="mt-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
                     {m.role}
                   </p>
-                  <p className="mt-3 max-w-xs text-sm leading-relaxed text-slate-600">{m.note}</p>
+                  <p className="mt-3 max-w-[14rem] text-sm leading-relaxed text-slate-600">{m.note}</p>
                 </article>
               );
             })}
@@ -231,9 +227,9 @@ export default async function AboutPage() {
         </div>
 
         {storyBlocks.length ? (
-          <div className="mx-auto mt-10 max-w-3xl space-y-8 sm:mt-12">
+          <div className="mx-auto mt-10 max-w-3xl space-y-8 text-center sm:mt-12">
             {storyBlocks.map((block, i) => (
-              <div key={`${i}-${block.title}`} className="text-center sm:text-left">
+              <div key={`${i}-${block.title}`}>
                 <h3 className="text-lg font-semibold tracking-tight text-slate-900 sm:text-xl">{block.title}</h3>
                 <p className="mt-2 text-sm leading-relaxed text-slate-600 sm:text-[15px]">{block.body}</p>
               </div>
@@ -242,25 +238,63 @@ export default async function AboutPage() {
         ) : null}
       </section>
 
-      <section className="mt-14 rounded-3xl border border-blue-100 bg-white p-8 shadow-sm sm:mt-16">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-          <div>
-            <h2 className="text-xl font-semibold tracking-tight text-slate-900">
-              {storefront.aboutHowTitle?.trim() || "How we work with shoppers"}
-            </h2>
-            <p className="mt-2 max-w-3xl text-sm leading-relaxed text-slate-600">
-              {storefront.aboutHowLead?.trim() || ""}
-            </p>
-          </div>
+      <section className="mt-14 w-full rounded-3xl border border-blue-100 bg-white p-5 shadow-sm sm:mt-16 sm:p-6 lg:p-8">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-6">
+          <h2 className="min-w-0 flex-1 text-xl font-semibold tracking-tight text-slate-900 sm:text-2xl lg:text-3xl lg:leading-snug">
+            {storefront.aboutHowTitle?.trim() || "How we work with shoppers"}
+          </h2>
           {storefront.aboutHowBadge?.trim() ? (
-            <div className="rounded-full bg-blue-50 px-4 py-2 text-xs font-semibold text-blue-900 ring-1 ring-blue-100">
+            <div className="shrink-0 self-start rounded-full bg-blue-50 px-4 py-2 text-xs font-semibold text-blue-900 ring-1 ring-blue-100">
               {storefront.aboutHowBadge.trim()}
             </div>
           ) : null}
         </div>
 
+        {(() => {
+          const howBlocks = (storefront.aboutHowBlocks ?? []).filter((b) => b.body?.trim());
+          const fromLead = splitProseSections(storefront.aboutHowLead?.trim() || "");
+          const fromBlocks = howBlocks.map((b) => {
+            const paras = b.body
+              .replace(/\r\n/g, "\n")
+              .split(/\n{2,}/)
+              .map((p) => p.replace(/\n+/g, " ").trim())
+              .filter(Boolean);
+            return {
+              heading: b.title?.trim() || undefined,
+              paragraphs: paras.length ? paras : [b.body.trim()],
+            };
+          });
+          // Admin blocks take priority; otherwise use the intro textarea (supports ## headings).
+          const sections = fromBlocks.length > 0 ? fromBlocks : fromLead;
+          if (!sections.length) return null;
+          return (
+            <div className="mt-6 w-full space-y-8 sm:mt-8">
+              {sections.map((sec, i) => (
+                <div key={`how-sec-${i}`} className="w-full border-t border-slate-100 pt-6 first:border-t-0 first:pt-0">
+                  {sec.heading ? (
+                    <h3 className="text-base font-semibold tracking-tight text-slate-900 sm:text-lg">
+                      {sec.heading}
+                    </h3>
+                  ) : null}
+                  <div
+                    className={`w-full space-y-3 text-sm leading-relaxed text-slate-600 sm:text-[15px] sm:leading-7 ${
+                      sec.heading ? "mt-3" : ""
+                    }`}
+                  >
+                    {sec.paragraphs.map((p, j) => (
+                      <p key={j} className="w-full max-w-none">
+                        {p}
+                      </p>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          );
+        })()}
+
         {howSteps.length ? (
-          <ol className="mt-8 grid gap-4 md:grid-cols-3">
+          <ol className="mt-8 grid w-full gap-4 sm:mt-10 sm:grid-cols-2 lg:grid-cols-3">
             {howSteps.map((item) => (
               <li key={`${item.step}-${item.title}`} className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
                 <div className="text-xs font-semibold uppercase tracking-wide text-blue-700">{item.step}</div>
