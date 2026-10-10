@@ -277,8 +277,7 @@ export const DEFAULT_STOREFRONT: StorefrontPayload & { socialLinks: SocialLinkRo
   ],
   aboutStoryEyebrow: "Our story",
   aboutStoryTitle: "From the shop floor to your doorstep",
-  aboutStoryLead:
-    "Al Makkah Electric Traders grew from serving nearby households to stocking fans, lighting, wiring, and kitchen helpers with clear specs and COD confirmation.",
+  aboutStoryLead: "",
   aboutStoryBlocks: [],
   contactPageTitle: "Call, WhatsApp, or visit us",
   contactPageLead: "Quotes, stock checks, and COD confirmation — we reply during desk hours.",
@@ -391,7 +390,7 @@ function normalizeAboutHowSteps(raw: unknown): AboutWorkStep[] {
 
 function normalizeAboutTeam(raw: unknown): AboutTeamMember[] {
   const fallback = DEFAULT_STOREFRONT.aboutTeam ?? [];
-  if (!Array.isArray(raw)) return fallback;
+  if (!Array.isArray(raw)) return fallback.slice(0, 2);
   const out: AboutTeamMember[] = [];
   for (const v of raw) {
     if (!v || typeof v !== "object") continue;
@@ -401,7 +400,7 @@ function normalizeAboutTeam(raw: unknown): AboutTeamMember[] {
     const note = String(o.note ?? "").trim();
     let initials = String(o.initials ?? "").trim();
     if (!initials && name) initials = name.split(/\s/).map((x) => x[0]).join("").slice(0, 4).toUpperCase();
-    if (!name || !role || !note || !initials) continue;
+    if (!name || !role || !initials) continue;
     const imageUrl = String(o.imageUrl ?? o.image_url ?? "").trim();
     out.push({
       name,
@@ -410,9 +409,9 @@ function normalizeAboutTeam(raw: unknown): AboutTeamMember[] {
       initials: initials.slice(0, 4),
       ...(imageUrl ? { imageUrl } : {}),
     });
-    if (out.length >= 8) break;
+    if (out.length >= 2) break;
   }
-  return out.length ? out : fallback;
+  return out.length ? out : fallback.slice(0, 2);
 }
 
 function normalizeAboutStoryBlocks(raw: unknown): AboutStoryBlock[] {
@@ -528,7 +527,7 @@ export async function getStorefrontPayload(): Promise<ResolvedStorefront> {
       brandsSectionLead: text("brandsSectionLead", DEFAULT_STOREFRONT.brandsSectionLead),
       aboutStoryEyebrow: text("aboutStoryEyebrow", DEFAULT_STOREFRONT.aboutStoryEyebrow),
       aboutStoryTitle: text("aboutStoryTitle", DEFAULT_STOREFRONT.aboutStoryTitle),
-      aboutStoryLead: text("aboutStoryLead", DEFAULT_STOREFRONT.aboutStoryLead),
+      aboutStoryLead: textAllowBlank("aboutStoryLead", DEFAULT_STOREFRONT.aboutStoryLead),
       homeStatsLead: textAllowBlank("homeStatsLead", DEFAULT_STOREFRONT.homeStatsLead),
       browseCategoriesTitle: text("browseCategoriesTitle", DEFAULT_STOREFRONT.browseCategoriesTitle),
       browseCategoriesLead: textAllowBlank(
