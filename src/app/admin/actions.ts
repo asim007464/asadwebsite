@@ -2054,17 +2054,10 @@ export async function updateHomePageContent(formData: FormData) {
       DEFAULT_STOREFRONT.gadgetsSectionTitle ?? "",
     ),
     gadgetsSectionLead: pick("gadgets_section_lead"),
-    testimonialsEyebrow: pickOr(
-      "testimonials_eyebrow",
-      base.testimonialsEyebrow,
-      DEFAULT_STOREFRONT.testimonialsEyebrow ?? "",
-    ),
-    testimonialsHeading: pickOr(
-      "testimonials_heading",
-      base.testimonialsHeading,
-      DEFAULT_STOREFRONT.testimonialsHeading ?? "",
-    ),
-    testimonialsLead: pickOr("testimonials_lead", base.testimonialsLead, DEFAULT_STOREFRONT.testimonialsLead ?? ""),
+    /** Blank = hide that line in the reviews section header. */
+    testimonialsEyebrow: pick("testimonials_eyebrow"),
+    testimonialsHeading: pick("testimonials_heading"),
+    testimonialsLead: pick("testimonials_lead"),
     reviewsRatingNote: pickOr(
       "reviews_rating_note",
       base.reviewsRatingNote,
@@ -2080,21 +2073,10 @@ export async function updateHomePageContent(formData: FormData) {
     faqLead: pickOr("faq_lead", base.faqLead, DEFAULT_STOREFRONT.faqLead ?? ""),
     faqContactLabel: pickOr("faq_contact_label", base.faqContactLabel, DEFAULT_STOREFRONT.faqContactLabel ?? ""),
     faqContactHref: pickOr("faq_contact_href", base.faqContactHref, DEFAULT_STOREFRONT.faqContactHref ?? ""),
-    brandsSectionEyebrow: pickOr(
-      "brands_section_eyebrow",
-      base.brandsSectionEyebrow,
-      DEFAULT_STOREFRONT.brandsSectionEyebrow ?? "",
-    ),
-    brandsSectionTitle: pickOr(
-      "brands_section_title",
-      base.brandsSectionTitle,
-      DEFAULT_STOREFRONT.brandsSectionTitle ?? "",
-    ),
-    brandsSectionLead: pickOr(
-      "brands_section_lead",
-      base.brandsSectionLead,
-      DEFAULT_STOREFRONT.brandsSectionLead ?? "",
-    ),
+    /** Blank = hide that line on the homepage brands strip. */
+    brandsSectionEyebrow: pick("brands_section_eyebrow"),
+    brandsSectionTitle: pick("brands_section_title"),
+    brandsSectionLead: pick("brands_section_lead"),
   };
   const testimonials = parseTestimonialsFromForm(formData, pick);
   if (testimonials) patch.testimonials = testimonials;
