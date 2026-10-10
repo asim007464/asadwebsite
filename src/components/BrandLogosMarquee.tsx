@@ -63,29 +63,46 @@ export function BrandLogosMarquee({
   const items = (logos ?? []).filter((l) => l.name?.trim());
   if (!items.length) return null;
 
-  const eyebrowText = eyebrow?.trim() || "Brands";
-  const headingText = heading?.trim() || "Brands we carry";
-  const leadText =
-    lead?.trim() ||
-    "Popular appliance and electrical brands stocked for everyday homes — fans, lighting, wiring, and kitchen helpers.";
+  const eyebrowText = eyebrow?.trim() || "";
+  const headingText = heading?.trim() || "";
+  const leadText = lead?.trim() || "";
+  const showHeader = Boolean(eyebrowText || headingText || leadText);
 
   const durationSec = Math.max(28, Math.min(70, items.length * 5));
   const loop = items.length < 6 ? [...items, ...items, ...items] : [...items, ...items];
 
   return (
-    <section className="mt-10 sm:mt-12" aria-labelledby="brand-logos-heading">
-      <div className="mx-auto max-w-2xl text-center">
-        <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-blue-700">{eyebrowText}</p>
-        <h2
-          id="brand-logos-heading"
-          className="mt-2 text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl"
-        >
-          {headingText}
-        </h2>
-        <p className="mt-3 text-sm leading-relaxed text-slate-600 sm:text-[15px]">{leadText}</p>
-      </div>
+    <section
+      className="mt-10 sm:mt-12"
+      aria-labelledby={headingText ? "brand-logos-heading" : undefined}
+      aria-label={headingText ? undefined : "Brand logos"}
+    >
+      {showHeader ? (
+        <div className="mx-auto max-w-2xl text-center">
+          {eyebrowText ? (
+            <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-blue-700">{eyebrowText}</p>
+          ) : null}
+          {headingText ? (
+            <h2
+              id="brand-logos-heading"
+              className={`text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl ${eyebrowText ? "mt-2" : ""}`}
+            >
+              {headingText}
+            </h2>
+          ) : null}
+          {leadText ? (
+            <p
+              className={`text-sm leading-relaxed text-slate-600 sm:text-[15px] ${
+                eyebrowText || headingText ? "mt-3" : ""
+              }`}
+            >
+              {leadText}
+            </p>
+          ) : null}
+        </div>
+      ) : null}
 
-      <div className="relative mt-8">
+      <div className={`relative ${showHeader ? "mt-8" : ""}`}>
         <div
           className="pointer-events-none absolute inset-y-0 left-0 z-10 w-10 bg-gradient-to-r from-white to-transparent sm:w-16"
           aria-hidden

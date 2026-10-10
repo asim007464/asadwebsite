@@ -169,13 +169,16 @@ export default async function AdminHomeContentPage({
           <section>
             <h2 className="text-lg font-semibold text-slate-900">Brands logo strip</h2>
             <p className="mt-1 text-xs text-slate-500">
-              Heading, description, and round logos that slide continuously above the reviews section. Leave image blank
-              to show initials.
+              Heading, description, and round logos that slide continuously above the reviews section. Leave any text
+              field blank to hide it on the site. Leave logo image blank to show initials.
             </p>
             <div className="mt-4 grid gap-5">
               <div className="grid gap-5 sm:grid-cols-2">
                 <div>
-                  <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">Small label</label>
+                  <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                    Small label{" "}
+                    <span className="font-normal normal-case tracking-normal text-slate-400">(leave blank to hide)</span>
+                  </label>
                   <input
                     name="brands_section_eyebrow"
                     defaultValue={storefront.brandsSectionEyebrow}
@@ -184,7 +187,10 @@ export default async function AdminHomeContentPage({
                   />
                 </div>
                 <div>
-                  <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">Heading</label>
+                  <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                    Heading{" "}
+                    <span className="font-normal normal-case tracking-normal text-slate-400">(leave blank to hide)</span>
+                  </label>
                   <input
                     name="brands_section_title"
                     defaultValue={storefront.brandsSectionTitle}
@@ -194,7 +200,10 @@ export default async function AdminHomeContentPage({
                 </div>
               </div>
               <div>
-                <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">Paragraph</label>
+                <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  Paragraph{" "}
+                  <span className="font-normal normal-case tracking-normal text-slate-400">(leave blank to hide)</span>
+                </label>
                 <textarea
                   name="brands_section_lead"
                   rows={2}
@@ -241,13 +250,16 @@ export default async function AdminHomeContentPage({
           <section>
             <h2 className="text-lg font-semibold text-slate-900">Customer reviews</h2>
             <p className="mt-1 text-xs text-slate-500">
-              Section copy, rating card, and up to {REVIEW_SLOTS} quotes shown in the reviews carousel. Leave a row blank
-              to skip it.
+              Section copy, rating card, and up to {REVIEW_SLOTS} quotes shown in the reviews carousel. Leave any text
+              field blank to hide it on the site. Leave a review row blank to skip it.
             </p>
             <div className="mt-4 grid gap-5">
               <div className="grid gap-5 sm:grid-cols-2">
                 <div>
-                  <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">Small label</label>
+                  <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                    Small label{" "}
+                    <span className="font-normal normal-case tracking-normal text-slate-400">(leave blank to hide)</span>
+                  </label>
                   <input
                     name="testimonials_eyebrow"
                     defaultValue={storefront.testimonialsEyebrow}
@@ -256,7 +268,10 @@ export default async function AdminHomeContentPage({
                   />
                 </div>
                 <div>
-                  <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">Main heading</label>
+                  <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                    Main heading{" "}
+                    <span className="font-normal normal-case tracking-normal text-slate-400">(leave blank to hide)</span>
+                  </label>
                   <input
                     name="testimonials_heading"
                     defaultValue={storefront.testimonialsHeading}
@@ -266,7 +281,10 @@ export default async function AdminHomeContentPage({
                 </div>
               </div>
               <div>
-                <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">Intro paragraph</label>
+                <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  Intro paragraph{" "}
+                  <span className="font-normal normal-case tracking-normal text-slate-400">(leave blank to hide)</span>
+                </label>
                 <textarea
                   name="testimonials_lead"
                   rows={3}

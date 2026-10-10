@@ -67,9 +67,11 @@ export function TestimonialsSection({
   testimonials?: readonly Testimonial[];
 }) {
   const items = testimonials && testimonials.length > 0 ? testimonials : DEMO_TESTIMONIALS;
-  const eyebrowText = eyebrow?.trim() || "Reviews";
-  const headingText = heading?.trim() || "What customers say";
+  const eyebrowText = eyebrow?.trim() || "";
+  const headingText = heading?.trim() || "";
+  const introText = intro?.trim() || "";
   const ratingScoreText = ratingScore?.trim() || "5.0";
+  const showTitleBlock = Boolean(eyebrowText || headingText);
   const [perPage, setPerPage] = useState(2);
 
   useEffect(() => {
@@ -87,18 +89,34 @@ export function TestimonialsSection({
   const visible = useMemo(() => items.slice(sliceStart, sliceStart + perPage), [items, sliceStart, perPage]);
 
   return (
-    <div className="relative" aria-labelledby="testimonials-heading">
+    <div
+      className="relative"
+      aria-labelledby={headingText ? "testimonials-heading" : undefined}
+      aria-label={headingText ? undefined : "Customer reviews"}
+    >
       {/* Same compact rating badge on phone + laptop (top-right), matching desktop layout */}
-      <div className="flex items-start justify-between gap-3 sm:gap-4">
-        <div className="min-w-0 max-w-xl">
-          <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-blue-700">{eyebrowText}</p>
-          <h2
-            id="testimonials-heading"
-            className="mt-2 text-lg font-bold tracking-tight text-slate-900 sm:mt-3 sm:text-4xl"
-          >
-            {headingText}
-          </h2>
-        </div>
+      <div
+        className={`flex items-start gap-3 sm:gap-4 ${
+          showTitleBlock ? "justify-between" : "justify-end"
+        }`}
+      >
+        {showTitleBlock ? (
+          <div className="min-w-0 max-w-xl">
+            {eyebrowText ? (
+              <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-blue-700">{eyebrowText}</p>
+            ) : null}
+            {headingText ? (
+              <h2
+                id="testimonials-heading"
+                className={`text-lg font-bold tracking-tight text-slate-900 sm:text-4xl ${
+                  eyebrowText ? "mt-2 sm:mt-3" : ""
+                }`}
+              >
+                {headingText}
+              </h2>
+            ) : null}
+          </div>
+        ) : null}
 
         <div className="flex shrink-0 items-center gap-2 rounded-2xl border border-slate-200 bg-white px-2.5 py-2 shadow-sm ring-1 ring-slate-100 sm:gap-4 sm:px-5 sm:py-3">
           <div className="flex items-baseline gap-1 sm:gap-2">
@@ -113,13 +131,11 @@ export function TestimonialsSection({
         </div>
       </div>
 
-      <p className="mt-3 max-w-xl text-sm leading-relaxed text-slate-600 sm:mt-4 sm:text-base">
-        {intro?.trim()?.length
-          ? intro.trim()
-          : "COD orders with phone confirmation — shoppers tell us when specs, delivery, and pricing line up. Quotes below are sample stories you can replace with live feedback."}
-      </p>
+      {introText ? (
+        <p className="mt-3 max-w-xl text-sm leading-relaxed text-slate-600 sm:mt-4 sm:text-base">{introText}</p>
+      ) : null}
 
-      <div className="relative mt-12">
+      <div className={`relative ${introText || showTitleBlock ? "mt-12" : "mt-6"}`}>
         <div
           className="touch-pan-y select-none"
           style={{ touchAction: "pan-y" }}
