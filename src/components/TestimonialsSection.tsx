@@ -94,7 +94,7 @@ export function TestimonialsSection({
           <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-blue-700">{eyebrowText}</p>
           <h2
             id="testimonials-heading"
-            className="mt-2 text-2xl font-bold tracking-tight text-slate-900 sm:mt-3 sm:text-4xl"
+            className="mt-2 text-lg font-bold tracking-tight text-slate-900 sm:mt-3 sm:text-4xl"
           >
             {headingText}
           </h2>

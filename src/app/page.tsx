@@ -249,10 +249,11 @@ async function HomeServer() {
                   <h2 className="text-lg font-semibold tracking-tight text-slate-900">
                     {storefront.browseCategoriesTitle?.trim() || "Browse categories"}
                   </h2>
-                  <p className="mt-1 text-sm text-slate-600">
-                    {storefront.browseCategoriesLead?.trim() ||
-                      "Quick links to the same categories in the navbar dropdown."}
-                  </p>
+                  {storefront.browseCategoriesLead?.trim() ? (
+                    <p className="mt-1 text-sm text-slate-600">
+                      {storefront.browseCategoriesLead.trim()}
+                    </p>
+                  ) : null}
                 </div>
                 <Link
                   href="/products"
@@ -279,10 +280,11 @@ async function HomeServer() {
               <h2 className="text-lg font-semibold tracking-tight text-slate-900">
                 {storefront.featuredSectionTitle?.trim() || "Featured picks"}
               </h2>
-              <p className="mt-1 text-sm text-slate-600">
-                {storefront.featuredSectionLead?.trim() ||
-                  "Hot-selling highlights chosen by admin — four across on extra-wide screens; step through one SKU at a time."}
-              </p>
+              {storefront.featuredSectionLead?.trim() ? (
+                <p className="mt-1 text-sm text-slate-600">
+                  {storefront.featuredSectionLead.trim()}
+                </p>
+              ) : null}
             </div>
             <Link
               href="/products"
@@ -345,9 +347,11 @@ async function HomeServer() {
               <h2 className="text-lg font-semibold tracking-tight text-slate-900">
                 {storefront.gadgetsSectionTitle?.trim() || "Gadget section"}
               </h2>
-              <p className="mt-1 text-sm text-slate-600">
-                {storefront.gadgetsSectionLead?.trim() || "More popular items — same layout as Featured picks."}
-              </p>
+              {storefront.gadgetsSectionLead?.trim() ? (
+                <p className="mt-1 text-sm text-slate-600">
+                  {storefront.gadgetsSectionLead.trim()}
+                </p>
+              ) : null}
             </div>
             <Link
               href="/products"
@@ -367,10 +371,11 @@ async function HomeServer() {
               {storefront.homeStatsTitle?.trim() ||
                 "Trusted home appliances & electrical accessories — with transparent pricing."}
             </h2>
-            <p className="mt-3 text-sm leading-relaxed text-slate-600 sm:text-[15px]">
-              {storefront.homeStatsLead?.trim() ||
-                "Cash on delivery, phone confirmation, and nationwide dispatch. These figures are placeholders — swap to real business stats anytime."}
-            </p>
+            {storefront.homeStatsLead?.trim() ? (
+              <p className="mt-3 text-sm leading-relaxed text-slate-600 sm:text-[15px]">
+                {storefront.homeStatsLead.trim()}
+              </p>
+            ) : null}
           </div>
 
           <div className="mt-7 grid grid-cols-2 gap-4 sm:grid-cols-4">

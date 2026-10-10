@@ -234,20 +234,7 @@ export const DEFAULT_STOREFRONT: StorefrontPayload & { socialLinks: SocialLinkRo
   aboutCtaSecondaryHref: "/contact",
   aboutBannerHeightPx: 420,
   aboutBannerHeightMobilePx: 300,
-  aboutValues: [
-    {
-      title: "Genuine products",
-      body: "Brand-backed SKUs with documented specs—ideal when warranties or voltage compatibility matter.",
-    },
-    {
-      title: "COD-first",
-      body: "Cash on delivery with human confirmation before goods leave the warehouse.",
-    },
-    {
-      title: "Fast support",
-      body: "Guidance on watt limits, plug types, cooler pads, clipper guards, and accessory pairing.",
-    },
-  ],
+  aboutValues: [],
   aboutHowTitle: "How we work with shoppers",
   aboutHowLead:
     "Whether you are furnishing a new flat or restocking a shop shelf, the flow stays simple: shortlist online → confirm specs → receive picking confirmation → pay on delivery.",
@@ -272,8 +259,7 @@ export const DEFAULT_STOREFRONT: StorefrontPayload & { socialLinks: SocialLinkRo
   ],
   aboutTeamEyebrow: "The people behind the business",
   aboutTeamTitle: "Meet Our Leadership",
-  aboutTeamLead:
-    "Our journey is shaped by the people who believe in honest relationships, dependable products, and long-term growth.",
+  aboutTeamLead: "",
   aboutTeamCtaLabel: "Talk to us",
   aboutTeamCtaHref: "/contact",
   aboutTeam: [
@@ -404,7 +390,8 @@ function normalizeAboutValues(raw: unknown): AboutValueCard[] {
     out.push({ title, body });
     if (out.length >= 6) break;
   }
-  return out.length ? out : fallback;
+  /** Empty array is intentional (admin cleared all cards). */
+  return out;
 }
 
 function normalizeAboutHowSteps(raw: unknown): AboutWorkStep[] {
@@ -495,6 +482,7 @@ export async function getStorefrontPayload(): Promise<ResolvedStorefront> {
         : DEFAULT_STOREFRONT.socialLinks;
     const testimonials = normalizeTestimonials(patch.testimonials);
     const defaultChips = DEFAULT_STOREFRONT.aboutChips ?? [];
+    /** Empty array is intentional (admin cleared all chips); only missing key uses defaults. */
     const aboutChips = Array.isArray(patch.aboutChips)
       ? patch.aboutChips.map((c) => String(c).trim()).filter(Boolean).slice(0, 12)
       : defaultChips;
@@ -529,13 +517,21 @@ export async function getStorefrontPayload(): Promise<ResolvedStorefront> {
       if (typeof v === "string" && v.trim()) return v.trim();
       return fallback ?? "";
     };
+    /** Respect intentional blanks (hide paragraph on storefront). Missing key → default. */
+    const textAllowBlank = (key: keyof StorefrontPayload, fallback: string | undefined) => {
+      if (!(key in patch) || patch[key] === undefined || patch[key] === null) {
+        return fallback ?? "";
+      }
+      const v = patch[key];
+      return typeof v === "string" ? v.trim() : (fallback ?? "");
+    };
 
     return {
       ...DEFAULT_STOREFRONT,
       ...patch,
       socialLinks: social,
       testimonials,
-      aboutChips: aboutChips.length ? aboutChips : defaultChips,
+      aboutChips,
       aboutBannerHeightPx,
       aboutBannerHeightMobilePx,
       heroHeightPx,
@@ -554,13 +550,22 @@ export async function getStorefrontPayload(): Promise<ResolvedStorefront> {
       aboutStoryEyebrow: text("aboutStoryEyebrow", DEFAULT_STOREFRONT.aboutStoryEyebrow),
       aboutStoryTitle: text("aboutStoryTitle", DEFAULT_STOREFRONT.aboutStoryTitle),
       aboutStoryLead: text("aboutStoryLead", DEFAULT_STOREFRONT.aboutStoryLead),
-      homeStatsLead: text("homeStatsLead", DEFAULT_STOREFRONT.homeStatsLead),
+      homeStatsLead: textAllowBlank("homeStatsLead", DEFAULT_STOREFRONT.homeStatsLead),
       browseCategoriesTitle: text("browseCategoriesTitle", DEFAULT_STOREFRONT.browseCategoriesTitle),
-      browseCategoriesLead: text("browseCategoriesLead", DEFAULT_STOREFRONT.browseCategoriesLead),
+      browseCategoriesLead: textAllowBlank(
+        "browseCategoriesLead",
+        DEFAULT_STOREFRONT.browseCategoriesLead,
+      ),
       featuredSectionTitle: text("featuredSectionTitle", DEFAULT_STOREFRONT.featuredSectionTitle),
-      featuredSectionLead: text("featuredSectionLead", DEFAULT_STOREFRONT.featuredSectionLead),
+      featuredSectionLead: textAllowBlank(
+        "featuredSectionLead",
+        DEFAULT_STOREFRONT.featuredSectionLead,
+      ),
       gadgetsSectionTitle: text("gadgetsSectionTitle", DEFAULT_STOREFRONT.gadgetsSectionTitle),
-      gadgetsSectionLead: text("gadgetsSectionLead", DEFAULT_STOREFRONT.gadgetsSectionLead),
+      gadgetsSectionLead: textAllowBlank(
+        "gadgetsSectionLead",
+        DEFAULT_STOREFRONT.gadgetsSectionLead,
+      ),
       testimonialsEyebrow: text("testimonialsEyebrow", DEFAULT_STOREFRONT.testimonialsEyebrow),
       testimonialsHeading: text("testimonialsHeading", DEFAULT_STOREFRONT.testimonialsHeading),
       testimonialsLead: text("testimonialsLead", DEFAULT_STOREFRONT.testimonialsLead),
@@ -573,17 +578,17 @@ export async function getStorefrontPayload(): Promise<ResolvedStorefront> {
       faqContactHref: text("faqContactHref", DEFAULT_STOREFRONT.faqContactHref),
       aboutEyebrow: text("aboutEyebrow", DEFAULT_STOREFRONT.aboutEyebrow),
       aboutPageTitle: text("aboutPageTitle", DEFAULT_STOREFRONT.aboutPageTitle),
-      aboutPageLead: text("aboutPageLead", DEFAULT_STOREFRONT.aboutPageLead),
+      aboutPageLead: textAllowBlank("aboutPageLead", DEFAULT_STOREFRONT.aboutPageLead),
       aboutCtaPrimaryLabel: text("aboutCtaPrimaryLabel", DEFAULT_STOREFRONT.aboutCtaPrimaryLabel),
       aboutCtaPrimaryHref: text("aboutCtaPrimaryHref", DEFAULT_STOREFRONT.aboutCtaPrimaryHref),
       aboutCtaSecondaryLabel: text("aboutCtaSecondaryLabel", DEFAULT_STOREFRONT.aboutCtaSecondaryLabel),
       aboutCtaSecondaryHref: text("aboutCtaSecondaryHref", DEFAULT_STOREFRONT.aboutCtaSecondaryHref),
       aboutHowTitle: text("aboutHowTitle", DEFAULT_STOREFRONT.aboutHowTitle),
-      aboutHowLead: text("aboutHowLead", DEFAULT_STOREFRONT.aboutHowLead),
+      aboutHowLead: textAllowBlank("aboutHowLead", DEFAULT_STOREFRONT.aboutHowLead),
       aboutHowBadge: text("aboutHowBadge", DEFAULT_STOREFRONT.aboutHowBadge),
       aboutTeamEyebrow: text("aboutTeamEyebrow", DEFAULT_STOREFRONT.aboutTeamEyebrow),
       aboutTeamTitle: text("aboutTeamTitle", DEFAULT_STOREFRONT.aboutTeamTitle),
-      aboutTeamLead: text("aboutTeamLead", DEFAULT_STOREFRONT.aboutTeamLead),
+      aboutTeamLead: textAllowBlank("aboutTeamLead", DEFAULT_STOREFRONT.aboutTeamLead),
       aboutTeamCtaLabel: text("aboutTeamCtaLabel", DEFAULT_STOREFRONT.aboutTeamCtaLabel),
       aboutTeamCtaHref: text("aboutTeamCtaHref", DEFAULT_STOREFRONT.aboutTeamCtaHref),
     };

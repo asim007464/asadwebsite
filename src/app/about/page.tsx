@@ -51,9 +51,7 @@ export default async function AboutPage() {
   const shopImage = (storefront.aboutSecondaryImage ?? "").trim() || ABOUT_FALLBACK_BANNER;
   const teamEyebrow = storefront.aboutTeamEyebrow?.trim() || "The people behind the business";
   const teamTitle = storefront.aboutTeamTitle?.trim() || "Meet Our Leadership";
-  const teamLead =
-    storefront.aboutTeamLead?.trim() ||
-    "Our journey is shaped by the people who believe in honest relationships, dependable products, and long-term growth.";
+  const teamLead = storefront.aboutTeamLead?.trim() || "";
   const storyEyebrow = storefront.aboutStoryEyebrow?.trim() || "Our story";
   const storyTitle = storefront.aboutStoryTitle?.trim() || "From the shop floor to your doorstep";
   const storyLead = storefront.aboutStoryLead?.trim() || "";
@@ -161,34 +159,38 @@ export default async function AboutPage() {
           >
             {teamTitle}
           </h2>
-          <p className="mt-4 text-sm leading-relaxed text-slate-600 sm:text-[15px]">{teamLead}</p>
+          {teamLead ? (
+            <p className="mt-4 text-sm leading-relaxed text-slate-600 sm:text-[15px]">{teamLead}</p>
+          ) : null}
         </div>
 
         {team.length ? (
-          <div className="mx-auto mt-10 flex max-w-5xl flex-wrap justify-center gap-x-10 gap-y-12 sm:mt-12 sm:gap-x-14">
+          <div className="mx-auto mt-10 grid max-w-3xl grid-cols-2 gap-x-8 gap-y-12 sm:mt-12 sm:gap-x-16 sm:gap-y-14">
             {team.map((m) => {
               const photo = (m.imageUrl ?? "").trim();
               const usePhoto =
                 photo.startsWith("https://") || (photo.startsWith("/") && photo.length > 1);
+              const note = (m.note ?? "").trim();
               return (
-                <article
-                  key={m.name}
-                  className="flex w-[11.5rem] flex-col items-center text-center sm:w-[13rem]"
-                >
-                  <div className="relative h-36 w-36 overflow-hidden rounded-full bg-slate-100 ring-2 ring-amber-200/80 sm:h-40 sm:w-40">
+                <article key={m.name} className="flex flex-col items-center text-center">
+                  <div className="relative h-44 w-44 overflow-hidden rounded-full bg-slate-100 ring-2 ring-amber-200/80 sm:h-56 sm:w-56">
                     {usePhoto ? (
-                      <SafeRemoteImage src={photo} alt={m.name} fill className="object-cover" sizes="160px" />
+                      <SafeRemoteImage src={photo} alt={m.name} fill className="object-cover" sizes="224px" />
                     ) : (
-                      <div className="flex h-full w-full items-center justify-center bg-blue-50 text-2xl font-bold text-blue-800">
+                      <div className="flex h-full w-full items-center justify-center bg-blue-50 text-3xl font-bold text-blue-800 sm:text-4xl">
                         {m.initials}
                       </div>
                     )}
                   </div>
-                  <h3 className="mt-5 text-lg font-bold tracking-tight text-slate-900">{m.name}</h3>
+                  <h3 className="mt-5 text-lg font-bold tracking-tight text-slate-900 sm:text-xl">{m.name}</h3>
                   <p className="mt-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
                     {m.role}
                   </p>
-                  <p className="mt-3 max-w-[14rem] text-sm leading-relaxed text-slate-600">{m.note}</p>
+                  {note ? (
+                    <p className="mt-3 max-w-[16rem] text-xs leading-relaxed text-slate-600 sm:text-sm">
+                      {note}
+                    </p>
+                  ) : null}
                 </article>
               );
             })}

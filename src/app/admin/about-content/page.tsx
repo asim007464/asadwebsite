@@ -141,7 +141,8 @@ export default async function AdminAboutContentPage({
             </div>
             <div>
               <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                Paragraph (under the heading)
+                Paragraph (under the heading){" "}
+                <span className="font-normal normal-case tracking-normal text-slate-400">(leave blank to hide)</span>
               </label>
               <textarea
                 name="about_page_lead"
@@ -154,6 +155,7 @@ export default async function AdminAboutContentPage({
               <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Highlight chips</p>
               <p className="mt-1 text-[11px] text-slate-500">
                 Rounded tags under the heading (e.g. COD with confirmation). Leave a slot blank to skip it.
+                Clear every chip to hide the whole row on the site.
               </p>
               <div className="mt-3 grid gap-3 sm:grid-cols-2">
                 {Array.from({ length: CHIP_SLOTS }, (_, i) => (
@@ -221,7 +223,7 @@ export default async function AdminAboutContentPage({
             <div>
               <h2 className="text-lg font-semibold text-slate-900">3. Trust / value cards (3)</h2>
               <p className="mt-1 text-xs text-slate-500">
-                The three cards directly under the banner (e.g. Genuine products, COD, Fast support).
+                Optional cards under the banner. Leave every title/paragraph blank to hide this row on the site.
               </p>
             </div>
             {[0, 1, 2].map((i) => (
@@ -376,7 +378,10 @@ export default async function AdminAboutContentPage({
               />
             </div>
             <div>
-              <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">Paragraph</label>
+              <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                Paragraph{" "}
+                <span className="font-normal normal-case tracking-normal text-slate-400">(leave blank to hide)</span>
+              </label>
               <textarea
                 name="about_team_lead"
                 rows={3}
