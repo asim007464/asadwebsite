@@ -2234,12 +2234,8 @@ export async function updateAboutPageContent(formData: FormData) {
     }))
     .filter((b) => b.body);
 
-  const aboutStoryBlocks = [0, 1, 2, 3, 4, 5]
-    .map((i) => ({
-      title: pick(`about_story_block_${i}_title`),
-      body: pick(`about_story_block_${i}_body`),
-    }))
-    .filter((b) => b.title && b.body);
+  /** Story text blocks removed from admin — keep cleared on save. */
+  const aboutStoryBlocks: { title: string; body: string }[] = [];
 
   const heightRaw = Number.parseInt(pick("about_banner_height_px") || "420", 10);
   const aboutBannerHeightPx = Number.isFinite(heightRaw)
@@ -2323,9 +2319,7 @@ export async function updateAboutPageContent(formData: FormData) {
         DEFAULT_STOREFRONT.aboutStoryTitle ?? "",
       ),
       aboutStoryLead: pickOr("about_story_lead", base.aboutStoryLead, DEFAULT_STOREFRONT.aboutStoryLead ?? ""),
-      aboutStoryBlocks: aboutStoryBlocks.length
-        ? aboutStoryBlocks
-        : (base.aboutStoryBlocks ?? DEFAULT_STOREFRONT.aboutStoryBlocks),
+      aboutStoryBlocks,
     },
     "/admin/about-content",
   );
