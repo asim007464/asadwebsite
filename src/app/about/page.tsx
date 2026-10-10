@@ -9,6 +9,7 @@ import {
 } from "@/lib/banner-height";
 import { resolveBannerImages } from "@/lib/banner-images";
 import { SITE_SHOP_NAME } from "@/lib/site-brand";
+import { InlineBoldText } from "@/lib/inline-bold";
 import { splitProseSections } from "@/lib/split-prose";
 import { getStorefrontPayload } from "@/lib/storefront";
 
@@ -47,7 +48,6 @@ export default async function AboutPage() {
   const values = storefront.aboutValues ?? [];
   const howSteps = storefront.aboutHowSteps ?? [];
   const team = storefront.aboutTeam ?? [];
-  const storyBlocks = storefront.aboutStoryBlocks ?? [];
   const shopImage = (storefront.aboutSecondaryImage ?? "").trim() || ABOUT_FALLBACK_BANNER;
   const teamEyebrow = storefront.aboutTeamEyebrow?.trim() || "The people behind the business";
   const teamTitle = storefront.aboutTeamTitle?.trim() || "Meet Our Leadership";
@@ -227,22 +227,11 @@ export default async function AboutPage() {
         <div className="relative mt-8 aspect-[21/9] min-h-[180px] overflow-hidden rounded-3xl bg-slate-100 shadow-sm ring-1 ring-slate-200 sm:mt-10 sm:min-h-[240px]">
           <SafeRemoteImage src={shopImage} alt={`${SITE_SHOP_NAME} shop`} fill className="object-cover" sizes="100vw" />
         </div>
-
-        {storyBlocks.length ? (
-          <div className="mx-auto mt-10 max-w-3xl space-y-8 text-center sm:mt-12">
-            {storyBlocks.map((block, i) => (
-              <div key={`${i}-${block.title}`}>
-                <h3 className="text-lg font-semibold tracking-tight text-slate-900 sm:text-xl">{block.title}</h3>
-                <p className="mt-2 text-sm leading-relaxed text-slate-600 sm:text-[15px]">{block.body}</p>
-              </div>
-            ))}
-          </div>
-        ) : null}
       </section>
 
       <section className="mt-14 w-full rounded-3xl border border-blue-100 bg-white p-5 shadow-sm sm:mt-16 sm:p-6 lg:p-8">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-6">
-          <h2 className="min-w-0 flex-1 text-xl font-semibold tracking-tight text-slate-900 sm:text-2xl lg:text-3xl lg:leading-snug">
+          <h2 className="min-w-0 flex-1 text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl lg:text-4xl lg:leading-snug">
             {storefront.aboutHowTitle?.trim() || "How we work with shoppers"}
           </h2>
           {storefront.aboutHowBadge?.trim() ? (
@@ -285,7 +274,7 @@ export default async function AboutPage() {
                   >
                     {sec.paragraphs.map((p, j) => (
                       <p key={j} className="w-full max-w-none">
-                        {p}
+                        <InlineBoldText text={p} />
                       </p>
                     ))}
                   </div>

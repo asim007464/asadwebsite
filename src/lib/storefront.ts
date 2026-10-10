@@ -169,15 +169,14 @@ export const DEFAULT_STOREFRONT: StorefrontPayload & { socialLinks: SocialLinkRo
   supportCommitmentsIntro:
     "Replace this block with your legal-approved SLA copy. For now it demonstrates how promise-driven messaging pairs with contact routes.",
   homeStatsTitle: "Trusted home appliances & electrical accessories — with transparent pricing.",
-  homeStatsLead:
-    "Cash on delivery, phone confirmation, and nationwide dispatch. These figures are placeholders — swap to real business stats anytime.",
+  /** Blank by default — hide paragraph until admin fills it. */
+  homeStatsLead: "",
   browseCategoriesTitle: "Browse categories",
-  browseCategoriesLead: "Quick links to the same categories in the navbar dropdown.",
+  browseCategoriesLead: "",
   featuredSectionTitle: "Featured picks",
-  featuredSectionLead:
-    "Hot-selling highlights chosen by admin — four across on extra-wide screens; step through one SKU at a time.",
+  featuredSectionLead: "",
   gadgetsSectionTitle: "Gadget section",
-  gadgetsSectionLead: "More popular items — same layout as Featured picks.",
+  gadgetsSectionLead: "",
   testimonialsEyebrow: "Reviews",
   testimonialsHeading: "What customers say",
   reviewsRatingNote: "Illustrative rating · swap for real Google / Trustpilot embed when ready.",
@@ -275,33 +274,12 @@ export const DEFAULT_STOREFRONT: StorefrontPayload & { socialLinks: SocialLinkRo
       note: "Helping strengthen our product range, service, and distribution network.",
       initials: "HA",
     },
-    {
-      name: "Amina",
-      role: "Dispatch & packing",
-      note: "Keeping orders labeled, packed, and ready so deliveries stay dependable.",
-      initials: "AK",
-    },
-    {
-      name: "Bilal",
-      role: "Catalog & listings",
-      note: "Building clear product pages so shoppers can compare specs before they order.",
-      initials: "BM",
-    },
   ],
   aboutStoryEyebrow: "Our story",
   aboutStoryTitle: "From the shop floor to your doorstep",
   aboutStoryLead:
     "Al Makkah Electric Traders grew from serving nearby households to stocking fans, lighting, wiring, and kitchen helpers with clear specs and COD confirmation.",
-  aboutStoryBlocks: [
-    {
-      title: "What we stand for",
-      body: "Genuine products, honest stock checks, and phone confirmation before dispatch — so the right variant reaches you.",
-    },
-    {
-      title: "How we serve",
-      body: "Walk-in support at the shop, WhatsApp quotes for bulk lists, and nationwide dispatch for COD orders across Pakistan.",
-    },
-  ],
+  aboutStoryBlocks: [],
   contactPageTitle: "Call, WhatsApp, or visit us",
   contactPageLead: "Quotes, stock checks, and COD confirmation — we reply during desk hours.",
   contactEmail: "almakkahelectrictraders@gmail.com",
@@ -449,7 +427,8 @@ function normalizeAboutStoryBlocks(raw: unknown): AboutStoryBlock[] {
     out.push({ title, body });
     if (out.length >= 12) break;
   }
-  return out.length ? out : (DEFAULT_STOREFRONT.aboutStoryBlocks ?? []);
+  /** Empty array is intentional — do not restore removed story blocks. */
+  return out;
 }
 
 /** Empty array is valid (no extra blocks) — do not force defaults. */

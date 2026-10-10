@@ -2,6 +2,7 @@ import Link from "next/link";
 import { updateAboutPageContent } from "@/app/admin/actions";
 import { BannerHeightsPair } from "@/components/admin/BannerHeightsPair";
 import { BannerResponsiveImageFields } from "@/components/admin/BannerResponsiveImageFields";
+import { BoldableTextarea } from "@/components/admin/BoldableTextarea";
 import { StorefrontImageUploadField } from "@/components/admin/StorefrontImageUploadField";
 import { SafeRemoteImage } from "@/components/SafeRemoteImage";
 import {
@@ -35,7 +36,6 @@ export default async function AdminAboutContentPage({
   const steps = storefront.aboutHowSteps ?? [];
   const howBlocks = storefront.aboutHowBlocks ?? [];
   const team = storefront.aboutTeam ?? [];
-  const storyBlocks = storefront.aboutStoryBlocks ?? [];
   const bannerHeight = clampBannerHeightPx(
     storefront.aboutBannerHeightPx,
     DEFAULT_ABOUT_BANNER_HEIGHT_PX,
@@ -278,7 +278,7 @@ export default async function AdminAboutContentPage({
               <p className="mt-1 text-[11px] text-slate-500">
                 Used only when the blocks below are empty. Prefer the heading/paragraph blocks for cleaner layout.
               </p>
-              <textarea
+              <BoldableTextarea
                 name="about_how_lead"
                 rows={4}
                 defaultValue={storefront.aboutHowLead}
@@ -311,7 +311,7 @@ export default async function AdminAboutContentPage({
                     <label className="text-xs font-semibold text-slate-500">
                       Paragraph(s) — blank line = new paragraph
                     </label>
-                    <textarea
+                    <BoldableTextarea
                       name={`about_how_block_${i}_body`}
                       rows={5}
                       defaultValue={howBlocks[i]?.body ?? ""}
@@ -486,7 +486,7 @@ export default async function AdminAboutContentPage({
             <div>
               <h2 className="text-lg font-semibold text-slate-900">6. Our story</h2>
               <p className="mt-1 text-xs text-slate-500">
-                Shop photo under the leadership section, then as many heading + paragraph blocks as you need.
+                Shop photo under the leadership section (heading and intro optional).
               </p>
             </div>
             <div>
@@ -521,33 +521,6 @@ export default async function AdminAboutContentPage({
               urlName="about_secondary_image"
               defaultUrl={storefront.aboutSecondaryImage ?? ""}
             />
-            <div className="space-y-4">
-              <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                Extra heading + paragraph blocks
-              </p>
-              {[0, 1, 2, 3, 4, 5].map((i) => (
-                <div key={i} className="grid gap-3 rounded-2xl border border-slate-200 bg-slate-50/60 p-4">
-                  <div className="text-[11px] font-bold uppercase tracking-wide text-slate-500">Block {i + 1}</div>
-                  <div>
-                    <label className="text-xs font-semibold text-slate-500">Heading</label>
-                    <input
-                      name={`about_story_block_${i}_title`}
-                      defaultValue={storyBlocks[i]?.title ?? ""}
-                      className={inputClass}
-                    />
-                  </div>
-                  <div>
-                    <label className="text-xs font-semibold text-slate-500">Paragraph</label>
-                    <textarea
-                      name={`about_story_block_${i}_body`}
-                      rows={3}
-                      defaultValue={storyBlocks[i]?.body ?? ""}
-                      className={textareaClass}
-                    />
-                  </div>
-                </div>
-              ))}
-            </div>
           </section>
 
           <button
