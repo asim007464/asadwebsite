@@ -74,7 +74,9 @@ export default async function AdminHomeContentPage({
                 />
               </div>
               <div>
-                <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">Paragraph</label>
+                <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  Paragraph <span className="font-normal normal-case tracking-normal text-slate-400">(leave blank to hide)</span>
+                </label>
                 <textarea
                   name="browse_categories_lead"
                   rows={2}
@@ -100,7 +102,9 @@ export default async function AdminHomeContentPage({
                 />
               </div>
               <div>
-                <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">Paragraph</label>
+                <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  Paragraph <span className="font-normal normal-case tracking-normal text-slate-400">(leave blank to hide)</span>
+                </label>
                 <textarea
                   name="featured_section_lead"
                   rows={3}
@@ -126,7 +130,9 @@ export default async function AdminHomeContentPage({
                 />
               </div>
               <div>
-                <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">Paragraph</label>
+                <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  Paragraph <span className="font-normal normal-case tracking-normal text-slate-400">(leave blank to hide)</span>
+                </label>
                 <textarea
                   name="gadgets_section_lead"
                   rows={3}
@@ -146,7 +152,10 @@ export default async function AdminHomeContentPage({
                 <input name="home_stats_title" defaultValue={storefront.homeStatsTitle} className={inputClass} />
               </div>
               <div>
-                <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">Section paragraph</label>
+                <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  Section paragraph{" "}
+                  <span className="font-normal normal-case tracking-normal text-slate-400">(leave blank to hide)</span>
+                </label>
                 <textarea
                   name="home_stats_lead"
                   rows={3}

@@ -2034,37 +2034,26 @@ export async function updateHomePageContent(formData: FormData) {
   const base = await loadStorefrontBase(supabase);
   const patch: Record<string, unknown> = {
     homeStatsTitle: pickOr("home_stats_title", base.homeStatsTitle, DEFAULT_STOREFRONT.homeStatsTitle ?? ""),
-    homeStatsLead: pickOr("home_stats_lead", base.homeStatsLead, DEFAULT_STOREFRONT.homeStatsLead ?? ""),
+    /** Blank paragraph = hide on storefront. */
+    homeStatsLead: pick("home_stats_lead"),
     browseCategoriesTitle: pickOr(
       "browse_categories_title",
       base.browseCategoriesTitle,
       DEFAULT_STOREFRONT.browseCategoriesTitle ?? "",
     ),
-    browseCategoriesLead: pickOr(
-      "browse_categories_lead",
-      base.browseCategoriesLead,
-      DEFAULT_STOREFRONT.browseCategoriesLead ?? "",
-    ),
+    browseCategoriesLead: pick("browse_categories_lead"),
     featuredSectionTitle: pickOr(
       "featured_section_title",
       base.featuredSectionTitle,
       DEFAULT_STOREFRONT.featuredSectionTitle ?? "",
     ),
-    featuredSectionLead: pickOr(
-      "featured_section_lead",
-      base.featuredSectionLead,
-      DEFAULT_STOREFRONT.featuredSectionLead ?? "",
-    ),
+    featuredSectionLead: pick("featured_section_lead"),
     gadgetsSectionTitle: pickOr(
       "gadgets_section_title",
       base.gadgetsSectionTitle,
       DEFAULT_STOREFRONT.gadgetsSectionTitle ?? "",
     ),
-    gadgetsSectionLead: pickOr(
-      "gadgets_section_lead",
-      base.gadgetsSectionLead,
-      DEFAULT_STOREFRONT.gadgetsSectionLead ?? "",
-    ),
+    gadgetsSectionLead: pick("gadgets_section_lead"),
     testimonialsEyebrow: pickOr(
       "testimonials_eyebrow",
       base.testimonialsEyebrow,
@@ -2174,7 +2163,8 @@ export async function updateAboutPageContent(formData: FormData) {
     redirect("/admin/about-content?error=bad-image-url");
   }
 
-  /** Prefer individual chip slots; fall back to newline textarea. */
+  /** Chip slots always post from the form — all blank = hide chips on the site. */
+  const hasChipSlots = [0, 1, 2, 3, 4, 5].some((i) => formData.has(`about_chip_${i}`));
   const chipsFromSlots = [0, 1, 2, 3, 4, 5]
     .map((i) => pick(`about_chip_${i}`))
     .filter(Boolean);
@@ -2182,7 +2172,7 @@ export async function updateAboutPageContent(formData: FormData) {
     .split(/\r?\n/)
     .map((s) => s.trim())
     .filter(Boolean);
-  const chips = (chipsFromSlots.length ? chipsFromSlots : chipsFromTextarea).slice(0, 12);
+  const chips = (hasChipSlots ? chipsFromSlots : chipsFromTextarea).slice(0, 12);
 
   const aboutValues = [0, 1, 2]
     .map((i) => ({
@@ -2266,8 +2256,9 @@ export async function updateAboutPageContent(formData: FormData) {
       ...base,
       aboutEyebrow: pickOr("about_eyebrow", base.aboutEyebrow, DEFAULT_STOREFRONT.aboutEyebrow ?? ""),
       aboutPageTitle: pickOr("about_page_title", base.aboutPageTitle, DEFAULT_STOREFRONT.aboutPageTitle ?? ""),
-      aboutPageLead: pickOr("about_page_lead", base.aboutPageLead, DEFAULT_STOREFRONT.aboutPageLead ?? ""),
-      aboutChips: chips.length ? chips : (base.aboutChips ?? DEFAULT_STOREFRONT.aboutChips),
+      /** Blank paragraph / all chips empty = hide on storefront. */
+      aboutPageLead: pick("about_page_lead"),
+      aboutChips: chips,
       aboutCtaPrimaryLabel: pickOr(
         "about_cta_primary_label",
         base.aboutCtaPrimaryLabel,
@@ -2294,9 +2285,8 @@ export async function updateAboutPageContent(formData: FormData) {
       aboutPrimaryImageMobile,
       aboutSeparateMobileImage,
       aboutSecondaryImage,
-      aboutValues: aboutValues.length
-        ? aboutValues
-        : (base.aboutValues ?? DEFAULT_STOREFRONT.aboutValues),
+      /** Empty value cards / team lead = hide on storefront. */
+      aboutValues,
       aboutHowTitle: pickOr("about_how_title", base.aboutHowTitle, DEFAULT_STOREFRONT.aboutHowTitle ?? ""),
       aboutHowLead: pick("about_how_lead"),
       aboutHowBadge: pickOr("about_how_badge", base.aboutHowBadge, DEFAULT_STOREFRONT.aboutHowBadge ?? ""),
@@ -2310,7 +2300,7 @@ export async function updateAboutPageContent(formData: FormData) {
         DEFAULT_STOREFRONT.aboutTeamEyebrow ?? "",
       ),
       aboutTeamTitle: pickOr("about_team_title", base.aboutTeamTitle, DEFAULT_STOREFRONT.aboutTeamTitle ?? ""),
-      aboutTeamLead: pickOr("about_team_lead", base.aboutTeamLead, DEFAULT_STOREFRONT.aboutTeamLead ?? ""),
+      aboutTeamLead: pick("about_team_lead"),
       aboutTeamCtaLabel: pickOr(
         "about_team_cta_label",
         base.aboutTeamCtaLabel,
