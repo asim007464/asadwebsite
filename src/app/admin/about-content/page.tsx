@@ -356,7 +356,7 @@ export default async function AdminAboutContentPage({
             <div>
               <h2 className="text-lg font-semibold text-slate-900">5. Leadership / team</h2>
               <p className="mt-1 text-xs text-slate-500">
-                Centered heading + circular photos with name, role, and short description (leave a slot blank to skip).
+                Two people max (2-column layout on /about). Circular photos with name, role, and short description.
               </p>
             </div>
             <div>
@@ -406,7 +406,7 @@ export default async function AdminAboutContentPage({
                 />
               </div>
             </div>
-            {[0, 1, 2, 3].map((i) => {
+            {[0, 1].map((i) => {
               const photo = (team[i]?.imageUrl ?? "").trim();
               const hasPhoto =
                 photo.startsWith("https://") || (photo.startsWith("/") && photo.length > 1);
@@ -416,7 +416,7 @@ export default async function AdminAboutContentPage({
                   className="grid gap-3 rounded-2xl border border-slate-200 bg-slate-50/60 p-4 sm:grid-cols-2"
                 >
                   <div className="sm:col-span-2 text-[11px] font-bold uppercase tracking-wide text-slate-500">
-                    Person {i + 1}
+                    Person {i + 1} of 2
                   </div>
                   <div className="sm:col-span-2 flex flex-col items-center gap-3 rounded-2xl border border-dashed border-slate-200 bg-white p-4 sm:flex-row sm:items-start">
                     <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-full bg-blue-50 ring-2 ring-amber-200/80">
@@ -508,7 +508,10 @@ export default async function AdminAboutContentPage({
               />
             </div>
             <div>
-              <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">Intro paragraph</label>
+              <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                Intro paragraph{" "}
+                <span className="font-normal normal-case tracking-normal text-slate-400">(leave blank to hide)</span>
+              </label>
               <textarea
                 name="about_story_lead"
                 rows={3}

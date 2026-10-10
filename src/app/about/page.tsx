@@ -47,7 +47,7 @@ export default async function AboutPage() {
   const secondaryHref = storefront.aboutCtaSecondaryHref?.trim() || "/contact";
   const values = storefront.aboutValues ?? [];
   const howSteps = storefront.aboutHowSteps ?? [];
-  const team = storefront.aboutTeam ?? [];
+  const team = (storefront.aboutTeam ?? []).slice(0, 2);
   const shopImage = (storefront.aboutSecondaryImage ?? "").trim() || ABOUT_FALLBACK_BANNER;
   const teamEyebrow = storefront.aboutTeamEyebrow?.trim() || "The people behind the business";
   const teamTitle = storefront.aboutTeamTitle?.trim() || "Meet Our Leadership";
@@ -212,7 +212,9 @@ export default async function AboutPage() {
       {/* Our story — shop image + repeatable heading/paragraph blocks */}
       <section className="mt-16 sm:mt-20" aria-labelledby="about-story-heading">
         <div className="mx-auto max-w-2xl text-center">
-          <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-blue-700">{storyEyebrow}</p>
+          <p className="text-sm font-bold uppercase tracking-[0.18em] text-blue-700 sm:text-base">
+            {storyEyebrow}
+          </p>
           <h2
             id="about-story-heading"
             className="mt-2 text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl"

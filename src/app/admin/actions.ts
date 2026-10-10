@@ -2193,7 +2193,8 @@ export async function updateAboutPageContent(formData: FormData) {
     ? (base.aboutTeam as { name?: string; imageUrl?: string }[])
     : [];
   const aboutTeam: { name: string; role: string; note: string; initials: string; imageUrl?: string }[] = [];
-  for (const i of [0, 1, 2, 3]) {
+  /** Two people only (2-column layout on /about). */
+  for (const i of [0, 1]) {
     const name = pick(`about_team_${i}_name`);
     const role = pick(`about_team_${i}_role`);
     const note = pick(`about_team_${i}_note`);
@@ -2217,7 +2218,7 @@ export async function updateAboutPageContent(formData: FormData) {
       existingUrl,
     );
     if (imageUrl === null) redirect("/admin/about-content?error=bad-image-url");
-    if (!name || !role || !note || !initials) continue;
+    if (!name || !role || !initials) continue;
     aboutTeam.push({
       name,
       role,
@@ -2307,7 +2308,10 @@ export async function updateAboutPageContent(formData: FormData) {
         base.aboutTeamCtaHref,
         DEFAULT_STOREFRONT.aboutTeamCtaHref ?? "/contact",
       ),
-      aboutTeam: aboutTeam.length ? aboutTeam : (base.aboutTeam ?? DEFAULT_STOREFRONT.aboutTeam),
+      aboutTeam: (aboutTeam.length ? aboutTeam : (base.aboutTeam ?? DEFAULT_STOREFRONT.aboutTeam ?? [])).slice(
+        0,
+        2,
+      ),
       aboutStoryEyebrow: pickOr(
         "about_story_eyebrow",
         base.aboutStoryEyebrow,
@@ -2318,7 +2322,7 @@ export async function updateAboutPageContent(formData: FormData) {
         base.aboutStoryTitle,
         DEFAULT_STOREFRONT.aboutStoryTitle ?? "",
       ),
-      aboutStoryLead: pickOr("about_story_lead", base.aboutStoryLead, DEFAULT_STOREFRONT.aboutStoryLead ?? ""),
+      aboutStoryLead: pick("about_story_lead"),
       aboutStoryBlocks,
     },
     "/admin/about-content",
