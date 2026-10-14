@@ -51,9 +51,49 @@ export function CheckoutClient({ storefront }: { storefront: ResolvedStorefront 
   return (
     <main className="mx-auto w-full max-w-3xl px-3 py-6 sm:px-4 sm:py-10">
       <div className="flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight text-slate-900 sm:text-3xl">Checkout &amp; payment</h1>
-          <p className="mt-2 text-sm text-slate-600">Choose how you pay, then share delivery details. Payments are verified manually before dispatch.</p>
+        <div className="min-w-0 flex-1 space-y-4">
+          {(() => {
+            const lang = storefront.checkoutCopyLang ?? "en";
+            const titleEn =
+              storefront.checkoutPageTitleEn?.trim() || "Checkout & payment";
+            const leadEn =
+              storefront.checkoutPageLeadEn?.trim() ||
+              "Choose how you pay, then share delivery details. Payments are verified manually before dispatch.";
+            const titleUr = storefront.checkoutPageTitleUr?.trim() || "";
+            const leadUr = storefront.checkoutPageLeadUr?.trim() || "";
+            const showEn = lang === "en" || lang === "both";
+            const showUr = lang === "ur" || lang === "both";
+            return (
+              <>
+                {showEn ? (
+                  <div>
+                    <h1 className="text-2xl font-semibold tracking-tight text-slate-900 sm:text-3xl">
+                      {titleEn}
+                    </h1>
+                    {leadEn ? <p className="mt-2 text-sm text-slate-600">{leadEn}</p> : null}
+                  </div>
+                ) : null}
+                {showUr && (titleUr || leadUr) ? (
+                  <div dir="rtl" lang="ur" className="text-right">
+                    {titleUr ? (
+                      <h1 className="text-2xl font-semibold tracking-tight text-slate-900 sm:text-3xl">
+                        {titleUr}
+                      </h1>
+                    ) : null}
+                    {leadUr ? <p className="mt-2 text-sm leading-relaxed text-slate-600">{leadUr}</p> : null}
+                  </div>
+                ) : null}
+                {showUr && !titleUr && !leadUr && !showEn ? (
+                  <div>
+                    <h1 className="text-2xl font-semibold tracking-tight text-slate-900 sm:text-3xl">
+                      {titleEn}
+                    </h1>
+                    {leadEn ? <p className="mt-2 text-sm text-slate-600">{leadEn}</p> : null}
+                  </div>
+                ) : null}
+              </>
+            );
+          })()}
         </div>
         <div className="rounded-full bg-blue-50 px-4 py-2 text-sm font-semibold text-blue-900 ring-1 ring-blue-100">{formatPKR(orderTotal)}</div>
       </div>
@@ -132,7 +172,7 @@ export function CheckoutClient({ storefront }: { storefront: ResolvedStorefront 
                   Cash on delivery
                   <input type="radio" name="payment_method" value="cod" checked={method === "cod"} onChange={() => setMethod("cod")} />
                 </span>
-                <span className="text-xs font-medium text-slate-600">Pay the courier when your parcel arrives. Delivery fee applies.</span>
+                <span className="text-xs font-medium text-slate-600">Pay the courier when your parcel arrives.</span>
               </label>
 
               <label
@@ -144,7 +184,7 @@ export function CheckoutClient({ storefront }: { storefront: ResolvedStorefront 
                   JazzCash
                   <input type="radio" name="payment_method" value="jazzcash" checked={method === "jazzcash"} onChange={() => setMethod("jazzcash")} />
                 </span>
-                <span className="text-xs font-medium text-slate-600">Free shipping once payment is confirmed. Send to the wallet below, then paste your TXN id.</span>
+                <span className="text-xs font-medium text-slate-600">Send to the wallet below, then paste your TXN id.</span>
               </label>
 
               <label
@@ -162,7 +202,7 @@ export function CheckoutClient({ storefront }: { storefront: ResolvedStorefront 
                     onChange={() => setMethod("bank_transfer")}
                   />
                 </span>
-                <span className="text-xs font-medium text-slate-600">Free shipping once payment is confirmed. IBAN transfer — add your reference in the form.</span>
+                <span className="text-xs font-medium text-slate-600">IBAN transfer — add your reference in the form.</span>
               </label>
             </div>
 
@@ -260,11 +300,6 @@ export function CheckoutClient({ storefront }: { storefront: ResolvedStorefront 
               <span className="font-semibold text-slate-900">Total</span>
               <span className="font-semibold text-blue-900">{formatPKR(orderTotal)}</span>
             </div>
-            {method === "cod" ? (
-              <p className="mt-3 text-xs leading-relaxed text-slate-500">COD orders include a flat delivery charge. Switch to JazzCash or bank transfer for free shipping.</p>
-            ) : (
-              <p className="mt-3 text-xs leading-relaxed text-slate-500">No delivery charge for prepaid orders — we ship after payment is matched.</p>
-            )}
           </div>
 
           <button

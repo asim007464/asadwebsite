@@ -209,18 +209,18 @@ export default async function AboutPage() {
         ) : null}
       </section>
 
-      {/* Our story — shop image + repeatable heading/paragraph blocks */}
+      {/* Our story — big title, supporting line as paragraph, then shop image */}
       <section className="mt-16 sm:mt-20" aria-labelledby="about-story-heading">
         <div className="mx-auto max-w-2xl text-center">
-          <p className="text-sm font-bold uppercase tracking-[0.18em] text-blue-700 sm:text-base">
-            {storyEyebrow}
-          </p>
           <h2
             id="about-story-heading"
-            className="mt-2 text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl"
+            className="text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl lg:text-5xl"
           >
-            {storyTitle}
+            {storyEyebrow}
           </h2>
+          {storyTitle ? (
+            <p className="mt-3 text-sm leading-relaxed text-slate-600 sm:mt-4 sm:text-[15px]">{storyTitle}</p>
+          ) : null}
           {storyLead ? (
             <p className="mt-3 text-sm leading-relaxed text-slate-600 sm:text-[15px]">{storyLead}</p>
           ) : null}

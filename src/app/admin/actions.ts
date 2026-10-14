@@ -2511,6 +2511,15 @@ export async function mergeStorefrontSettings(formData: FormData) {
     bankAccountTitle: pick("bank_account_title"),
     jazzcashNumber: pick("jazzcash_number"),
     jazzcashTitle: pick("jazzcash_title"),
+    checkoutPageTitleEn: pick("checkout_page_title_en"),
+    checkoutPageLeadEn: pick("checkout_page_lead_en"),
+    checkoutPageTitleUr: pick("checkout_page_title_ur"),
+    checkoutPageLeadUr: pick("checkout_page_lead_ur"),
+    checkoutCopyLang: (() => {
+      const v = pick("checkout_copy_lang").toLowerCase();
+      if (v === "ur" || v === "both") return v;
+      return "en";
+    })(),
     supportDeskHours: pick("support_desk_hours"),
     supportEscalations: pick("support_escalations"),
     supportCommitmentsIntro: pick("support_commitments_intro"),

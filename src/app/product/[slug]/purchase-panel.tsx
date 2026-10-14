@@ -179,7 +179,7 @@ export function ProductPurchasePanel({
           href="/cart"
           className="inline-flex h-11 items-center justify-center rounded-xl border border-blue-200 bg-blue-50 px-5 text-sm font-semibold text-blue-800 transition hover:bg-blue-100"
         >
-          View cart
+          Shop now
         </Link>
       </div>
       <p className="text-xs text-slate-500">Cash on delivery · confirmed before dispatch</p>

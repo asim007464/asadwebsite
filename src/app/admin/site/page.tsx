@@ -240,6 +240,78 @@ export default async function AdminSitePage({
           </section>
 
           <section className="rounded-3xl border border-slate-200 bg-slate-50/70 p-4 sm:p-5">
+            <h2 className="text-lg font-semibold text-slate-900">Checkout heading (top of /checkout)</h2>
+            <p className="mt-1 text-xs text-slate-500">
+              Write English and/or Urdu. Choose which language shoppers see (or both).
+            </p>
+            <div className="mt-5 grid gap-5 sm:grid-cols-6">
+              <div className="sm:col-span-6">
+                <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  Language shown on checkout
+                </label>
+                <select
+                  name="checkout_copy_lang"
+                  defaultValue={storefront.checkoutCopyLang ?? "en"}
+                  className="mt-2 h-11 w-full max-w-md rounded-2xl border border-slate-200 bg-white px-4 text-sm outline-none focus:border-blue-300 focus:ring-4 focus:ring-blue-100"
+                >
+                  <option value="en">English only</option>
+                  <option value="ur">Urdu only</option>
+                  <option value="both">English + Urdu</option>
+                </select>
+              </div>
+              <div className="sm:col-span-6 lg:col-span-3">
+                <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  Heading (English)
+                </label>
+                <input
+                  name="checkout_page_title_en"
+                  defaultValue={storefront.checkoutPageTitleEn ?? ""}
+                  placeholder="Checkout & payment"
+                  className="mt-2 h-11 w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm outline-none focus:border-blue-300 focus:ring-4 focus:ring-blue-100"
+                />
+              </div>
+              <div className="sm:col-span-6 lg:col-span-3">
+                <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  Heading (Urdu)
+                </label>
+                <input
+                  name="checkout_page_title_ur"
+                  defaultValue={storefront.checkoutPageTitleUr ?? ""}
+                  dir="rtl"
+                  lang="ur"
+                  placeholder="چیک آؤٹ اور ادائیگی"
+                  className="mt-2 h-11 w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm outline-none focus:border-blue-300 focus:ring-4 focus:ring-blue-100"
+                />
+              </div>
+              <div className="sm:col-span-6 lg:col-span-3">
+                <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  Paragraph (English)
+                </label>
+                <textarea
+                  name="checkout_page_lead_en"
+                  rows={3}
+                  defaultValue={storefront.checkoutPageLeadEn ?? ""}
+                  placeholder="Choose how you pay…"
+                  className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-blue-300 focus:ring-4 focus:ring-blue-100"
+                />
+              </div>
+              <div className="sm:col-span-6 lg:col-span-3">
+                <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  Paragraph (Urdu)
+                </label>
+                <textarea
+                  name="checkout_page_lead_ur"
+                  rows={3}
+                  defaultValue={storefront.checkoutPageLeadUr ?? ""}
+                  dir="rtl"
+                  lang="ur"
+                  className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-blue-300 focus:ring-4 focus:ring-blue-100"
+                />
+              </div>
+            </div>
+          </section>
+
+          <section className="rounded-3xl border border-slate-200 bg-slate-50/70 p-4 sm:p-5">
             <h2 className="text-lg font-semibold text-slate-900">Manual payment wording (shown on checkout)</h2>
             <div className="mt-5 grid gap-5 sm:grid-cols-6">
               {fieldRow("bankName", "Bank label", "Short title above IBAN helper text.", storefront, false, {

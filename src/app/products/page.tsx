@@ -96,7 +96,6 @@ export default async function ProductsPage({
   const listingsError = listingsPack.error;
   const hasLiveProducts = listings.length > 0;
   const hasMore = hasLiveProducts && listings.length < totalCount;
-  const showingTo = listings.length;
 
   function seeMoreHref() {
     const u = new URLSearchParams();
@@ -115,29 +114,6 @@ export default async function ProductsPage({
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div className="min-w-0">
           <h1 className="text-2xl font-semibold tracking-tight text-slate-900 sm:text-3xl">Shop</h1>
-          <p className="mt-1.5 text-sm text-slate-600">
-            {category ? (
-              <>
-                <span className="font-semibold text-slate-900">{category}</span>
-                <span className="text-slate-500"> · category</span>
-              </>
-            ) : q ? (
-              <>
-                <span className="font-semibold text-slate-900">“{q}”</span>
-                <span className="text-slate-500"> · search</span>
-              </>
-            ) : (
-              "Filter by category, search, or price."
-            )}
-            {hasLiveProducts ? (
-              <>
-                {" "}
-                <span className="text-slate-500">
-                  · Showing {showingTo} of {totalCount} products
-                </span>
-              </>
-            ) : null}
-          </p>
         </div>
         <div className="-mx-3 flex gap-2 overflow-x-auto px-3 pb-1 md:hidden [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           <Link
@@ -217,6 +193,7 @@ export default async function ProductsPage({
         <div className="mt-8 flex justify-center">
           <Link
             href={seeMoreHref()}
+            scroll={false}
             className="inline-flex min-w-[10rem] items-center justify-center rounded-full bg-blue-600 px-8 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700"
           >
             See more

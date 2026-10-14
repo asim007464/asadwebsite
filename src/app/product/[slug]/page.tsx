@@ -106,9 +106,6 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
       <div className="mt-6 grid grid-cols-1 gap-8 lg:grid-cols-2 lg:gap-10">
         <div className="space-y-4">
           <ProductImageGallery images={galleryImages} productName={product.name} />
-          <div className="hidden rounded-2xl border border-slate-200 bg-white/90 p-4 text-xs leading-relaxed text-slate-600 shadow-sm ring-1 ring-white/60 backdrop-blur-sm sm:block">
-            <span className="font-semibold text-slate-900">Imagery:</span> Swipe thumbnails to compare angles; box shots and spec plates help COD buyers validate before courier dispatch.
-          </div>
         </div>
 
         <div className="flex flex-col gap-6">

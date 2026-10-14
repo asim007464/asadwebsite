@@ -139,6 +139,13 @@ export type StorefrontPayload = {
   heroVisibleOnMobile?: boolean;
   /** Homepage / nav category order: category id → display rank (lower = first). */
   categoryDisplayOrder?: Record<string, number>;
+  /** Checkout page heading + intro (English / Urdu). */
+  checkoutPageTitleEn?: string;
+  checkoutPageLeadEn?: string;
+  checkoutPageTitleUr?: string;
+  checkoutPageLeadUr?: string;
+  /** Which checkout heading copy to show: English, Urdu, or both. */
+  checkoutCopyLang?: "en" | "ur" | "both";
 };
 
 export const DEFAULT_STOREFRONT: StorefrontPayload & { socialLinks: SocialLinkRow[] } = {
@@ -167,6 +174,12 @@ export const DEFAULT_STOREFRONT: StorefrontPayload & { socialLinks: SocialLinkRo
   bankAccountTitle: "Al Makkah Electric Traders",
   jazzcashNumber: "03XX XXXXXXX",
   jazzcashTitle: "Business JazzCash wallet",
+  checkoutPageTitleEn: "Checkout & payment",
+  checkoutPageLeadEn:
+    "Choose how you pay, then share delivery details. Payments are verified manually before dispatch.",
+  checkoutPageTitleUr: "",
+  checkoutPageLeadUr: "",
+  checkoutCopyLang: "en",
   supportDeskHours: "08:00–20:00 PKT · Mon–Sat",
   supportEscalations: "Supervisor loop via WhatsApp label “URGENT DELIVERY ISSUE”",
   supportCommitmentsIntro:
@@ -525,6 +538,23 @@ export async function getStorefrontPayload(): Promise<ResolvedStorefront> {
       faqs: normalizeFaqs(patch.faqs),
       brandLogos: normalizeBrandLogos(patch.brandLogos),
       categoryDisplayOrder: normalizeCategoryDisplayOrder(patch.categoryDisplayOrder),
+      checkoutPageTitleEn: textAllowBlank(
+        "checkoutPageTitleEn",
+        DEFAULT_STOREFRONT.checkoutPageTitleEn,
+      ),
+      checkoutPageLeadEn: textAllowBlank("checkoutPageLeadEn", DEFAULT_STOREFRONT.checkoutPageLeadEn),
+      checkoutPageTitleUr: textAllowBlank(
+        "checkoutPageTitleUr",
+        DEFAULT_STOREFRONT.checkoutPageTitleUr,
+      ),
+      checkoutPageLeadUr: textAllowBlank("checkoutPageLeadUr", DEFAULT_STOREFRONT.checkoutPageLeadUr),
+      checkoutCopyLang: (() => {
+        const v = String(patch.checkoutCopyLang ?? DEFAULT_STOREFRONT.checkoutCopyLang ?? "en")
+          .trim()
+          .toLowerCase();
+        if (v === "ur" || v === "both") return v;
+        return "en";
+      })(),
       homeStatsTitle: text("homeStatsTitle", DEFAULT_STOREFRONT.homeStatsTitle),
       brandsSectionEyebrow: textAllowBlank(
         "brandsSectionEyebrow",

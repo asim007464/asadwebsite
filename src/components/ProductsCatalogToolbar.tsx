@@ -75,7 +75,7 @@ export function ProductsCatalogToolbar(props: ToolbarProps) {
   const base = { category, q, min, max, featured };
 
   return (
-    <div className="mt-4 rounded-xl border border-slate-200/85 bg-gradient-to-br from-slate-50/90 via-white to-white p-3 shadow-[0_4px_28px_-8px_rgba(15,23,42,0.12),0_2px_8px_-4px_rgba(15,23,42,0.06)] ring-1 ring-slate-900/[0.04] sm:mt-5 sm:rounded-2xl sm:p-5">
+    <div className="mt-4 hidden rounded-xl border border-slate-200/85 bg-gradient-to-br from-slate-50/90 via-white to-white p-3 shadow-[0_4px_28px_-8px_rgba(15,23,42,0.12),0_2px_8px_-4px_rgba(15,23,42,0.06)] ring-1 ring-slate-900/[0.04] sm:mt-5 sm:rounded-2xl sm:p-5 md:block">
       <div className="flex flex-col gap-3 sm:gap-5 md:flex-row md:items-stretch md:justify-between md:gap-8">
         <div className="min-w-0 flex-1">
           <div className="flex items-baseline gap-1.5 sm:gap-2">
@@ -113,7 +113,8 @@ export function ProductsCatalogToolbar(props: ToolbarProps) {
           </div>
         </div>
 
-        <div className="flex w-full shrink-0 flex-col items-stretch border-t border-slate-200/80 pt-3 sm:pt-5 md:w-auto md:border-l md:border-t-0 md:pl-8 md:pt-0">
+        {/* Sort chips: desktop only — phones use Filters popup */}
+        <div className="hidden w-full shrink-0 flex-col items-stretch border-t border-slate-200/80 pt-3 sm:pt-5 md:flex md:w-auto md:border-l md:border-t-0 md:pl-8 md:pt-0">
           <div className="flex flex-col items-stretch sm:items-end md:min-w-[14rem]">
             <span className="text-[9px] font-semibold uppercase tracking-[0.14em] text-slate-400 sm:text-[10px] sm:tracking-[0.16em]">
               Sort order

@@ -486,11 +486,13 @@ export default async function AdminAboutContentPage({
             <div>
               <h2 className="text-lg font-semibold text-slate-900">6. Our story</h2>
               <p className="mt-1 text-xs text-slate-500">
-                Shop photo under the leadership section (heading and intro optional).
+                Big section title, then a short paragraph under it, then the shop photo.
               </p>
             </div>
             <div>
-              <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">Small label</label>
+              <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                Main heading (large)
+              </label>
               <input
                 name="about_story_eyebrow"
                 defaultValue={storefront.aboutStoryEyebrow}
@@ -499,7 +501,9 @@ export default async function AdminAboutContentPage({
               />
             </div>
             <div>
-              <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">Heading</label>
+              <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                Paragraph under heading
+              </label>
               <input
                 name="about_story_title"
                 defaultValue={storefront.aboutStoryTitle}
