@@ -43,7 +43,7 @@ export function HeroCarouselProvider({
 }) {
   const list = slides.length > 0 ? slides : [];
   const slideKey = list.map((s) => s.id ?? s.url).join("|");
-  const slider = useSlider(list.length, { loop: true });
+  const slider = useSlider(list.length, { loop: true, touchOnly: true });
   const [reducedMotion, setReducedMotion] = useState(false);
 
   useEffect(() => {
@@ -105,7 +105,8 @@ export function HeroCarouselImagePanel({
 
   return (
     <div
-      className={`${shellClass} ${className}`}
+      className={`${shellClass} touch-pan-y select-none ${className}`}
+      style={{ touchAction: "pan-y" }}
       aria-live="polite"
       aria-atomic="true"
       aria-label="Homepage banner slideshow"
@@ -148,13 +149,14 @@ export function HeroCarouselArrows() {
   const ctx = useHeroCarousel();
   if (!ctx || ctx.slideCount <= 1) return null;
 
+  /** Mobile only — desktop uses autoplay / swipe is touch-oriented. */
   return (
     <>
       <button
         type="button"
         aria-label="Previous banner slide"
         onClick={ctx.prev}
-        className="absolute left-2 top-1/2 z-20 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-white/40 bg-white/90 text-lg font-semibold text-slate-800 shadow-md backdrop-blur-sm transition hover:bg-white sm:left-5 sm:h-11 sm:w-11"
+        className="absolute left-1.5 top-1/2 z-20 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full border border-white/40 bg-white/90 text-sm font-semibold text-slate-800 shadow-md backdrop-blur-sm transition hover:bg-white md:hidden"
       >
         ‹
       </button>
@@ -162,7 +164,7 @@ export function HeroCarouselArrows() {
         type="button"
         aria-label="Next banner slide"
         onClick={ctx.next}
-        className="absolute right-2 top-1/2 z-20 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-white/40 bg-white/90 text-lg font-semibold text-slate-800 shadow-md backdrop-blur-sm transition hover:bg-white sm:right-5 sm:h-11 sm:w-11"
+        className="absolute right-1.5 top-1/2 z-20 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full border border-white/40 bg-white/90 text-sm font-semibold text-slate-800 shadow-md backdrop-blur-sm transition hover:bg-white md:hidden"
       >
         ›
       </button>

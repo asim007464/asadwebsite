@@ -2,9 +2,14 @@
 
 import { useCallback, useEffect, useRef, useState, type PointerEvent } from "react";
 
-export function useSlider(count: number, { loop = true }: { loop?: boolean } = {}) {
+export function useSlider(
+  count: number,
+  { loop = true, touchOnly = false }: { loop?: boolean; touchOnly?: boolean } = {},
+) {
   const [index, setIndex] = useState(0);
   const drag = useRef({ x: 0, active: false });
+  const touchOnlyRef = useRef(touchOnly);
+  touchOnlyRef.current = touchOnly;
 
   const go = useCallback(
     (next: number) => {
@@ -39,8 +44,14 @@ export function useSlider(count: number, { loop = true }: { loop?: boolean } = {
   }, [count]);
 
   const onPointerDown = useCallback((e: PointerEvent<HTMLElement>) => {
+    if (touchOnlyRef.current && e.pointerType === "mouse") return;
     if (e.pointerType === "mouse" && e.button !== 0) return;
     drag.current = { x: e.clientX, active: true };
+    try {
+      e.currentTarget.setPointerCapture(e.pointerId);
+    } catch {
+      /* ignore */
+    }
   }, []);
 
   const onPointerUp = useCallback(
@@ -48,6 +59,11 @@ export function useSlider(count: number, { loop = true }: { loop?: boolean } = {
       if (!drag.current.active) return;
       const dx = e.clientX - drag.current.x;
       drag.current.active = false;
+      try {
+        e.currentTarget.releasePointerCapture(e.pointerId);
+      } catch {
+        /* ignore */
+      }
       if (dx > 48) prev();
       else if (dx < -48) next();
     },
