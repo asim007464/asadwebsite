@@ -134,20 +134,12 @@ export default function CartPage() {
               <div className="text-slate-600">Subtotal</div>
               <div className="font-semibold text-slate-900">{formatPKR(subtotal)}</div>
             </div>
-            <div className="mt-2 flex items-start justify-between gap-3 text-sm">
-              <div className="text-slate-600">Shipping</div>
-              <div className="text-right">
-                <div className="font-semibold text-slate-900">Free if you pay first</div>
-                <div className="text-xs text-slate-500">Rs 250 on cash on delivery</div>
-              </div>
-            </div>
             <Link
               href="/checkout"
               className="mt-5 inline-flex h-12 w-full items-center justify-center rounded-full bg-blue-600 text-sm font-semibold text-white shadow-sm hover:bg-blue-700"
             >
               Checkout
             </Link>
-            <div className="mt-4 text-xs leading-relaxed text-slate-600">Final amount is calculated at checkout from your payment choice.</div>
           </div>
         </div>
       )}

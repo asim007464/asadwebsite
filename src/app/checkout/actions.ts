@@ -53,10 +53,10 @@ export async function createOrder(payload: unknown) {
   if (input.payment_method === "jazzcash") {
     const phone = (input.jazzcash_phone || "").trim();
     const ref = (input.jazzcash_reference || "").trim();
-    if (phone.length < 8 || ref.length < 3) {
-      throw new Error("Please enter JazzCash phone number and transaction / reference id.");
+    if (phone.length < 8) {
+      throw new Error("Please enter your JazzCash phone number.");
     }
-    paymentNote = `Payment: JazzCash • Phone: ${phone} • Ref: ${ref}`;
+    paymentNote = `Payment: JazzCash • Phone: ${phone}${ref ? ` • Ref: ${ref}` : ""}`;
   }
   if (input.payment_method === "bank_transfer") {
     const ref = (input.bank_reference || "").trim();

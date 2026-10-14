@@ -222,7 +222,11 @@ export function CheckoutClient({ storefront }: { storefront: ResolvedStorefront 
                   </dl>
                 </div>
                 <Field label="Your JazzCash number" name="jazzcash_phone" placeholder="03xx-xxxxxxx" required />
-                <Field label="Transaction / reference id" name="jazzcash_reference" placeholder="e.g. T1234567890" required />
+                <Field
+                  label="Transaction / reference id (optional)"
+                  name="jazzcash_reference"
+                  placeholder="e.g. T1234567890"
+                />
               </div>
             ) : null}
 
