@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { createCategory, deleteCategory, updateCategory } from "@/app/admin/actions";
 import { ADMIN_IMAGE_FILE_INPUT_CLASS, ADMIN_IMAGE_UPLOAD_HINT } from "@/lib/admin-media-upload";
+import { sortCategoriesByDisplayOrder } from "@/lib/category-display-order";
+import { getStorefrontPayload } from "@/lib/storefront";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
 export const dynamic = "force-dynamic";
@@ -38,12 +40,13 @@ export default async function AdminCategoriesPage({
   const notice = noticeRaw ? noticeMsg(noticeRaw) : "";
 
   const supabase = createSupabaseAdminClient();
-  const { data: categories } = await supabase
-    .from("categories")
-    .select("id,name,slug,thumbnail_url")
-    .order("name");
+  const [{ data: categories }, storefront] = await Promise.all([
+    supabase.from("categories").select("id,name,slug,thumbnail_url").order("name"),
+    getStorefrontPayload(),
+  ]);
 
-  const rows = ((categories ?? []) as CatRow[]) ?? [];
+  const orderMap = storefront.categoryDisplayOrder ?? {};
+  const rows = sortCategoriesByDisplayOrder(((categories ?? []) as CatRow[]) ?? [], orderMap);
 
   const inputClass =
     "mt-2 h-11 w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm outline-none focus:border-blue-300 focus:ring-4 focus:ring-blue-100";
@@ -56,8 +59,9 @@ export default async function AdminCategoriesPage({
           <div>
             <h1 className="text-2xl font-semibold tracking-tight text-slate-900">Categories</h1>
             <p className="mt-2 max-w-2xl text-sm text-slate-600">
-              Each category needs a name, URL slug, and image. Upload a photo from your computer — it appears in Browse
-              categories on the homepage.
+              Each category needs a name, URL slug, and image. Use <span className="font-semibold">Place</span> (1 =
+              first on the homepage). If you move one category to another place, it{" "}
+              <span className="font-semibold">swaps</span> with the category that was there.
             </p>
           </div>
           <Link href="/admin" className="text-sm font-semibold text-blue-700 hover:text-blue-800">
@@ -90,6 +94,19 @@ export default async function AdminCategoriesPage({
           <div>
             <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">Slug (optional)</label>
             <input name="slug" placeholder="auto from name if empty" className={monoInput} />
+          </div>
+          <div>
+            <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+              Place <span className="font-normal normal-case tracking-normal text-slate-400">(1 = first)</span>
+            </label>
+            <input
+              name="sort_order"
+              type="number"
+              min={1}
+              step={1}
+              placeholder="end"
+              className={inputClass}
+            />
           </div>
           <div className="sm:col-span-2">
             <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">Image</label>
@@ -143,6 +160,26 @@ export default async function AdminCategoriesPage({
                     <div>
                       <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">Slug</label>
                       <input name="slug" defaultValue={c.slug} className={monoInput} />
+                    </div>
+                    <div>
+                      <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                        Place{" "}
+                        <span className="font-normal normal-case tracking-normal text-slate-400">
+                          (1 = first · swaps with that place)
+                        </span>
+                      </label>
+                      <input
+                        name="sort_order"
+                        type="number"
+                        min={1}
+                        step={1}
+                        defaultValue={
+                          typeof orderMap[c.id] === "number"
+                            ? orderMap[c.id] + 1
+                            : rows.findIndex((r) => r.id === c.id) + 1
+                        }
+                        className={inputClass}
+                      />
                     </div>
                     <div className="sm:col-span-2">
                       <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">

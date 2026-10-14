@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { updateHomePageContent } from "@/app/admin/actions";
+import { StorefrontImageUploadField } from "@/components/admin/StorefrontImageUploadField";
 import { DEMO_TESTIMONIALS } from "@/lib/testimonials";
 import { getStorefrontPayload } from "@/lib/storefront";
 
@@ -170,7 +171,8 @@ export default async function AdminHomeContentPage({
             <h2 className="text-lg font-semibold text-slate-900">Brands logo strip</h2>
             <p className="mt-1 text-xs text-slate-500">
               Heading, description, and round logos that slide continuously above the reviews section. Leave any text
-              field blank to hide it on the site. Leave logo image blank to show initials.
+              field blank to hide it on the site. Upload a logo image (or paste a URL); leave image blank to show
+              initials.
             </p>
             <div className="mt-4 grid gap-5">
               <div className="grid gap-5 sm:grid-cols-2">
@@ -228,18 +230,15 @@ export default async function AdminHomeContentPage({
                           className={inputClass}
                           placeholder="Philips"
                         />
+                        <p className="mt-2 text-[11px] text-slate-500">
+                          Leave name blank to skip this slot.
+                        </p>
                       </div>
-                      <div>
-                        <label className="text-[11px] font-semibold text-slate-500">
-                          Logo image URL (optional)
-                        </label>
-                        <input
-                          name={`brand_logo_${i}_image`}
-                          defaultValue={row?.imageUrl ?? ""}
-                          className={inputClass}
-                          placeholder="https://… or /logo.png"
-                        />
-                      </div>
+                      <StorefrontImageUploadField
+                        label="Logo image (optional)"
+                        urlName={`brand_logo_${i}_image`}
+                        defaultUrl={row?.imageUrl ?? ""}
+                      />
                     </div>
                   );
                 })}

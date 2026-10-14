@@ -1,4 +1,5 @@
 import { unstable_noStore as noStore } from "next/cache";
+import { normalizeCategoryDisplayOrder } from "@/lib/category-display-order";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
 export type SocialLinkRow = { label: string; url: string; platform?: string };
@@ -136,6 +137,8 @@ export type StorefrontPayload = {
   heroHeightMobilePx?: number;
   /** When false, hero is hidden on phone screens only. */
   heroVisibleOnMobile?: boolean;
+  /** Homepage / nav category order: category id → display rank (lower = first). */
+  categoryDisplayOrder?: Record<string, number>;
 };
 
 export const DEFAULT_STOREFRONT: StorefrontPayload & { socialLinks: SocialLinkRow[] } = {
@@ -521,6 +524,7 @@ export async function getStorefrontPayload(): Promise<ResolvedStorefront> {
       aboutStoryBlocks: normalizeAboutStoryBlocks(patch.aboutStoryBlocks),
       faqs: normalizeFaqs(patch.faqs),
       brandLogos: normalizeBrandLogos(patch.brandLogos),
+      categoryDisplayOrder: normalizeCategoryDisplayOrder(patch.categoryDisplayOrder),
       homeStatsTitle: text("homeStatsTitle", DEFAULT_STOREFRONT.homeStatsTitle),
       brandsSectionEyebrow: textAllowBlank(
         "brandsSectionEyebrow",

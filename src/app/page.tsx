@@ -27,6 +27,7 @@ import { BrowseCategoriesGrid } from "@/components/BrowseCategoriesGrid";
 import { HomeBrowseShowcaseGrid } from "@/components/HomeBrowseShowcaseGrid";
 import { getHomeBrowseShowcasePayload } from "@/lib/home-browse-showcase";
 import { getHomeSectionListings } from "@/lib/home-section-products";
+import { sortCategoriesByDisplayOrder } from "@/lib/category-display-order";
 import { getStorefrontPayload } from "@/lib/storefront";
 import {
   BANNER_HEIGHT_FIXED_CLASS,
@@ -101,7 +102,10 @@ async function HomeServer() {
   const featuredProducts = featuredBlock.rows;
   const featuredSource = featuredBlock.source;
   const hasLiveProducts = (catalogCountRes.count ?? 0) > 0;
-  const allCategoriesList = (categories as Category[] | null) ?? [];
+  const allCategoriesList = sortCategoriesByDisplayOrder(
+    (categories as Category[] | null) ?? [],
+    storefront.categoryDisplayOrder,
+  );
   const gadgetsProducts = gadgetsBlock.rows;
   const promoById = new Map<number, HomeReviewsBannerRow>();
   if (!promoBannersRes.error && promoBannersRes.data) {

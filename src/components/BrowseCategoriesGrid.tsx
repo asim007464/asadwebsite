@@ -32,7 +32,8 @@ export function BrowseCategoriesGrid({
   }, []);
 
   const desktopCap = 10;
-  const cap = narrow ? 5 : desktopCap;
+  /** Two columns on phones → 6 fills three full rows (no empty cell). */
+  const cap = narrow ? 6 : desktopCap;
   const canExpand = categories.length > cap;
 
   const visible = useMemo(() => {

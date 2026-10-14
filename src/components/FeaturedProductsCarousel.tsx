@@ -9,7 +9,8 @@ export function FeaturedProductsCarousel({ products }: { products: ProductListin
   const scrollerRef = useRef<HTMLDivElement>(null);
   const [perView, setPerView] = useState(3);
   const [page, setPage] = useState(0);
-  const imgSizes = "(max-width:640px) 100vw, (max-width:1024px) 50vw, (max-width:1536px) 33vw, 25vw";
+  const imgSizes =
+    "(max-width:640px) 78vw, (max-width:1024px) 50vw, (max-width:1536px) 33vw, 25vw";
 
   useEffect(() => {
     const xxl = window.matchMedia("(min-width: 1536px)");
@@ -30,6 +31,8 @@ export function FeaturedProductsCarousel({ products }: { products: ProductListin
   const maxPage = Math.max(0, n - perView);
   const canSlide = n > perView;
   const gapPx = 16;
+  /** Phones: card is narrower so ~half of the next product peeks (scroll hint). */
+  const mobilePeek = perView === 1;
 
   const scrollToPage = useCallback(
     (nextPage: number) => {
@@ -71,6 +74,10 @@ export function FeaturedProductsCarousel({ products }: { products: ProductListin
 
   if (n === 0) return null;
 
+  const cardWidth = mobilePeek
+    ? "78%"
+    : `calc((100% - ${gapPx * (perView - 1)}px) / ${perView})`;
+
   return (
     <div className="relative sm:px-12 lg:px-14">
       {canSlide ? (
@@ -91,22 +98,6 @@ export function FeaturedProductsCarousel({ products }: { products: ProductListin
           >
             ›
           </button>
-          <div className="mb-4 flex justify-center gap-3 sm:hidden">
-            <button
-              type="button"
-              onClick={() => scrollToPage(page - 1)}
-              className="inline-flex h-10 min-w-[5.5rem] items-center justify-center rounded-full border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 shadow-sm"
-            >
-              ‹ Prev
-            </button>
-            <button
-              type="button"
-              onClick={() => scrollToPage(page + 1)}
-              className="inline-flex h-10 min-w-[5.5rem] items-center justify-center rounded-full border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 shadow-sm"
-            >
-              Next ›
-            </button>
-          </div>
         </>
       ) : null}
 
@@ -121,8 +112,8 @@ export function FeaturedProductsCarousel({ products }: { products: ProductListin
             key={p.id}
             className="flex shrink-0 snap-start"
             style={{
-              flexBasis: `calc((100% - ${gapPx * (perView - 1)}px) / ${perView})`,
-              width: `calc((100% - ${gapPx * (perView - 1)}px) / ${perView})`,
+              flexBasis: cardWidth,
+              width: cardWidth,
             }}
           >
             <div className="flex h-full w-full flex-col">
@@ -132,8 +123,31 @@ export function FeaturedProductsCarousel({ products }: { products: ProductListin
         ))}
       </div>
 
+      {canSlide ? (
+        <div className="mt-4 flex justify-center gap-3 sm:hidden">
+          <button
+            type="button"
+            onClick={() => scrollToPage(page - 1)}
+            className="inline-flex h-10 min-w-[5.5rem] items-center justify-center rounded-full border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 shadow-sm"
+          >
+            ‹ Prev
+          </button>
+          <button
+            type="button"
+            onClick={() => scrollToPage(page + 1)}
+            className="inline-flex h-10 min-w-[5.5rem] items-center justify-center rounded-full border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 shadow-sm"
+          >
+            Next ›
+          </button>
+        </div>
+      ) : null}
+
       {canSlide && maxPage > 0 ? (
-        <div className="mt-5 flex flex-wrap items-center justify-center gap-1.5" role="tablist" aria-label="Product slides">
+        <div
+          className="mt-4 flex flex-wrap items-center justify-center gap-1.5 sm:mt-5"
+          role="tablist"
+          aria-label="Product slides"
+        >
           {Array.from({ length: maxPage + 1 }, (_, i) => (
             <button
               key={i}
@@ -144,7 +158,11 @@ export function FeaturedProductsCarousel({ products }: { products: ProductListin
               onClick={() => scrollToPage(i)}
               className="inline-flex h-8 w-8 items-center justify-center"
             >
-              <span className={`block h-2 rounded-full transition-all ${i === page ? "w-8 bg-blue-600" : "w-2 bg-slate-300 hover:bg-slate-400"}`} />
+              <span
+                className={`block h-2 rounded-full transition-all ${
+                  i === page ? "w-8 bg-blue-600" : "w-2 bg-slate-300 hover:bg-slate-400"
+                }`}
+              />
             </button>
           ))}
         </div>

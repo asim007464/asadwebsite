@@ -17,6 +17,12 @@ import {
   specListsToOptions,
   variantTitleFromSpecLists,
 } from "@/lib/product-spec-lists";
+import {
+  insertCategoryDisplayPlace,
+  normalizeCategoryDisplayOrder,
+  removeCategoryDisplayPlace,
+  swapCategoryDisplayPlace,
+} from "@/lib/category-display-order";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { DEFAULT_STOREFRONT } from "@/lib/storefront";
@@ -148,6 +154,7 @@ export async function createCategory(formData: FormData) {
   const slug = slugifyCatalogSlug(name, slugInput);
   if (slug.length < 2) redirect("/admin/categories?error=slug");
 
+  const sortRaw = Number.parseInt(String(formData.get("sort_order") ?? ""), 10);
   const supabase = createSupabaseAdminClient();
   const { data: inserted, error } = await supabase
     .from("categories")
@@ -176,7 +183,18 @@ export async function createCategory(formData: FormData) {
     }
   }
 
+  const base = await loadStorefrontBase(supabase);
+  const prevOrder = normalizeCategoryDisplayOrder(base.categoryDisplayOrder);
+  const { data: allCats } = await supabase.from("categories").select("id,name");
+  const cats = ((allCats ?? []) as { id: string; name: string }[]).filter((c) => c.id !== inserted.id);
+  const place = Number.isFinite(sortRaw) && sortRaw >= 1 ? Math.round(sortRaw) : undefined;
+  await persistCategoryDisplayOrder(
+    supabase,
+    insertCategoryDisplayPlace(cats, prevOrder, inserted.id, place),
+  );
+
   revalidateCatalog();
+  revalidatePublicStorefront();
   redirect("/admin/categories?notice=category-created");
 }
 
@@ -186,10 +204,19 @@ export async function deleteCategory(formData: FormData) {
   if (!id) redirect("/admin/categories");
   const { createSupabaseAdminClient } = await import("@/lib/supabase/admin");
   const supabase = createSupabaseAdminClient();
+  const { data: beforeDelete } = await supabase.from("categories").select("id,name");
   const { error } = await supabase.from("categories").delete().eq("id", id);
   if (error)
     redirect(`/admin/categories?error=${encodeURIComponent(error.message)}`);
+  const base = await loadStorefrontBase(supabase);
+  const prevOrder = normalizeCategoryDisplayOrder(base.categoryDisplayOrder);
+  const remaining = ((beforeDelete ?? []) as { id: string; name: string }[]).filter((c) => c.id !== id);
+  await persistCategoryDisplayOrder(
+    supabase,
+    removeCategoryDisplayPlace(remaining, prevOrder, id),
+  );
   revalidateCatalog();
+  revalidatePublicStorefront();
   redirect("/admin/categories");
 }
 
@@ -280,6 +307,10 @@ export async function updateCategory(formData: FormData) {
   const slug = slugifyCatalogSlug(name, String(formData.get("slug") ?? ""));
   if (slug.length < 2) redirect("/admin/categories?error=slug");
 
+  /** Admin place is 1-based (1 = first on homepage). */
+  const sortRaw = Number.parseInt(String(formData.get("sort_order") ?? "1"), 10);
+  const place1Based = Number.isFinite(sortRaw) ? Math.max(1, Math.round(sortRaw)) : 1;
+
   const supabase = createSupabaseAdminClient();
   const patch: { name: string; slug: string; parent_id: null; thumbnail_url?: string } = {
     name,
@@ -299,7 +330,17 @@ export async function updateCategory(formData: FormData) {
   const { error } = await supabase.from("categories").update(patch).eq("id", id);
   if (error) redirect(`/admin/categories?error=${encodeURIComponent(error.message)}`);
 
+  const base = await loadStorefrontBase(supabase);
+  const prevOrder = normalizeCategoryDisplayOrder(base.categoryDisplayOrder);
+  const { data: allCats } = await supabase.from("categories").select("id,name");
+  const cats = (allCats ?? []) as { id: string; name: string }[];
+  await persistCategoryDisplayOrder(
+    supabase,
+    swapCategoryDisplayPlace(cats, prevOrder, id, place1Based),
+  );
+
   revalidateCatalog();
+  revalidatePublicStorefront();
   redirect("/admin/categories?notice=category-saved");
 }
 
@@ -1944,6 +1985,26 @@ async function loadStorefrontBase(supabase: ReturnType<typeof createSupabaseAdmi
   return ((existing?.data as Record<string, unknown> | null) ?? {}) as Record<string, unknown>;
 }
 
+async function persistCategoryDisplayOrder(
+  supabase: ReturnType<typeof createSupabaseAdminClient>,
+  categoryDisplayOrder: Record<string, number>,
+) {
+  const base = await loadStorefrontBase(supabase);
+  const { error } = await supabase.from("storefront_settings").upsert(
+    {
+      id: 1,
+      data: {
+        ...base,
+        categoryDisplayOrder,
+        updated_marker: Date.now(),
+      } as never,
+      updated_at: new Date().toISOString(),
+    },
+    { onConflict: "id" },
+  );
+  if (error) redirect(`/admin/categories?error=${encodeURIComponent(error.message)}`);
+}
+
 async function saveStorefrontMerged(
   supabase: ReturnType<typeof createSupabaseAdminClient>,
   merged: Record<string, unknown>,
@@ -2085,16 +2146,28 @@ export async function updateHomePageContent(formData: FormData) {
   else if (Array.isArray(base.faqs) && (base.faqs as unknown[]).length > 0) patch.faqs = base.faqs;
   else patch.faqs = DEFAULT_STOREFRONT.faqs;
 
+  const prevBrandLogos = Array.isArray(base.brandLogos)
+    ? (base.brandLogos as { name?: string; imageUrl?: string }[])
+    : [];
   const brandLogos: { name: string; imageUrl?: string }[] = [];
   for (let i = 0; i < 12; i++) {
     const name = pick(`brand_logo_${i}_name`);
-    const imageUrl = pick(`brand_logo_${i}_image`);
     if (!name) continue;
+    const imageUrl = await storefrontImageFromForm(
+      supabase,
+      formData,
+      `brand_logo_${i}_image`,
+      `brand_logo_${i}_image_file`,
+      `site/brand-logo-${i}`,
+      "/admin/home-content",
+      String(prevBrandLogos[i]?.imageUrl ?? ""),
+    );
+    if (imageUrl === null) redirect("/admin/home-content?error=bad-image-url");
     brandLogos.push(imageUrl ? { name, imageUrl } : { name });
   }
   if (brandLogos.length > 0) patch.brandLogos = brandLogos;
-  else if (Array.isArray(base.brandLogos) && (base.brandLogos as unknown[]).length > 0) {
-    patch.brandLogos = base.brandLogos;
+  else if (prevBrandLogos.length > 0) {
+    patch.brandLogos = prevBrandLogos;
   } else {
     patch.brandLogos = DEFAULT_STOREFRONT.brandLogos;
   }
