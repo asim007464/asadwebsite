@@ -8,7 +8,9 @@ import {
 } from "@/app/admin/actions";
 import { AdminCategoryMultiSelect } from "@/components/admin/AdminCategoryMultiSelect";
 import { AdminProductGallery } from "@/components/admin/AdminProductGallery";
+import { AdminSpecListsField } from "@/components/admin/AdminSpecListsField";
 import { AdminStockQtyField } from "@/components/admin/AdminStockQtyField";
+import { specListsFromOptions } from "@/lib/product-spec-lists";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
 export const dynamic = "force-dynamic";
@@ -42,6 +44,7 @@ type VariantRow = {
   price_pkr: number;
   compare_at_price_pkr: number | null;
   is_active: boolean;
+  options: Record<string, unknown> | null;
 };
 
 export default async function AdminEditProductPage({
@@ -74,7 +77,7 @@ export default async function AdminEditProductPage({
     supabase.from("categories").select("id,name").order("name"),
     supabase
       .from("product_variants")
-      .select("id,sku,title,price_pkr,compare_at_price_pkr,is_active")
+      .select("id,sku,title,price_pkr,compare_at_price_pkr,is_active,options")
       .eq("product_id", id)
       .order("price_pkr", { ascending: true }),
     supabase
@@ -129,6 +132,8 @@ export default async function AdminEditProductPage({
         ? [p.category_id]
         : [];
   const varRows = ((variants ?? []) as VariantRow[]) ?? [];
+  const initialSpecLists =
+    varRows.map((v) => specListsFromOptions(v.options)).find((lists) => lists.length > 0) ?? [];
   const variantIds = varRows.map((v) => v.id);
 
   const { data: invRows } =
@@ -275,6 +280,16 @@ export default async function AdminEditProductPage({
               <p className="mt-1 text-[11px] text-slate-500">
                 Percent off the list price on the storefront and in cart (0 = no sale).
               </p>
+            </div>
+            <div className="sm:col-span-2 border-t border-slate-100 pt-6">
+              <h2 className="text-sm font-bold text-slate-900">Product lists</h2>
+              <p className="mt-1 text-xs text-slate-500">
+                Add a heading, then bullet points underneath (e.g. Key features). Shown on the product page. Saving
+                updates every variant.
+              </p>
+            </div>
+            <div className="sm:col-span-2">
+              <AdminSpecListsField inputClassName={input} initialLists={initialSpecLists} />
             </div>
             <div className="sm:col-span-2">
               <button

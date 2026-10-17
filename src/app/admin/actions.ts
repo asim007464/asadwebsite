@@ -14,6 +14,7 @@ import {
 import { uploadAdminMediaImage } from "@/lib/admin-media-upload";
 import {
   parseSpecListsJson,
+  SPEC_LISTS_OPTIONS_KEY,
   specListsToOptions,
   variantTitleFromSpecLists,
 } from "@/lib/product-spec-lists";
@@ -1127,6 +1128,8 @@ export async function updateProduct(formData: FormData) {
   if ("err" in rating) redirect(`/admin/products/${id}/edit?error=${rating.err}`);
   const sale_percent = parseSalePercentFromForm(formData);
   if (typeof sale_percent === "object") redirect(`/admin/products/${id}/edit?error=${sale_percent.err}`);
+  const specLists = parseSpecListsJson(String(formData.get("spec_lists_json") ?? ""));
+  const specOptions = specListsToOptions(specLists);
 
   const supabase = createSupabaseAdminClient();
 
@@ -1159,6 +1162,33 @@ export async function updateProduct(formData: FormData) {
     );
 
   await syncProductCategories(supabase, id, categoryIds);
+
+  // Keep product feature lists in sync on every variant (same as create flow).
+  const { data: variantRows } = await supabase
+    .from("product_variants")
+    .select("id,options")
+    .eq("product_id", id);
+  for (const row of variantRows ?? []) {
+    const existing =
+      row.options && typeof row.options === "object" && !Array.isArray(row.options)
+        ? { ...(row.options as Record<string, unknown>) }
+        : {};
+    if (Object.keys(specOptions).length === 0) {
+      delete existing[SPEC_LISTS_OPTIONS_KEY];
+    } else {
+      Object.assign(existing, specOptions);
+    }
+    const { error: optErr } = await supabase
+      .from("product_variants")
+      .update({ options: existing })
+      .eq("id", row.id)
+      .eq("product_id", id);
+    if (optErr) {
+      redirect(
+        `/admin/products/${id}/edit?error=${encodeURIComponent(optErr.message)}`,
+      );
+    }
+  }
 
   revalidateCatalog(slug);
   redirect(`/admin/products/${id}/edit?notice=saved`);
