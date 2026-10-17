@@ -2,7 +2,9 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { AddToCartButton } from "@/components/AddToCartButton";
+import { addVariantToCart } from "@/lib/cart";
 import { formatPKR } from "@/lib/money";
 import { SPEC_LISTS_OPTIONS_KEY, specListsFromOptions } from "@/lib/product-spec-lists";
 import { clampSalePercent, hasActiveSale, salePricePkr } from "@/lib/sale-price";
@@ -101,7 +103,9 @@ export function ProductPurchasePanel({
   qtyByVariant: Record<string, number>;
   salePercent?: number;
 }) {
+  const router = useRouter();
   const [selectedId, setSelectedId] = useState(variants[0]?.id ?? "");
+  const [checkingOut, setCheckingOut] = useState(false);
   const selected = useMemo(
     () => variants.find((v) => v.id === selectedId) ?? variants[0] ?? null,
     [selectedId, variants],
@@ -187,17 +191,36 @@ export function ProductPurchasePanel({
             image_url: imageUrl,
           }}
         />
+        <button
+          type="button"
+          disabled={checkingOut}
+          onClick={() => {
+            setCheckingOut(true);
+            try {
+              addVariantToCart({
+                id: selected.id,
+                sku: selected.sku,
+                title: selected.title,
+                price_pkr: sellPrice,
+                product_slug: productSlug,
+                product_name: productName,
+                image_url: imageUrl,
+              });
+              window.dispatchEvent(new Event("storage"));
+              router.push("/checkout");
+            } finally {
+              setCheckingOut(false);
+            }
+          }}
+          className="inline-flex h-11 w-full items-center justify-center rounded-xl border border-blue-200 bg-blue-50 px-5 text-sm font-semibold text-blue-800 transition hover:bg-blue-100 disabled:opacity-60 sm:w-auto"
+        >
+          {checkingOut ? "Opening…" : "Checkout"}
+        </button>
         <Link
           href="/products"
           className="inline-flex h-11 items-center justify-center rounded-xl border border-slate-200 bg-white px-5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
         >
           Continue shopping
-        </Link>
-        <Link
-          href="/cart"
-          className="inline-flex h-11 items-center justify-center rounded-xl border border-blue-200 bg-blue-50 px-5 text-sm font-semibold text-blue-800 transition hover:bg-blue-100"
-        >
-          Shop now
         </Link>
       </div>
       <p className="text-xs text-slate-500">Cash on delivery · confirmed before dispatch</p>

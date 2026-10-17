@@ -128,11 +128,50 @@ export default function CartPage() {
             </div>
           </div>
 
-          <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+          <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6 lg:sticky lg:top-24">
             <div className="text-sm font-semibold text-slate-900">Order summary</div>
-            <div className="mt-4 flex items-center justify-between text-sm">
-              <div className="text-slate-600">Subtotal</div>
-              <div className="font-semibold text-slate-900">{formatPKR(subtotal)}</div>
+            <p className="mt-1 text-xs text-slate-500">
+              {items.length} {items.length === 1 ? "item" : "items"}
+            </p>
+            <ul className="mt-4 max-h-[min(22rem,45vh)] space-y-3 overflow-y-auto pr-1">
+              {items.map((it) => (
+                <li
+                  key={it.variantId}
+                  className="flex gap-3 border-b border-slate-100 pb-3 last:border-0 last:pb-0"
+                >
+                  <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-xl bg-slate-50 ring-1 ring-slate-200">
+                    {it.imageUrl ? (
+                      <SafeRemoteImage
+                        src={it.imageUrl}
+                        alt={it.productName}
+                        fill
+                        className="object-cover"
+                        sizes="56px"
+                      />
+                    ) : null}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="line-clamp-2 text-sm font-semibold text-slate-900">{it.productName}</div>
+                    <div className="mt-0.5 truncate text-xs text-slate-500">{it.variantTitle}</div>
+                    <div className="mt-1 flex items-center justify-between gap-2 text-xs">
+                      <span className="text-slate-500">Qty {it.quantity}</span>
+                      <span className="font-semibold tabular-nums text-slate-900">
+                        {formatPKR(it.unitPricePkr * it.quantity)}
+                      </span>
+                    </div>
+                  </div>
+                </li>
+              ))}
+            </ul>
+            <div className="mt-4 border-t border-slate-100 pt-4">
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-slate-600">Subtotal</span>
+                <span className="font-semibold text-slate-900">{formatPKR(subtotal)}</span>
+              </div>
+              <div className="mt-3 flex items-center justify-between border-t border-slate-100 pt-3 text-sm">
+                <span className="font-semibold text-slate-900">Total</span>
+                <span className="font-semibold text-blue-900">{formatPKR(subtotal)}</span>
+              </div>
             </div>
             <Link
               href="/checkout"

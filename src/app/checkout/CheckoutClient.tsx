@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import { SafeRemoteImage } from "@/components/SafeRemoteImage";
 import { CheckoutPageSkeleton } from "@/components/skeletons";
 import type { CartItem } from "@/lib/cart";
 import { cartSubtotal, readCart, writeCart } from "@/lib/cart";
@@ -49,53 +50,50 @@ export function CheckoutClient({ storefront }: { storefront: ResolvedStorefront 
   }
 
   return (
-    <main className="mx-auto w-full max-w-3xl px-3 py-6 sm:px-4 sm:py-10">
-      <div className="flex flex-wrap items-end justify-between gap-4">
-        <div className="min-w-0 flex-1 space-y-4">
-          {(() => {
-            const lang = storefront.checkoutCopyLang ?? "en";
-            const titleEn =
-              storefront.checkoutPageTitleEn?.trim() || "Checkout & payment";
-            const leadEn =
-              storefront.checkoutPageLeadEn?.trim() ||
-              "Choose how you pay, then share delivery details. Payments are verified manually before dispatch.";
-            const titleUr = storefront.checkoutPageTitleUr?.trim() || "";
-            const leadUr = storefront.checkoutPageLeadUr?.trim() || "";
-            const showEn = lang === "en" || lang === "both";
-            const showUr = lang === "ur" || lang === "both";
-            return (
-              <>
-                {showEn ? (
-                  <div>
+    <main className="mx-auto w-full max-w-6xl px-3 py-6 sm:px-4 sm:py-10">
+      <div className="min-w-0 space-y-4">
+        {(() => {
+          const lang = storefront.checkoutCopyLang ?? "en";
+          const titleEn =
+            storefront.checkoutPageTitleEn?.trim() || "Checkout & payment";
+          const leadEn =
+            storefront.checkoutPageLeadEn?.trim() ||
+            "Choose how you pay, then share delivery details. Payments are verified manually before dispatch.";
+          const titleUr = storefront.checkoutPageTitleUr?.trim() || "";
+          const leadUr = storefront.checkoutPageLeadUr?.trim() || "";
+          const showEn = lang === "en" || lang === "both";
+          const showUr = lang === "ur" || lang === "both";
+          return (
+            <>
+              {showEn ? (
+                <div>
+                  <h1 className="text-2xl font-semibold tracking-tight text-slate-900 sm:text-3xl">
+                    {titleEn}
+                  </h1>
+                  {leadEn ? <p className="mt-2 text-sm text-slate-600">{leadEn}</p> : null}
+                </div>
+              ) : null}
+              {showUr && (titleUr || leadUr) ? (
+                <div dir="rtl" lang="ur" className="text-right">
+                  {titleUr ? (
                     <h1 className="text-2xl font-semibold tracking-tight text-slate-900 sm:text-3xl">
-                      {titleEn}
+                      {titleUr}
                     </h1>
-                    {leadEn ? <p className="mt-2 text-sm text-slate-600">{leadEn}</p> : null}
-                  </div>
-                ) : null}
-                {showUr && (titleUr || leadUr) ? (
-                  <div dir="rtl" lang="ur" className="text-right">
-                    {titleUr ? (
-                      <h1 className="text-2xl font-semibold tracking-tight text-slate-900 sm:text-3xl">
-                        {titleUr}
-                      </h1>
-                    ) : null}
-                    {leadUr ? <p className="mt-2 text-sm leading-relaxed text-slate-600">{leadUr}</p> : null}
-                  </div>
-                ) : null}
-                {showUr && !titleUr && !leadUr && !showEn ? (
-                  <div>
-                    <h1 className="text-2xl font-semibold tracking-tight text-slate-900 sm:text-3xl">
-                      {titleEn}
-                    </h1>
-                    {leadEn ? <p className="mt-2 text-sm text-slate-600">{leadEn}</p> : null}
-                  </div>
-                ) : null}
-              </>
-            );
-          })()}
-        </div>
-        <div className="rounded-full bg-blue-50 px-4 py-2 text-sm font-semibold text-blue-900 ring-1 ring-blue-100">{formatPKR(orderTotal)}</div>
+                  ) : null}
+                  {leadUr ? <p className="mt-2 text-sm leading-relaxed text-slate-600">{leadUr}</p> : null}
+                </div>
+              ) : null}
+              {showUr && !titleUr && !leadUr && !showEn ? (
+                <div>
+                  <h1 className="text-2xl font-semibold tracking-tight text-slate-900 sm:text-3xl">
+                    {titleEn}
+                  </h1>
+                  {leadEn ? <p className="mt-2 text-sm text-slate-600">{leadEn}</p> : null}
+                </div>
+              ) : null}
+            </>
+          );
+        })()}
       </div>
 
       {success ? (
@@ -114,7 +112,7 @@ export function CheckoutClient({ storefront }: { storefront: ResolvedStorefront 
         </div>
       ) : (
         <form
-          className="mt-6 space-y-6"
+          className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-5 md:items-start"
           onSubmit={async (e) => {
             e.preventDefault();
             setSubmitting(true);
@@ -158,6 +156,15 @@ export function CheckoutClient({ storefront }: { storefront: ResolvedStorefront 
             }
           }}
         >
+          <div className="space-y-6 md:col-span-3">
+          <div className="md:hidden">
+            <CheckoutOrderItemsPanel
+              items={items}
+              subtotal={subtotal}
+              shippingPkr={shippingPkr}
+              orderTotal={orderTotal}
+            />
+          </div>
           <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
             <div className="text-sm font-semibold text-slate-900">How would you like to pay?</div>
             <p className="mt-1 text-xs text-slate-500">No card numbers are collected on this site — JazzCash / bank transfer details are for reference only.</p>
@@ -290,22 +297,6 @@ export function CheckoutClient({ storefront }: { storefront: ResolvedStorefront 
 
           {error ? <div className="text-sm font-semibold text-red-700">{error}</div> : null}
 
-          <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
-            <div className="text-sm font-semibold text-slate-900">Order summary</div>
-            <div className="mt-4 flex items-center justify-between text-sm">
-              <span className="text-slate-600">Subtotal</span>
-              <span className="font-semibold text-slate-900">{formatPKR(subtotal)}</span>
-            </div>
-            <div className="mt-2 flex items-center justify-between text-sm">
-              <span className="text-slate-600">Shipping</span>
-              <span className="font-semibold text-slate-900">{shippingPkr === 0 ? "Free" : formatPKR(shippingPkr)}</span>
-            </div>
-            <div className="mt-4 flex items-center justify-between border-t border-slate-100 pt-4 text-sm">
-              <span className="font-semibold text-slate-900">Total</span>
-              <span className="font-semibold text-blue-900">{formatPKR(orderTotal)}</span>
-            </div>
-          </div>
-
           <button
             type="submit"
             disabled={submitting}
@@ -317,9 +308,82 @@ export function CheckoutClient({ storefront }: { storefront: ResolvedStorefront 
           <p className="text-center text-xs leading-relaxed text-slate-600">
             By placing an order you agree we may phone or WhatsApp you to confirm specs, payment, and dispatch timing.
           </p>
+          </div>
+
+          <div className="hidden md:col-span-2 md:block">
+            <CheckoutOrderItemsPanel
+              items={items}
+              subtotal={subtotal}
+              shippingPkr={shippingPkr}
+              orderTotal={orderTotal}
+            />
+          </div>
         </form>
       )}
     </main>
+  );
+}
+
+function CheckoutOrderItemsPanel({
+  items,
+  subtotal,
+  shippingPkr,
+  orderTotal,
+}: {
+  items: CartItem[];
+  subtotal: number;
+  shippingPkr: number;
+  orderTotal: number;
+}) {
+  return (
+    <aside className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6 md:sticky md:top-24">
+      <div className="text-sm font-semibold text-slate-900">Your order</div>
+      <p className="mt-1 text-xs text-slate-500">
+        {items.length} {items.length === 1 ? "item" : "items"} in this checkout
+      </p>
+      <ul className="mt-4 max-h-[min(28rem,55vh)] space-y-3 overflow-y-auto pr-1">
+        {items.map((it) => (
+          <li key={it.variantId} className="flex gap-3 border-b border-slate-100 pb-3 last:border-0 last:pb-0">
+            <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-xl bg-slate-50 ring-1 ring-slate-200">
+              {it.imageUrl ? (
+                <SafeRemoteImage src={it.imageUrl} alt={it.productName} fill className="object-cover" sizes="64px" />
+              ) : null}
+            </div>
+            <div className="min-w-0 flex-1">
+              <Link
+                href={`/product/${it.productSlug}`}
+                className="line-clamp-2 text-sm font-semibold text-slate-900 hover:text-blue-800"
+              >
+                {it.productName}
+              </Link>
+              <div className="mt-0.5 truncate text-xs text-slate-500">{it.variantTitle}</div>
+              <div className="mt-1 flex items-center justify-between gap-2 text-xs">
+                <span className="text-slate-500">Qty {it.quantity}</span>
+                <span className="font-semibold tabular-nums text-slate-900">
+                  {formatPKR(it.unitPricePkr * it.quantity)}
+                </span>
+              </div>
+            </div>
+          </li>
+        ))}
+      </ul>
+      <div className="mt-4 border-t border-slate-100 pt-4">
+        <div className="flex items-center justify-between text-sm">
+          <span className="text-slate-600">Subtotal</span>
+          <span className="font-semibold text-slate-900">{formatPKR(subtotal)}</span>
+        </div>
+        {shippingPkr > 0 ? (
+          <div className="mt-2 flex items-center justify-between text-sm">
+            <span className="text-slate-600">Shipping</span>
+            <span className="font-semibold text-slate-900">{formatPKR(shippingPkr)}</span>
+          </div>
+        ) : null}
+        <div className="mt-3 flex items-center justify-between border-t border-slate-100 pt-3 text-sm">
+          <span className="font-semibold text-slate-900">Total</span>
+          <span className="font-semibold text-blue-900">{formatPKR(orderTotal)}</span>
+        </div>
+      </div>
+    </aside>
   );
 }
 

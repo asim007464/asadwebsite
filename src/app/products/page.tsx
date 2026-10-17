@@ -69,8 +69,9 @@ export default async function ProductsPage({
       }
 
       const { data: cat } = await supabase.from("categories").select("id").eq("slug", category).maybeSingle();
+      // Unknown category slug → empty list (do not fall back to all products).
       if (!cat?.id) {
-        return applySort(applyPrice(started())).range(rangeFrom, rangeTo);
+        return { data: [], count: 0, error: null };
       }
 
       // Include products linked via product_categories OR legacy primary category_id

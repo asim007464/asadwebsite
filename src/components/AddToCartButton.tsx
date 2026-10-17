@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { readCart, writeCart } from "@/lib/cart";
+import { addVariantToCart } from "@/lib/cart";
 
 function CartIcon() {
   return (
@@ -56,23 +56,7 @@ export function AddToCartButton({
         if (!variant) return;
         setAdding(true);
         try {
-          const items = readCart();
-          const existing = items.find((i) => i.variantId === variant.id);
-          if (existing) {
-            existing.quantity += 1;
-          } else {
-            items.push({
-              variantId: variant.id,
-              productSlug: variant.product_slug,
-              productName: variant.product_name,
-              variantTitle: variant.title,
-              sku: variant.sku,
-              unitPricePkr: variant.price_pkr,
-              quantity: 1,
-              imageUrl: variant.image_url ?? null,
-            });
-          }
-          writeCart(items);
+          addVariantToCart(variant);
           window.dispatchEvent(new Event("storage"));
           setAddedTick((x) => x + 1);
           window.setTimeout(() => setAddedTick(0), 900);

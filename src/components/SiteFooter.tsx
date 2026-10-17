@@ -3,21 +3,12 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { SITE_SHOP_NAME } from "@/lib/site-brand";
 import { resolveStoreLocation } from "@/lib/store-location";
+import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { getStorefrontPayload } from "@/lib/storefront";
 
-const shopLinks = [
+const staticShopLinks = [
   { href: "/products", label: "All products" },
   { href: "/cart", label: "Cart" },
-  { href: "/products?category=fans-cooling", label: "Fans & cooling" },
-  { href: "/products?category=lighting-leds", label: "Lighting & LEDs" },
-  { href: "/products?category=heaters", label: "Heaters" },
-  { href: "/products?category=kitchen-appliances", label: "Kitchen" },
-  { href: "/products?category=personal-care", label: "Personal care" },
-  { href: "/products?category=power-cables", label: "Power & cables" },
-  { href: "/products?category=breakers-protection", label: "Breakers & protection" },
-  { href: "/products?category=conduits-accessories", label: "Conduits & accessories" },
-  { href: "/products?category=switches-sockets", label: "Switches & sockets" },
-  { href: "/products?category=wires-cables", label: "Wires & cables" },
 ] as const;
 
 const companyLinks = [
@@ -110,6 +101,18 @@ function TikTokIcon() {
 
 export async function SiteFooter() {
   const storefront = await getStorefrontPayload();
+  const supabase = createSupabaseAdminClient();
+  const { data: categoryRows } = await supabase
+    .from("categories")
+    .select("name,slug")
+    .order("name", { ascending: true });
+  const categoryLinks = ((categoryRows ?? []) as { name: string; slug: string }[])
+    .filter((c) => c.slug?.trim() && c.name?.trim())
+    .map((c) => ({
+      href: `/products?category=${encodeURIComponent(c.slug.trim())}`,
+      label: c.name.trim(),
+    }));
+  const shopLinks = [...staticShopLinks, ...categoryLinks];
   const store = resolveStoreLocation(storefront);
   const socialLinksResolved = storefront.socialLinks
     .filter((x) => x.url?.trim()?.length && x.label?.trim()?.length)
@@ -199,7 +202,11 @@ export async function SiteFooter() {
             <FootHeading>Browse</FootHeading>
             <nav className="mt-5 grid grid-cols-2 gap-x-6 gap-y-2.5" aria-label="Footer shop links">
               {shopLinks.map(({ href, label }) => (
-                <Link key={href} href={href} className="text-sm font-medium text-slate-300 transition hover:text-white">
+                <Link
+                  key={`${href}-${label}`}
+                  href={href}
+                  className="text-sm font-medium text-slate-300 transition hover:text-white"
+                >
                   {label}
                 </Link>
               ))}
