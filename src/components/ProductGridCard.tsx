@@ -2,6 +2,7 @@ import Link from "next/link";
 import { AddToCartButton } from "@/components/AddToCartButton";
 import { ProductCardMedia } from "@/components/ProductCardMedia";
 import { formatPKR } from "@/lib/money";
+import { clampSalePercent, hasActiveSale } from "@/lib/sale-price";
 import type { ProductListing } from "@/lib/store-types";
 
 const gridAddToCartClass =
@@ -16,6 +17,10 @@ export function ProductGridCard({
 }) {
   const href = `/product/${product.slug}`;
   const catchyLine = (product.catchy_headline ?? "").trim();
+  const salePercent = clampSalePercent(product.sale_percent ?? 0);
+  const onSale = hasActiveSale(salePercent);
+  const listPrice = product.default_variant_price_pkr ?? product.min_price_pkr;
+  const sellPrice = product.min_price_pkr;
   const defaultVariantId = product.default_variant_id?.trim();
   const cartVariant =
     defaultVariantId && product.default_variant_sku
@@ -23,7 +28,7 @@ export function ProductGridCard({
           id: defaultVariantId,
           sku: product.default_variant_sku,
           title: product.default_variant_title ?? product.name,
-          price_pkr: product.default_variant_price_pkr ?? product.min_price_pkr,
+          price_pkr: sellPrice,
           product_slug: product.slug,
           product_name: product.name,
           image_url: product.image_url,
@@ -40,7 +45,11 @@ export function ProductGridCard({
           sizes={sizes}
           tone="catalog"
         />
-        {product.is_featured ? (
+        {onSale ? (
+          <span className="absolute left-3 top-3 z-20 rounded-full bg-rose-600 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-white shadow-sm">
+            −{salePercent % 1 === 0 ? String(salePercent) : salePercent.toFixed(1)}%
+          </span>
+        ) : product.is_featured ? (
           <span className="absolute left-3 top-3 z-20 rounded-full bg-blue-600 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-white shadow-sm">
             Featured
           </span>
@@ -65,9 +74,14 @@ export function ProductGridCard({
           </p>
         </Link>
         <div className="mt-auto pt-2">
-          <p className="mb-2 text-sm font-bold tabular-nums tracking-tight text-slate-900 sm:text-base">
-            {formatPKR(product.min_price_pkr)}
-          </p>
+          <div className="mb-2 flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+            <p className="text-sm font-bold tabular-nums tracking-tight text-slate-900 sm:text-base">
+              {formatPKR(sellPrice)}
+            </p>
+            {onSale && listPrice > sellPrice ? (
+              <p className="text-xs tabular-nums text-slate-400 line-through sm:text-sm">{formatPKR(listPrice)}</p>
+            ) : null}
+          </div>
           <AddToCartButton variant={cartVariant} className={gridAddToCartClass} label="Add to cart" withIcon />
         </div>
       </div>

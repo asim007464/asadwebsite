@@ -3,12 +3,19 @@ import type { ProductListing } from "@/lib/store-types";
 import {
   PRODUCT_LISTING_SELECT_WITH_CATEGORY,
   PRODUCT_LISTING_SELECT_WITH_CATEGORY_LEGACY,
+  PRODUCT_LISTING_SELECT_WITHOUT_SALE,
 } from "@/lib/product-listing-columns";
 
 function isCatchyHeadlineSchemaError(message: string | undefined) {
   if (!message) return false;
   const m = message.toLowerCase();
   return m.includes("catchy_headline") || (m.includes("column") && m.includes("does not exist"));
+}
+
+function isSalePercentSchemaError(message: string | undefined) {
+  if (!message) return false;
+  const m = message.toLowerCase();
+  return m.includes("sale_percent");
 }
 
 type ListingsResult = { data: ProductListing[] | null; count: number | null; error: string | null };
@@ -33,6 +40,9 @@ export async function queryProductListingsPage(
   };
 
   let result = await run(PRODUCT_LISTING_SELECT_WITH_CATEGORY);
+  if (result.error && isSalePercentSchemaError(result.error)) {
+    result = await run(PRODUCT_LISTING_SELECT_WITHOUT_SALE);
+  }
   if (result.error && isCatchyHeadlineSchemaError(result.error)) {
     result = await run(PRODUCT_LISTING_SELECT_WITH_CATEGORY_LEGACY);
   }

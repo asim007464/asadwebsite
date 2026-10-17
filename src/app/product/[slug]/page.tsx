@@ -45,16 +45,27 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
   const { slug } = await params;
   const supabase = createSupabaseAdminClient();
 
-  const { data: product } = await supabase
+  const { data: productWithSale, error: productSaleErr } = await supabase
     .from("products")
-    .select("id,name,slug,catchy_headline,description,category_id,brand_id,is_active,rating_avg,rating_count")
+    .select("id,name,slug,catchy_headline,description,category_id,brand_id,is_active,rating_avg,rating_count,sale_percent")
     .eq("slug", slug)
     .maybeSingle();
+
+  let product = productWithSale;
+  if (!product && productSaleErr) {
+    const fallback = await supabase
+      .from("products")
+      .select("id,name,slug,catchy_headline,description,category_id,brand_id,is_active,rating_avg,rating_count")
+      .eq("slug", slug)
+      .maybeSingle();
+    product = fallback.data as typeof productWithSale;
+  }
 
   if (!product || !(product as { is_active?: boolean }).is_active) return notFound();
 
   const ratingAvg = Number((product as { rating_avg?: number | string | null }).rating_avg ?? 0);
   const ratingCount = Number((product as { rating_count?: number | null }).rating_count ?? 0);
+  const salePercent = Number((product as { sale_percent?: number | string | null }).sale_percent ?? 0);
 
   const [{ data: variants }, { data: images }] = await Promise.all([
     supabase
@@ -133,6 +144,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
               productName={(product as Product).name}
               productSlug={(product as Product).slug}
               imageUrl={hero?.url ?? null}
+              salePercent={Number.isFinite(salePercent) ? salePercent : 0}
               variants={variantRows.map((v) => ({
                 id: v.id,
                 sku: v.sku,

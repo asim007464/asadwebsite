@@ -5,6 +5,7 @@ import Link from "next/link";
 import { AddToCartButton } from "@/components/AddToCartButton";
 import { formatPKR } from "@/lib/money";
 import { SPEC_LISTS_OPTIONS_KEY, specListsFromOptions } from "@/lib/product-spec-lists";
+import { clampSalePercent, hasActiveSale, salePricePkr } from "@/lib/sale-price";
 
 type VariantRow = {
   id: string;
@@ -91,12 +92,14 @@ export function ProductPurchasePanel({
   imageUrl,
   variants,
   qtyByVariant,
+  salePercent = 0,
 }: {
   productName: string;
   productSlug: string;
   imageUrl: string | null;
   variants: VariantRow[];
   qtyByVariant: Record<string, number>;
+  salePercent?: number;
 }) {
   const [selectedId, setSelectedId] = useState(variants[0]?.id ?? "");
   const selected = useMemo(
@@ -104,17 +107,25 @@ export function ProductPurchasePanel({
     [selectedId, variants],
   );
   const multiple = variants.length > 1;
+  const salePct = clampSalePercent(salePercent);
+  const onSale = hasActiveSale(salePct);
 
   if (!selected) {
     return <p className="mt-4 text-sm text-slate-600">This product is not available for order yet.</p>;
   }
 
+  const sellPrice = salePricePkr(selected.price_pkr, salePct);
   const compareAt = selected.compare_at_price_pkr;
-  const showCompare = compareAt != null && compareAt > selected.price_pkr;
+  const strikePrice = onSale
+    ? selected.price_pkr
+    : compareAt != null && compareAt > selected.price_pkr
+      ? compareAt
+      : null;
+  const showStrike = strikePrice != null && strikePrice > sellPrice;
   const optionLabel = (v: VariantRow) => {
     const title = v.title.trim();
     if (title && title.toLowerCase() !== productName.trim().toLowerCase()) return title;
-    return formatPKR(v.price_pkr);
+    return formatPKR(salePricePkr(v.price_pkr, salePct));
   };
 
   return (
@@ -146,9 +157,16 @@ export function ProductPurchasePanel({
 
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <p className="text-2xl font-bold tabular-nums tracking-tight text-slate-900">{formatPKR(selected.price_pkr)}</p>
-          {showCompare ? (
-            <p className="text-sm text-slate-400 line-through tabular-nums">{formatPKR(compareAt)}</p>
+          <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
+            <p className="text-2xl font-bold tabular-nums tracking-tight text-slate-900">{formatPKR(sellPrice)}</p>
+            {onSale ? (
+              <span className="rounded-full bg-rose-600 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-white">
+                −{salePct % 1 === 0 ? String(salePct) : salePct.toFixed(1)}%
+              </span>
+            ) : null}
+          </div>
+          {showStrike ? (
+            <p className="text-sm text-slate-400 line-through tabular-nums">{formatPKR(strikePrice)}</p>
           ) : null}
         </div>
         {stockBadge(qtyByVariant[selected.id])}
@@ -163,7 +181,7 @@ export function ProductPurchasePanel({
             id: selected.id,
             sku: selected.sku,
             title: selected.title,
-            price_pkr: selected.price_pkr,
+            price_pkr: sellPrice,
             product_slug: productSlug,
             product_name: productName,
             image_url: imageUrl,

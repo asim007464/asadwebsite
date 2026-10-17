@@ -27,6 +27,7 @@ function errMsg(code: string) {
   if (code === "brand") return "Could not save that brand. Try a shorter name or try again.";
   if (code === "rating") return "Rating must be a number from 0 to 5 (e.g. 4.3).";
   if (code === "rating-count") return "Rating count must be a whole number ≥ 0.";
+  if (code === "sale") return "Sale percent must be a number from 0 to 100.";
   return code.length < 220 ? code : "Something went wrong.";
 }
 
@@ -59,7 +60,7 @@ export default async function AdminEditProductPage({
   const supabase = createSupabaseAdminClient();
 
   const [
-    { data: product },
+    productRes,
     { data: categories },
     { data: variants },
     { data: galleryRows },
@@ -67,7 +68,7 @@ export default async function AdminEditProductPage({
   ] = await Promise.all([
     supabase
       .from("products")
-      .select("id,name,slug,catchy_headline,description,category_id,brand_id,is_active,rating_avg,rating_count")
+      .select("id,name,slug,catchy_headline,description,category_id,brand_id,is_active,rating_avg,rating_count,sale_percent")
       .eq("id", id)
       .maybeSingle(),
     supabase.from("categories").select("id,name").order("name"),
@@ -88,6 +89,16 @@ export default async function AdminEditProductPage({
       .order("sort_order", { ascending: true }),
   ]);
 
+  let product = productRes.data;
+  if (!product && productRes.error) {
+    const fallback = await supabase
+      .from("products")
+      .select("id,name,slug,catchy_headline,description,category_id,brand_id,is_active,rating_avg,rating_count")
+      .eq("id", id)
+      .maybeSingle();
+    product = fallback.data as typeof productRes.data;
+  }
+
   if (!product) notFound();
 
   const p = product as {
@@ -101,9 +112,11 @@ export default async function AdminEditProductPage({
     is_active: boolean;
     rating_avg: number | string | null;
     rating_count: number | null;
+    sale_percent: number | string | null;
   };
   const ratingAvgDefault = Number(p.rating_avg ?? 0);
   const ratingCountDefault = Number(p.rating_count ?? 0);
+  const salePercentDefault = Number(p.sale_percent ?? 0);
 
   const cats = ((categories ?? []) as { id: string; name: string }[]) ?? [];
   const linkedCategoryIds = ((productCatRows ?? []) as { category_id: string }[])
@@ -246,6 +259,22 @@ export default async function AdminEditProductPage({
                 className={input}
               />
               <p className="mt-1 text-[11px] text-slate-500">Shown in parentheses next to the stars.</p>
+            </div>
+            <div>
+              <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">Sale (%)</label>
+              <input
+                name="sale_percent"
+                type="number"
+                min={0}
+                max={100}
+                step={0.01}
+                defaultValue={Number.isFinite(salePercentDefault) ? salePercentDefault : 0}
+                placeholder="10"
+                className={input}
+              />
+              <p className="mt-1 text-[11px] text-slate-500">
+                Percent off the list price on the storefront and in cart (0 = no sale).
+              </p>
             </div>
             <div className="sm:col-span-2">
               <button

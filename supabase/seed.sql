@@ -11,6 +11,7 @@ alter table public.products add column if not exists meta_description text not n
 alter table public.categories add column if not exists thumbnail_url text not null default '';
 alter table public.categories add column if not exists hero_icon_hint text not null default '';
 alter table public.products add column if not exists catchy_headline text not null default '';
+alter table public.products add column if not exists sale_percent numeric(5,2) not null default 0;
 
 drop view if exists public.product_listings cascade;
 
@@ -24,7 +25,14 @@ select
   p.category_id,
   p.brand_id,
   p.is_active,
-  coalesce(dv.price_pkr, 0) as min_price_pkr,
+  case
+    when coalesce(p.sale_percent, 0) > 0 then
+      greatest(
+        0,
+        round(coalesce(dv.price_pkr, 0)::numeric * (100 - p.sale_percent) / 100.0)
+      )::integer
+    else coalesce(dv.price_pkr, 0)
+  end as min_price_pkr,
   (
     select pi.url
     from public.product_images pi
@@ -36,6 +44,7 @@ select
   p.featured_sort_order,
   p.meta_keywords,
   p.meta_description,
+  p.sale_percent,
   dv.id as default_variant_id,
   dv.sku as default_variant_sku,
   dv.title as default_variant_title,

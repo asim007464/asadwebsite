@@ -12,9 +12,12 @@ export type ProductListing = {
   meta_keywords?: string;
   meta_description?: string;
   /** Cheapest (default) variant for quick add-to-cart. */
+  /** 0–100; when > 0, min_price_pkr is already sale-adjusted. */
+  sale_percent?: number | null;
   default_variant_id?: string | null;
   default_variant_sku?: string | null;
   default_variant_title?: string | null;
+  /** List (pre-sale) price of the default variant. */
   default_variant_price_pkr?: number | null;
 };
 
@@ -38,6 +41,8 @@ export type Product = {
   brand_id: string | null;
   is_featured?: boolean;
   featured_sort_order?: number;
+  /** 0–100 percent off list price. */
+  sale_percent?: number | null;
 };
 
 export type Category = {

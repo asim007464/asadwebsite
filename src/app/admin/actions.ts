@@ -368,6 +368,15 @@ function parseProductRatingFromForm(formData: FormData): { rating_avg: number; r
   };
 }
 
+/** Sale discount % off list price (0–100). Empty → 0. */
+function parseSalePercentFromForm(formData: FormData): number | { err: string } {
+  const raw = String(formData.get("sale_percent") ?? "").trim();
+  if (raw.length === 0) return 0;
+  const n = Number.parseFloat(raw);
+  if (!Number.isFinite(n) || n < 0 || n > 100) return { err: "sale" };
+  return Math.round(n * 100) / 100;
+}
+
 /** Multi-select checkboxes `category_ids` (+ optional legacy single `category_id`). */
 function parseCategoryIdsFromForm(formData: FormData): string[] {
   const fromMulti = formData
@@ -574,6 +583,8 @@ export async function createProduct(formData: FormData) {
 
   const rating = parseProductRatingFromForm(formData);
   if ("err" in rating) redirect(`/admin/products/new?error=${rating.err}`);
+  const sale_percent = parseSalePercentFromForm(formData);
+  if (typeof sale_percent === "object") redirect(`/admin/products/new?error=${sale_percent.err}`);
 
   const imageRaw = String(formData.get("primary_image_url") ?? "");
   const galleryFiles = formData
@@ -608,6 +619,7 @@ export async function createProduct(formData: FormData) {
       is_active,
       rating_avg: rating.rating_avg,
       rating_count: rating.rating_count,
+      sale_percent,
     })
     .select("id")
     .single();
@@ -1113,6 +1125,8 @@ export async function updateProduct(formData: FormData) {
   const is_active = formData.get("is_active") === "on";
   const rating = parseProductRatingFromForm(formData);
   if ("err" in rating) redirect(`/admin/products/${id}/edit?error=${rating.err}`);
+  const sale_percent = parseSalePercentFromForm(formData);
+  if (typeof sale_percent === "object") redirect(`/admin/products/${id}/edit?error=${sale_percent.err}`);
 
   const supabase = createSupabaseAdminClient();
 
@@ -1135,6 +1149,7 @@ export async function updateProduct(formData: FormData) {
       is_active,
       rating_avg: rating.rating_avg,
       rating_count: rating.rating_count,
+      sale_percent,
     })
     .eq("id", id);
 
@@ -1366,7 +1381,7 @@ async function heroSlideImageFromForm(
     const url = normalizeHeroImageUrl(raw);
     if (url === null) return { err: "invalid-url" };
     if (!url) return required ? { err: "invalid-url" } : { ok: "" };
-    return { ok: url };
+  return { ok: url };
   }
   if (existingUrl.trim()) return { ok: existingUrl.trim() };
   return required ? { err: "invalid-url" } : { ok: "" };

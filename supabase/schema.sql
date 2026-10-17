@@ -33,6 +33,7 @@ create table if not exists public.products (
   featured_sort_order integer not null default 0,
   rating_avg numeric(2,1) not null default 0 check (rating_avg >= 0 and rating_avg <= 5),
   rating_count integer not null default 0 check (rating_count >= 0),
+  sale_percent numeric(5,2) not null default 0 check (sale_percent >= 0 and sale_percent <= 100),
   created_at timestamptz not null default now()
 );
 
@@ -343,6 +344,7 @@ alter table public.products add column if not exists meta_keywords text not null
 alter table public.products add column if not exists meta_description text not null default '';
 alter table public.products add column if not exists catchy_headline text not null default '';
 alter table public.products add column if not exists rating_avg numeric(2,1) not null default 0;
+alter table public.products add column if not exists sale_percent numeric(5,2) not null default 0;
 alter table public.products add column if not exists rating_count integer not null default 0;
 
 alter table public.home_reviews_banner
@@ -459,7 +461,14 @@ select
   p.category_id,
   p.brand_id,
   p.is_active,
-  coalesce(dv.price_pkr, 0) as min_price_pkr,
+  case
+    when coalesce(p.sale_percent, 0) > 0 then
+      greatest(
+        0,
+        round(coalesce(dv.price_pkr, 0)::numeric * (100 - p.sale_percent) / 100.0)
+      )::integer
+    else coalesce(dv.price_pkr, 0)
+  end as min_price_pkr,
   (
     select pi.url
     from public.product_images pi
@@ -471,6 +480,7 @@ select
   p.featured_sort_order,
   p.meta_keywords,
   p.meta_description,
+  p.sale_percent,
   dv.id as default_variant_id,
   dv.sku as default_variant_sku,
   dv.title as default_variant_title,

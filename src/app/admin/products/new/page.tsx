@@ -18,6 +18,7 @@ function errMsg(code: string) {
   if (code === "brand") return "Could not save that brand. Try a shorter name or try again.";
   if (code === "rating") return "Rating must be a number from 0 to 5 (e.g. 4.3).";
   if (code === "rating-count") return "Rating count must be a whole number ≥ 0.";
+  if (code === "sale") return "Sale percent must be a number from 0 to 100.";
   return code.length < 180 ? code : "Something went wrong.";
 }
 
@@ -135,6 +136,22 @@ export default async function AdminNewProductPage({
               className={input}
             />
             <p className="mt-1 text-[11px] text-slate-500">Number shown in parentheses, e.g. (1,673).</p>
+          </div>
+          <div>
+            <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">Sale (%)</label>
+            <input
+              name="sale_percent"
+              type="number"
+              min={0}
+              max={100}
+              step={0.01}
+              defaultValue={0}
+              placeholder="10"
+              className={input}
+            />
+            <p className="mt-1 text-[11px] text-slate-500">
+              Percent off the product price (0 = no sale). Example: 10 = 10% off.
+            </p>
           </div>
 
           <div className="sm:col-span-2 border-t border-slate-100 pt-6">
